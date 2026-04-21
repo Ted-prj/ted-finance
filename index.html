@@ -171,9 +171,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // --- 1. Supabase 설정 (여기에 본인의 정보를 입력하세요) ---
+        // --- 1. Supabase 설정 ---
         const SUPABASE_URL = 'https://vaamifqzjsrflmprihgv.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI'; // 본인의 anon public key
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let dropdownCache = { accounts: [], categories: [], trTypes: [], fixedList: [] };
@@ -182,7 +182,6 @@
 
         // --- 2. 초기화 및 마스터 데이터 로드 ---
         document.addEventListener('DOMContentLoaded', async () => {
-            // 탭 이벤트 바인딩
             const triggerTabList = document.querySelectorAll('.nav-link');
             triggerTabList.forEach(el => {
                 el.addEventListener('click', function(e) {
@@ -204,7 +203,6 @@
             const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
             if(document.getElementById('stats-month')) document.getElementById('stats-month').value = monthStr;
 
-            // Supabase에서 마스터 데이터 가져오기
             const [accRes, catRes, setRes, fixRes] = await Promise.all([
                 _supabase.from('accounts').select('code, name').order('id'),
                 _supabase.from('categories').select('code, name, is_stats').order('id'),
@@ -224,7 +222,7 @@
             loadHistoryTab('OUT');
         }
 
-        // --- 3. CRUD 로직 (저장, 수정, 삭제) ---
+        // --- 3. CRUD 로직 ---
         async function saveEdit(btn, source, id) {
             const card = btn.closest('.custom-card');
             const inputs = card.querySelectorAll('.edit-input');
@@ -312,8 +310,23 @@
             const list = document.getElementById('acc-balance-list');
             list.innerHTML = `<div class="loading-inline">...</div>`;
 
-            const { data: assets } = await _supabase.from('v_account_balances').select('*, loans(*)').order('id');
+            const { data: assets, error } = await _supabase
+                .from('v_account_balances')
+                .select(`
+                    *,
+                    loans!loans_account_code_fkey (
+                        *,
+                        linked_acc:accounts!linked_account_code (name)
+                    )
+                `)
+                .order('account_id');
             
+            if (error) {
+                console.error("Asset Load Error:", error);
+                list.innerHTML = "<p class='text-center opacity-50'>데이터 로드 실패</p>";
+                return;
+            }
+
             let total = (assets || []).reduce((sum, acc) => sum + acc.current_balance, 0);
             list.innerHTML = `<div class="text-end mb-4"><small class="label-mini">TOTAL ASSETS</small><h4 class="total-asset-val">${Math.round(total).toLocaleString()}원</h4></div>` + 
                 (assets || []).map(acc => renderAssetCard(acc)).join('');
@@ -357,7 +370,7 @@
             if (balanceArea) balanceArea.innerText = `Balance: ${Math.round(data?.current_balance || 0).toLocaleString()}원`;
         }
 
-        // --- 5. UI 유틸리티 (렌더링, 이벤트) ---
+        // --- 5. UI 유틸리티 ---
         function renderTxCardOriginal(i) {
             return `<div class="swipe-container"><div class="swipe-delete-bg">DEL</div><div class="custom-card swipe-target" data-id="${i.id}" data-source="TX" ontouchstart="handleSwipeStart(event)" ontouchmove="handleSwipeMove(event)" ontouchend="handleSwipeEnd(event)">
                 <div class="card-grid">
@@ -389,18 +402,39 @@
             if (type === "신용카드" || type === "대출계좌") borderColor = "#e83e8c";
             else if (type === "상품권" || type === "미수금") borderColor = "#ffffff";
 
-            let loanHtml = acc.loans ? `<div class="loan-detail-box">
-                <div><div class="loan-label">이율</div><div class="loan-val">${acc.loans.interest_rate}%</div></div>
-                <div><div class="loan-label">납부일</div><div class="loan-val">${acc.loans.payment_day}일</div></div>
-                <div class="card-full border-top pt-2"><div class="loan-label">만기일</div><div class="loan-val">${acc.loans.expiry_date}</div></div>
-            </div>` : "";
+            const loan = (acc.loans && acc.loans.length > 0) ? acc.loans[0] : null;
 
-            return `<div class="custom-card mb-3" style="border-left-color: ${borderColor}">
-                <div class="small opacity-50 mb-1">${acc.bank} | ${acc.account_type}</div>
-                <div class="acc-main">${acc.account_name}</div>
-                <div class="acc-amount">${Math.round(acc.current_balance).toLocaleString()}원</div>
-                ${loanHtml}
-            </div>`;
+            let loanHtml = "";
+            if (loan) {
+                // 🔥 수정 포인트: 데이터가 객체로 오든 배열로 오든 안전하게 처리합니다.
+                const lAcc = loan.linked_acc;
+                let linkedAccName = "연결 정보 없음";
+                
+                if (lAcc) {
+                    if (Array.isArray(lAcc) && lAcc.length > 0) linkedAccName = lAcc[0].name;
+                    else if (typeof lAcc === 'object' && lAcc.name) linkedAccName = lAcc.name;
+                }
+                
+                loanHtml = `
+                    <div class="loan-detail-box">
+                        <div><div class="loan-label">금리</div><div class="loan-val">${loan.interest_rate}%</div></div>
+                        <div><div class="loan-label">월 이자</div><div class="loan-val">${Math.round(loan.monthly_interest || 0).toLocaleString()}원</div></div>
+                        <div><div class="loan-label">납부일</div><div class="loan-val">${loan.payment_day}일</div></div>
+                        <div><div class="loan-label">만기일</div><div class="loan-val">${loan.expiry_date}</div></div>
+                        <div class="card-full border-top pt-2" style="border-color: rgba(232, 142, 163, 0.1) !important; margin-top: 5px;">
+                            <div class="loan-label">연결 계좌</div>
+                            <div class="loan-val" style="color: var(--bp-pink);">${linkedAccName}</div>
+                        </div>
+                    </div>`;
+            }
+
+            return `
+                <div class="custom-card mb-3" style="border-left-color: ${borderColor}">
+                    <div class="small opacity-50 mb-1">${acc.bank} | ${acc.account_type}</div>
+                    <div class="acc-main">${acc.account_name}</div>
+                    <div class="acc-amount">${Math.round(acc.current_balance).toLocaleString()}원</div>
+                    ${loanHtml}
+                </div>`;
         }
 
         function addNewCard(type) {
