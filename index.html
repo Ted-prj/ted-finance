@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <base target="_top">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Blackpink Money - Supabase Edition</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -16,7 +16,7 @@
             --asset-pink: #e83e8c; 
         }
         body { 
-            padding: 15px; 
+            padding: 10px; /* 여백 축소 */
             background-color: var(--bp-black); 
             color: #fff; 
             font-family: 'Pretendard', -apple-system, sans-serif; 
@@ -40,9 +40,10 @@
         }
         /* ----------------------- */
         .container { 
+            width: 100%; /* 모바일 꽉 채우기 */
             max-width: 500px; 
             background: var(--bp-dark-gray); 
-            padding: 20px; 
+            padding: 15px; /* 내부 여백 최적화 */
             border-radius: 28px; 
             border: 1px solid rgba(232, 142, 163, 0.2); 
             margin-bottom: 30px; 
@@ -53,14 +54,14 @@
         
         .nav-pills { background: #000; border-radius: 16px; padding: 4px; margin-bottom: 20px !important; display: flex; }
         .nav-pills .nav-link { 
-            border-radius: 12px; font-weight: 800; color: var(--bp-pink); font-size: 0.62rem; 
+            border-radius: 12px; font-weight: 800; color: var(--bp-pink); font-size: 0.65rem; 
             flex: 1; padding: 12px 2px; border: none; background: transparent; transition: 0.3s; 
         }
         .nav-pills .nav-link.active { background-color: var(--bp-pink) !important; color: #000 !important; font-weight: 900; }
         
         .form-control, .form-select { 
             background-color: #080808 !important; border: 1.5px solid #252525 !important; 
-            color: #fff !important; border-radius: 18px; padding: 14px 16px; font-size: 0.95rem; 
+            color: #fff !important; border-radius: 18px; padding: 12px 14px; font-size: 0.9rem; /* 폰트 소폭 축소 */
             font-weight: 600; transition: all 0.2s ease;
         }
         .form-control:focus, .form-select:focus { 
@@ -68,20 +69,23 @@
         }
         .form-select { 
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e88ea3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-            background-size: 12px;
+            background-size: 10px;
         }
 
+        /* [수정] Date Input - 줄바꿈 방지 및 가독성 */
         input[type="date"], input[type="month"] {
             appearance: none; -webkit-appearance: none;
             position: relative;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0px; /* 간격 축소 */
+            min-height: 45px;
+            color: var(--bp-pink) !important; /* 기본 컬러 강제 부여 */
         }
-        input[type="date"]::-webkit-datetime-edit-fields-wrapper { display: flex; justify-content: center; gap: 4px; }
-        input[type="date"]::-webkit-datetime-edit-year-field { color: var(--text-dim); font-size: 0.8rem; font-weight: 400; }
+        input[type="date"]::-webkit-datetime-edit-fields-wrapper { display: flex; justify-content: center; gap: 2px; padding: 0; }
+        input[type="date"]::-webkit-datetime-edit-year-field { color: var(--text-dim); font-size: 0.75rem; }
         input[type="date"]::-webkit-datetime-edit-month-field, 
-        input[type="date"]::-webkit-datetime-edit-day-field { color: var(--bp-pink); font-weight: 900; }
-        input[type="date"]::-webkit-datetime-edit-text { color: rgba(232, 142, 163, 0.3); padding: 0 4px; }
+        input[type="date"]::-webkit-datetime-edit-day-field { color: var(--bp-pink); font-weight: 900; font-size: 0.85rem; }
+        input[type="date"]::-webkit-datetime-edit-text { color: rgba(232, 142, 163, 0.3); padding: 0 2px; }
 
         .btn-pink { 
             width: 100%; padding: 18px; font-weight: 900; border-radius: 20px; border: none !important; 
@@ -99,48 +103,50 @@
         }
 
         .slim-filter { 
-            background: #000; border-radius: 22px; padding: 8px 12px; margin-bottom: 15px; 
-            border: 1px solid #222; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow: hidden; 
+            background: #000; border-radius: 22px; padding: 8px; margin-bottom: 15px; 
+            border: 1px solid #222; display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; overflow: hidden; 
         }
         .slim-filter input[type="date"], .slim-filter input[type="month"] { 
             background: #0a0a0a !important; border: 1px solid #333 !important; color: var(--bp-pink) !important; 
-            border-radius: 12px; padding: 8px 4px; font-size: 0.72rem; flex: 1; min-width: 0; text-align: center; outline: none; 
+            border-radius: 12px; padding: 6px 2px; font-size: 0.7rem; flex: 1; min-width: 0; text-align: center; outline: none; 
             font-weight: 800;
         }
 
         .btn-query { 
             background: var(--bp-pink) !important; color: #000 !important; border: none; 
-            border-radius: 12px; padding: 0 15px; font-weight: 900; font-size: 0.75rem; height: 38px; flex-shrink: 0; 
+            border-radius: 12px; padding: 0 12px; font-weight: 900; font-size: 0.7rem; height: 34px; flex-shrink: 0; 
         }
 
         .total-summary-row { text-align: right; padding: 0 8px 12px 0; font-size: 0.8rem; font-weight: 900; color: var(--bp-pink); letter-spacing: 0.5px; opacity: 0.9; }
 
         .custom-card { 
-            position: relative; background: var(--bp-black); border-radius: 24px; padding: 20px; 
+            position: relative; background: var(--bp-black); border-radius: 24px; padding: 18px; 
             border-left: 6px solid var(--bp-pink); border-top: 1px solid #222; border-right: 1px solid #222; 
             border-bottom: 1px solid #222; margin-bottom: 14px; transition: transform 0.3s ease; 
             overflow: hidden; cursor: pointer; 
         }
-        .label-mini { font-size: 0.65rem; color: var(--text-dim) !important; font-weight: 900; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .label-mini { font-size: 0.62rem; color: var(--text-dim) !important; font-weight: 900; margin-bottom: 4px; letter-spacing: 0.5px; }
         
         .acc-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
         .acc-main { color: #fff !important; font-weight: 700; font-size: 1.05rem; }
         .acc-amount { color: var(--pink-light) !important; font-weight: 900; font-size: 1.3rem; }
 
-        .val-text { font-size: 0.85rem; font-weight: 700; color: #fff !important; min-height: 18px; }
-        .val-amt { font-size: 1.15rem; font-weight: 900; color: var(--pink-light) !important; }
-        .card-balance-badge { font-weight: 800; font-size: 0.65rem; color: var(--bp-pink) !important; opacity: 0.9; margin-top: 4px; text-align: right; display: block; }
-        .card-note-area { font-size: 0.72rem; color: #aaa !important; border-top: 1px solid #222; margin-top: 8px; padding-top: 8px; font-weight: 500; }
+        .val-text { font-size: 0.82rem; font-weight: 700; color: #fff !important; min-height: 18px; }
+        .val-amt { font-size: 1.1rem; font-weight: 900; color: var(--pink-light) !important; }
+        .card-balance-badge { font-weight: 800; font-size: 0.6rem; color: var(--bp-pink) !important; opacity: 0.9; margin-top: 4px; text-align: right; display: block; }
+        .card-note-area { font-size: 0.7rem; color: #aaa !important; border-top: 1px solid #222; margin-top: 8px; padding-top: 8px; font-weight: 500; }
         
         .tr-row-wrap { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #222; margin-top: 8px; padding: 10px 0 0 0; gap: 4px; }
         .tr-col { flex: 1; min-width: 0; }
         .tr-amt-col { flex: 1; text-align: center; min-width: 0; }
-        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        /* [수정] 입력 카드 그리드 비율 최적화 */
+        .card-grid { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 10px; }
         .card-full { grid-column: span 2; }
 
         .edit-mode { border: 1.5px solid var(--bp-pink) !important; background: #050505 !important; cursor: default; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .edit-btn-group { display: flex; gap: 10px; margin-top: 18px; }
-        .live-balance-box { font-size: 0.7rem; font-weight: 800; color: var(--bp-pink); margin-top: 6px; text-align: right; }
+        .live-balance-box { font-size: 0.68rem; font-weight: 800; color: var(--bp-pink); margin-top: 4px; text-align: right; }
 
         .expand-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .expand-container.expanded { max-height: 5000px; padding-bottom: 10px; }
@@ -385,6 +391,12 @@
         async function initApp() {
             const now = new Date();
             const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            const dateStr = monthStr + '-' + String(now.getDate()).padStart(2, '0');
+            
+            // [수정] 초기 로드시 날짜 필터에 오늘 날짜 기본 세팅 (표시 안되는 문제 해결)
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(ipt => { if(!ipt.value) ipt.value = dateStr; });
+
             if(document.getElementById('stats-month')) document.getElementById('stats-month').value = monthStr;
 
             const [accRes, catRes, setRes, fixRes] = await Promise.all([
@@ -406,7 +418,6 @@
             loadHistoryTab('OUT');
         }
 
-        // [추가] 고정비 선택 시 자동 입력 로직
         function onFixedLinkChange(selectEl) {
             const card = selectEl.closest('.custom-card');
             const fixedId = selectEl.value;
@@ -415,13 +426,9 @@
             const item = dropdownCache.fixedList.find(f => f.id === fixedId);
             if (!item) return;
 
-            // 1. 금액 입력 (콤마 포함)
             const amtInput = card.querySelector('[data-field="amount"]');
-            if (amtInput) {
-                amtInput.value = Number(item.amt).toLocaleString();
-            }
+            if (amtInput) amtInput.value = Number(item.amt).toLocaleString();
 
-            // 2. 날짜 계산 (오늘 기준 해당 월의 고정 결제일)
             const dateInput = card.querySelector('[data-field="date"]');
             if (dateInput) {
                 const now = new Date();
@@ -431,7 +438,6 @@
                 dateInput.value = `${year}-${month}-${day}`;
             }
 
-            // 3. 계좌/카테고리 매핑
             const accSelect = card.querySelector('[data-field="acc"]') || card.querySelector('[data-field="fromAcc"]');
             if (accSelect) {
                 const accName = dropdownCache.accounts_raw.find(a => a.code === item.acc)?.name;
@@ -447,19 +453,14 @@
                 if (catName) catSelect.value = catName;
             }
 
-            // 4. 메모 자동 입력
             const noteInput = card.querySelector('[data-field="note"]');
             if (noteInput) noteInput.value = item.name;
         }
 
-        // [추가] 금액 천 단위 콤마 포맷터
         function formatAmountInput(input) {
             let val = input.value.replace(/[^0-9]/g, "");
-            if (val) {
-                input.value = Number(val).toLocaleString();
-            } else {
-                input.value = "";
-            }
+            if (val) input.value = Number(val).toLocaleString();
+            else input.value = "";
         }
 
         function renderTxEditCard(i, source) {
@@ -543,29 +544,19 @@
             btn.innerHTML = "..."; btn.disabled = true;
 
             try {
-                // [수정] 콤마 제거 후 숫자로 변환하여 저장
                 const amount = parseInt(String(formData.amount).replace(/[^0-9-]/g, "")) || 0;
                 
                 if (source === 'TR' || source === 'MOVE') {
                     const from_code = dropdownCache.accounts_raw.find(a => a.name === formData.fromAcc)?.code;
                     const to_code = dropdownCache.accounts_raw.find(a => a.name === formData.toAcc)?.code;
                     const type_code = dropdownCache.trTypes_raw.find(s => s.value === formData.type)?.code || 'TX_TRANSFER';
-                    
-                    const payload = {
-                        date: formData.date, from_account_code: from_code, to_account_code: to_code,
-                        amount: amount, type_code: type_code, transfer_code: type_code, note: formData.note
-                    };
-
+                    const payload = { date: formData.date, from_account_code: from_code, to_account_code: to_code, amount: amount, type_code: type_code, transfer_code: type_code, note: formData.note };
                     const { error } = (id === 'NEW') ? await _supabase.from('transfer').insert([payload]) : await _supabase.from('transfer').update(payload).eq('id', id);
                     if (error) throw error;
                 } else {
                     const acc_code = dropdownCache.accounts_raw.find(a => a.name === formData.acc)?.code;
                     const cat_code = dropdownCache.categories_raw.find(c => c.name === formData.cat)?.code;
-                    const payload = {
-                        date: formData.date, amount: amount, account_code: acc_code, category_code: cat_code,
-                        type_code: source === 'IN' ? 'TX_INCOME' : (source === 'OUT' ? 'TX_EXPENSE' : (amount < 0 ? 'TX_EXPENSE' : 'TX_INCOME')),
-                        note: formData.note, fixed_link: formData.fixedLinkId || null
-                    };
+                    const payload = { date: formData.date, amount: amount, account_code: acc_code, category_code: cat_code, type_code: source === 'IN' ? 'TX_INCOME' : (source === 'OUT' ? 'TX_EXPENSE' : (amount < 0 ? 'TX_EXPENSE' : 'TX_INCOME')), note: formData.note, fixed_link: formData.fixedLinkId || null };
                     const { error } = (id === 'NEW') ? await _supabase.from('transactions').insert([payload]) : await _supabase.from('transactions').update(payload).eq('id', id);
                     if (error) throw error;
                 }
@@ -594,10 +585,7 @@
                     data.type = dropdownCache.trTypes_raw.find(s => s.code === (data.transfer_code || data.type_code))?.value || '이체';
                     container.outerHTML = renderTrEditCard(data);
                 }
-            } catch (e) { 
-                alert("데이터 로드 실패: " + e.message);
-                container.outerHTML = window.tempOriginalRowHtml; 
-            }
+            } catch (e) { alert("데이터 로드 실패: " + e.message); container.outerHTML = window.tempOriginalRowHtml; }
         }
 
         async function toggleAssetHistory(accCode, element, event) {
