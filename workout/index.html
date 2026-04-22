@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Blackpink Workout - Supabase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --bp-black: #000000;
+        --bp-deep-grey: #0F0F0F;
+        --bp-card-grey: #171717;
+        --bp-pink: rgb(232, 142, 163); 
+        --bp-neon-pink: #FF3F7E;
+        --bp-deep-purple: #5D3FD3;
+        --bp-text-light: #f8f9fa;
+        --bp-border: #333333;
+      }
+
+      body { background-color: var(--bp-black); font-family: 'Pretendard', sans-serif; padding-bottom: 80px; color: var(--bp-text-light); overflow-x: hidden; }
+      
+      /* 보안 레이어 */
+      #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bp-black); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+      .auth-input { letter-spacing: 10px; text-align: center; font-size: 1.5rem; margin-bottom: 20px; border: 2px solid #333 !important; background: #000 !important; color: #fff !important; -webkit-text-security: disc; }
+
+      /* 상단 진행 바 */
+      .sticky-top-group { position: sticky; top: 0; z-index: 1000; background: var(--bp-black); border-bottom: 1px solid var(--bp-border); }
+      .progress-section { padding: 15px; }
+      .progress-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+      .progress-text { font-size: 0.9rem; color: var(--bp-pink); font-weight: 800; }
+      .progress-container { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
+      .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--bp-pink), var(--bp-neon-pink)); width: 0%; transition: width 0.3s ease; }
+      
+      .finish-btn { background: linear-gradient(45deg, var(--bp-pink), var(--bp-neon-pink)); color: #000; padding: 5px 15px; border-radius: 15px; font-weight: 900; border: none; font-size: 0.75rem; }
+
+      /* 프로그램 로더 */
+      .loader-section { padding: 10px 15px; background: #080808; display: flex; gap: 8px; }
+      .form-select, .form-control { background-color: #121212 !important; color: #fff !important; border: 1.5px solid #252525 !important; border-radius: 12px; font-size: 0.85rem; }
+
+      /* 운동 카드 그룹 */
+      .workout-group { background: var(--bp-deep-grey); border-radius: 20px; margin: 15px; border: 1px solid #222; overflow: hidden; }
+      .group-header { padding: 12px 18px; background: #141414; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+      .group-title { font-weight: 900; color: var(--bp-pink); font-size: 1rem; }
+      
+      /* 세트 카드 */
+      .set-card { padding: 15px; border-bottom: 1px solid #222; position: relative; background: var(--bp-deep-grey); transition: transform 0.2s; }
+      .set-card:last-child { border-bottom: none; }
+      .history-guide { font-size: 0.65rem; color: #888; background: #1a1a1a; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; border-left: 3px solid var(--bp-deep-purple); }
+      
+      /* 버튼 상태 */
+      .btn-save { width: 100%; font-weight: 800; border-radius: 12px; border: none; background: #333; color: #fff; font-size: 0.75rem; height: 40px; }
+      .btn-saved { background: #3a1a20 !important; color: var(--bp-pink) !important; border: 1px solid var(--bp-pink) !important; }
+      .btn-final { background: var(--bp-pink) !important; color: #000 !important; opacity: 0.7; }
+
+      /* 부위별 포인트 */
+      .part-chest { border-left: 5px solid #FF5E9B; }
+      .part-back { border-left: 5px solid #FFBBDC; }
+      .part-shoulder { border-left: 5px solid var(--bp-neon-pink); }
+      .part-leg { border-left: 5px solid var(--bp-deep-purple); }
+      
+      /* 하단 추가 폼 */
+      .free-add-section { margin: 15px; padding: 15px; border: 1px dashed var(--bp-pink); border-radius: 20px; background: rgba(232, 142, 163, 0.05); }
+    </style>
+</head>
+<body>
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px; margin-bottom: 30px;">WORKOUT IDENTITY</h4>
+            <input type="password" id="access-pw-input" class="form-control auth-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus oninput="handleAutoVerify(this)">
+            <div id="auth-msg" style="font-size: 0.7rem; color: #844; margin-top: 10px; font-weight: 800;"></div>
+        </div>
+    </div>
+
+    <div id="main-app" style="display:none;">
+        <div class="sticky-top-group">
+            <div class="progress-section">
+                <div class="progress-info-row">
+                    <div id="progressValue" class="progress-text">READY TO BURN?</div>
+                    <button id="finishBtn" class="finish-btn" onclick="finishWorkout()">FINISH</button>
+                </div>
+                <div class="progress-container"><div id="progressBar" class="progress-bar-fill"></div></div>
+            </div>
+            <div class="loader-section">
+                <select id="progSelect" class="form-select form-select-sm"></select>
+                <button class="btn btn-sm" style="background:var(--bp-pink); color:#000; font-weight:900; border-radius:10px;" onclick="loadRoutine()">LOAD</button>
+            </div>
+        </div>
+
+        <div id="workoutContainer"></div>
+
+        <div class="free-add-section">
+            <div style="font-weight:900; color:var(--bp-pink); font-size:0.8rem; margin-bottom:10px;">+ QUICK ADD EXERCISE</div>
+            <div class="row g-2">
+                <div class="col-8"><select id="freeExSelect" class="form-select form-select-sm"></select></div>
+                <div class="col-4"><button class="btn btn-sm btn-outline-light w-100" style="border-radius:10px;" onclick="addFreeSet()">ADD</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://vaamifqzjsrflmprihgv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
+
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let CURRENT_LOGS = [];
+        let EXERCISE_MASTER = [];
+
+        // --- 1. 보안 및 초기화 ---
+        function handleAutoVerify(input) { if (input.value.length === 4) verifyAccess(); }
+
+        async function verifyAccess() {
+            const inputPw = document.getElementById('access-pw-input').value;
+            const { data } = await _supabase.from('settings').select('value').eq('code', 'ACCESS_PW').single();
+            if (data && data.value === inputPw) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                initApp();
+            } else {
+                document.getElementById('auth-msg').innerText = "DENIED";
+                document.getElementById('access-pw-input').value = "";
+            }
+        }
+
+        async function initApp() {
+            // 운동 마스터 로드
+            const { data: exData } = await _supabase.schema('workout').from('exercises').select('*').order('name');
+            EXERCISE_MASTER = exData;
+            
+            // 프로그램 목록 로드
+            const { data: progData } = await _supabase.schema('workout').from('programs').select('program_name').distinct();
+            const progSelect = document.getElementById('progSelect');
+            progSelect.innerHTML = '<option value="">Select Program</option>' + 
+                [...new Set(progData.map(p => p.program_name))].map(name => `<option value="${name}">${name}</option>`).join('');
+
+            // 자유운동 선택지
+            document.getElementById('freeExSelect').innerHTML = exData.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+
+            // 오늘 이미 진행중인 로그가 있는지 확인
+            loadTodaysLogs();
+        }
+
+        // --- 2. 루틴 로드 로직 ---
+        async function loadRoutine() {
+            const progName = document.getElementById('progSelect').value;
+            if(!progName) return;
+
+            if(!confirm(`${progName} 루틴을 불러올까요?`)) return;
+
+            // 1. 프로그램 계획 가져오기 (주차/일차는 일단 1/1로 고정, 추후 확장 가능)
+            const { data: plan } = await _supabase.schema('workout').from('programs')
+                .select('*, exercises(name, body_part, unit)')
+                .eq('program_name', progName)
+                .eq('week', 1).eq('day', 1)
+                .order('order_no');
+
+            // 2. 오늘 날짜 로그 생성 (로그 생성 로직)
+            const newLogs = [];
+            const today = new Date().toISOString();
+            
+            for(const p of plan) {
+                for(let s = 1; s <= p.planned_sets; s++) {
+                    newLogs.push({
+                        id: `LOG_${Date.now()}_${p.exercise_id}_${s}`,
+                        workout_date: today,
+                        program_id: p.program_code,
+                        session_day: `${p.week}주차 / ${p.day}일차`,
+                        body_part: p.body_part,
+                        exercise_id: p.exercise_id,
+                        weight: p.planned_weight,
+                        reps: p.planned_reps,
+                        set_no: s,
+                        unit: 'kg',
+                        display_name: p.exercises.name,
+                        status: 'TEMP'
+                    });
+                }
+            }
+
+            const { error } = await _supabase.schema('workout').from('logs').insert(newLogs);
+            if(error) alert("Error: " + error.message);
+            else loadTodaysLogs();
+        }
+
+        async function loadTodaysLogs() {
+            const today = new Date().toISOString().split('T')[0];
+            const { data: logs } = await _supabase.schema('workout').from('logs')
+                .select('*, exercises(name, body_part)')
+                .gte('workout_date', today)
+                .order('workout_date', { ascending: true });
+
+            CURRENT_LOGS = logs;
+            renderLogs();
+        }
+
+        // --- 3. 렌더링 및 UI ---
+        function renderLogs() {
+            const container = document.getElementById('workoutContainer');
+            if(CURRENT_LOGS.length === 0) {
+                container.innerHTML = '<div class="text-center p-5 opacity-50">NO PLAN LOADED</div>';
+                return;
+            }
+
+            let html = '';
+            let currentEx = '';
+            
+            CURRENT_LOGS.forEach((log, idx) => {
+                if(log.exercise_id !== currentEx) {
+                    if(currentEx !== '') html += '</div>'; // close previous group
+                    currentEx = log.exercise_id;
+                    html += `
+                        <div class="workout-group ${getPartClass(log.body_part)}">
+                            <div class="group-header">
+                                <div class="group-title">${log.display_name || log.exercises.name}</div>
+                                <div style="font-size:0.6rem; color:#666;">${log.body_part}</div>
+                            </div>`;
+                }
+
+                const isSaved = log.status === 'SAVED';
+                const isFinal = log.status === 'FINAL';
+
+                html += `
+                    <div class="set-card" id="card_${log.id}">
+                        <div class="row align-items-center g-2">
+                            <div class="col-2 text-center">
+                                <span style="font-weight:900; color:var(--bp-pink);">${log.set_no}</span><small style="font-size:0.6rem; color:#555;">S</small>
+                            </div>
+                            <div class="col-7">
+                                <div class="history-guide">⏮ Last: 10kg x 12</div>
+                                <div class="d-flex gap-1">
+                                    <input type="number" class="form-control form-control-sm text-center" id="w_${log.id}" value="${log.weight}">
+                                    <input type="number" class="form-control form-control-sm text-center" id="r_${log.id}" value="${log.reps}">
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <button class="btn-save ${isSaved ? 'btn-saved' : ''} ${isFinal ? 'btn-final' : ''}" 
+                                        onclick="saveSet('${log.id}')" ${isFinal ? 'disabled' : ''}>
+                                    ${isFinal ? 'DONE' : (isSaved ? 'SAVED' : 'SAVE')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            updateProgress();
+        }
+
+        // --- 4. 데이터 조작 ---
+        async function saveSet(logId) {
+            const weight = document.getElementById(`w_${logId}`).value;
+            const reps = document.getElementById(`r_${logId}`).value;
+            
+            const { error } = await _supabase.schema('workout').from('logs')
+                .update({ weight, reps, status: 'SAVED' })
+                .eq('id', logId);
+
+            if(!error) {
+                const log = CURRENT_LOGS.find(l => l.id === logId);
+                log.status = 'SAVED';
+                log.weight = weight;
+                log.reps = reps;
+                renderLogs();
+            }
+        }
+
+        async function finishWorkout() {
+            if(!confirm("오늘 운동을 마감하시겠습니까?")) return;
+            const today = new Date().toISOString().split('T')[0];
+            
+            const { error } = await _supabase.schema('workout').from('logs')
+                .update({ status: 'FINAL' })
+                .eq('status', 'SAVED')
+                .gte('workout_date', today);
+
+            if(!error) {
+                alert("오운완! 🌸");
+                loadTodaysLogs();
+            }
+        }
+
+        function updateProgress() {
+            const total = CURRENT_LOGS.length;
+            const done = CURRENT_LOGS.filter(l => l.status === 'SAVED' || l.status === 'FINAL').length;
+            const percent = total > 0 ? Math.round((done/total)*100) : 0;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressValue').innerText = `${done} / ${total} (${percent}%) COMPLETED`;
+        }
+
+        function getPartClass(part) {
+            if(part.includes('가슴')) return 'part-chest';
+            if(part.includes('등')) return 'part-back';
+            if(part.includes('어깨')) return 'part-shoulder';
+            if(part.includes('하체')) return 'part-leg';
+            return '';
+        }
+    </script>
+</body>
+</html>
