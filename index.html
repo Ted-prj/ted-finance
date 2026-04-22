@@ -23,6 +23,22 @@
             -webkit-tap-highlight-color: transparent; 
             overflow-x: hidden; 
         }
+        /* --- 보안 레이어 스타일 --- */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bp-black); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .auth-box {
+            width: 100%; max-width: 300px; text-align: center;
+        }
+        .auth-input {
+            letter-spacing: 10px; text-align: center; font-size: 1.5rem;
+            margin-bottom: 20px; border: 2px solid #333 !important;
+            -webkit-text-security: disc;
+        }
+        /* ----------------------- */
         .container { 
             max-width: 500px; 
             background: var(--bp-dark-gray); 
@@ -32,9 +48,9 @@
             margin-bottom: 30px; 
             margin-left: auto; 
             margin-right: auto; 
+            display: none; 
         }
         
-        /* Navigation */
         .nav-pills { background: #000; border-radius: 16px; padding: 4px; margin-bottom: 20px !important; display: flex; }
         .nav-pills .nav-link { 
             border-radius: 12px; font-weight: 800; color: var(--bp-pink); font-size: 0.62rem; 
@@ -42,54 +58,71 @@
         }
         .nav-pills .nav-link.active { background-color: var(--bp-pink) !important; color: #000 !important; font-weight: 900; }
         
-        /* Form UI */
         .form-control, .form-select { 
-            background-color: #0a0a0a !important; border: 1px solid #333 !important; 
-            color: #fff !important; border-radius: 14px; padding: 12px; font-size: 0.9rem; 
+            background-color: #080808 !important; border: 1.5px solid #252525 !important; 
+            color: #fff !important; border-radius: 18px; padding: 14px 16px; font-size: 0.95rem; 
+            font-weight: 600; transition: all 0.2s ease;
         }
-        .form-control:focus, .form-select:focus { border-color: var(--bp-pink) !important; box-shadow: none !important; outline: none; }
+        .form-control:focus, .form-select:focus { 
+            border-color: var(--bp-pink) !important; box-shadow: 0 0 8px rgba(232, 142, 163, 0.15) !important; outline: none; 
+        }
+        .form-select { 
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e88ea3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-size: 12px;
+        }
 
-        /* Buttons */
+        input[type="date"], input[type="month"] {
+            appearance: none; -webkit-appearance: none;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        input[type="date"]::-webkit-datetime-edit-fields-wrapper { display: flex; justify-content: center; gap: 4px; }
+        input[type="date"]::-webkit-datetime-edit-year-field { color: var(--text-dim); font-size: 0.8rem; font-weight: 400; }
+        input[type="date"]::-webkit-datetime-edit-month-field, 
+        input[type="date"]::-webkit-datetime-edit-day-field { color: var(--bp-pink); font-weight: 900; }
+        input[type="date"]::-webkit-datetime-edit-text { color: rgba(232, 142, 163, 0.3); padding: 0 4px; }
+
         .btn-pink { 
-            width: 100%; padding: 16px; font-weight: 800; border-radius: 16px; border: none !important; 
-            background-color: var(--bp-pink) !important; color: #000 !important; font-size: 1rem; 
-            box-shadow: 0 4px 15px rgba(232, 142, 163, 0.2); margin-bottom: 20px; display: block; 
+            width: 100%; padding: 18px; font-weight: 900; border-radius: 20px; border: none !important; 
+            background-color: var(--bp-pink) !important; color: #000 !important; font-size: 1.05rem; 
+            box-shadow: 0 6px 20px rgba(232, 142, 163, 0.2); margin-bottom: 25px; display: block; 
+            text-transform: uppercase; letter-spacing: 1px;
         }
         .btn-edit-save { 
             background: var(--bp-pink) !important; color: #000 !important; flex: 1; 
-            border-radius: 12px; font-weight: 900; font-size: 0.75rem; padding: 10px; border: none !important; cursor: pointer; 
+            border-radius: 15px; font-weight: 900; font-size: 0.85rem; padding: 14px; border: none !important; cursor: pointer; 
         }
         .btn-edit-cancel { 
-            background: #333 !important; color: #fff !important; flex: 1; 
-            border-radius: 12px; font-weight: 900; font-size: 0.75rem; padding: 10px; border: none !important; cursor: pointer; 
+            background: #252525 !important; color: #aaa !important; flex: 1; 
+            border-radius: 15px; font-weight: 900; font-size: 0.85rem; padding: 14px; border: none !important; cursor: pointer; 
         }
 
-        /* Filter Capsule */
         .slim-filter { 
-            background: #000; border-radius: 20px; padding: 6px 10px; margin-bottom: 15px; 
-            border: 1px solid #333; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden; 
+            background: #000; border-radius: 22px; padding: 8px 12px; margin-bottom: 15px; 
+            border: 1px solid #222; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow: hidden; 
         }
         .slim-filter input[type="date"], .slim-filter input[type="month"] { 
-            background: #111 !important; border: 1px solid #444 !important; color: var(--bp-pink) !important; 
-            border-radius: 10px; padding: 6px 4px; font-size: 0.65rem; flex: 1; min-width: 0; text-align: center; outline: none; 
+            background: #0a0a0a !important; border: 1px solid #333 !important; color: var(--bp-pink) !important; 
+            border-radius: 12px; padding: 8px 4px; font-size: 0.72rem; flex: 1; min-width: 0; text-align: center; outline: none; 
+            font-weight: 800;
         }
+
         .btn-query { 
             background: var(--bp-pink) !important; color: #000 !important; border: none; 
-            border-radius: 12px; padding: 0 12px; font-weight: 900; font-size: 0.7rem; height: 34px; flex-shrink: 0; 
+            border-radius: 12px; padding: 0 15px; font-weight: 900; font-size: 0.75rem; height: 38px; flex-shrink: 0; 
         }
 
-        .total-summary-row { text-align: right; padding: 0 8px 12px 0; font-size: 0.75rem; font-weight: 900; color: var(--bp-pink); letter-spacing: 0.5px; }
+        .total-summary-row { text-align: right; padding: 0 8px 12px 0; font-size: 0.8rem; font-weight: 900; color: var(--bp-pink); letter-spacing: 0.5px; opacity: 0.9; }
 
-        /* Cards Style */
         .custom-card { 
-            position: relative; background: var(--bp-black); border-radius: 20px; padding: 18px; 
-            border-left: 5px solid var(--bp-pink); border-top: 1px solid #222; border-right: 1px solid #222; 
-            border-bottom: 1px solid #222; margin-bottom: 12px; transition: transform 0.3s ease; 
+            position: relative; background: var(--bp-black); border-radius: 24px; padding: 20px; 
+            border-left: 6px solid var(--bp-pink); border-top: 1px solid #222; border-right: 1px solid #222; 
+            border-bottom: 1px solid #222; margin-bottom: 14px; transition: transform 0.3s ease; 
             overflow: hidden; cursor: pointer; 
         }
-        .label-mini { font-size: 0.6rem; color: var(--text-dim) !important; font-weight: 800; margin-bottom: 1px; }
+        .label-mini { font-size: 0.65rem; color: var(--text-dim) !important; font-weight: 900; margin-bottom: 4px; letter-spacing: 0.5px; }
         
-        /* 🔥 ASSETS Header Fix */
         .acc-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
         .acc-main { color: #fff !important; font-weight: 700; font-size: 1.05rem; }
         .acc-amount { color: var(--pink-light) !important; font-weight: 900; font-size: 1.3rem; }
@@ -102,18 +135,16 @@
         .tr-row-wrap { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #222; margin-top: 8px; padding: 10px 0 0 0; gap: 4px; }
         .tr-col { flex: 1; min-width: 0; }
         .tr-amt-col { flex: 1; text-align: center; min-width: 0; }
-        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .card-full { grid-column: span 2; }
 
-        /* Edit Mode Styles */
-        .edit-mode { border: 1px solid var(--bp-pink) !important; background: #0a0a0a !important; cursor: default; }
-        .edit-btn-group { display: flex; gap: 8px; margin-top: 15px; }
+        .edit-mode { border: 1.5px solid var(--bp-pink) !important; background: #050505 !important; cursor: default; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .edit-btn-group { display: flex; gap: 10px; margin-top: 18px; }
+        .live-balance-box { font-size: 0.7rem; font-weight: 800; color: var(--bp-pink); margin-top: 6px; text-align: right; }
 
-        /* Expansion Box Styles */
         .expand-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .expand-container.expanded { max-height: 5000px; padding-bottom: 10px; }
 
-        /* Detail History Lists UI */
         .history-list { margin-top: 15px; border-top: 1px solid #222; padding-top: 10px; }
         .ah-row { 
             display: flex; flex-direction: column; 
@@ -128,7 +159,6 @@
         .ah-amt { font-size: 0.8rem; font-weight: 900; color: var(--pink-light); }
         .ah-balance { font-size: 0.6rem; color: var(--text-dim); text-align: right; margin-top: 2px; pointer-events: none; }
 
-        /* Assets UI Grid */
         .loan-detail-box { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
@@ -143,7 +173,6 @@
         .loan-label { font-size: 0.6rem; color: var(--bp-pink); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
         .loan-val { font-size: 0.8rem; color: #eee; font-weight: 700; }
 
-        /* Stats items */
         .stats-stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         .stats-card { background: var(--bp-black); border-radius: 20px; padding: 20px; border: 1px solid #222; border-top: 4px solid var(--bp-pink); cursor: pointer; transition: transform 0.2s; }
         .stats-card:active { transform: scale(0.98); }
@@ -157,20 +186,17 @@
         }
         .stat-item-card:active { transform: scale(0.98); background: #111; }
 
-        /* Progress Bar */
         .progress { background-color: #1a1a1a; height: 6px !important; border-radius: 10px; }
         .bar-income { background: #fff !important; }
         .bar-asset { background: var(--asset-pink) !important; }
         .bar-expense { background: var(--bp-pink) !important; }
         
-        /* Token Chips */
         .fixed-chip { 
             background: rgba(232, 142, 163, 0.1); padding: 6px 12px; border-radius: 12px; 
             font-size: 0.65rem; border: 1px solid rgba(232, 142, 163, 0.2); color: var(--pink-light); 
             display: inline-block; margin: 3px; font-weight: 700; 
         }
 
-        /* Swipe & Loading */
         .swipe-container { position: relative; overflow: hidden; border-radius: 20px; margin-bottom: 12px; background: #200; display: flex; align-items: stretch; }
         .swipe-delete-bg { 
             position: absolute; top: 0; right: 0; width: 100%; height: 100%; 
@@ -183,7 +209,16 @@
     </style>
 </head>
 <body>
-    <div class="container mt-2">
+    <div id="auth-overlay">
+        <div class="auth-box">
+            <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px; margin-bottom: 30px;">IDENTITY REQUIRED</h4>
+            <input type="password" id="access-pw-input" class="form-control auth-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus oninput="handleAutoVerify(this)">
+            <button class="btn-pink" onclick="verifyAccess()">ACCESS</button>
+            <div id="auth-msg" style="font-size: 0.7rem; color: #844; margin-top: 10px; font-weight: 800;"></div>
+        </div>
+    </div>
+
+    <div class="container mt-2" id="main-app-container">
         <div class="text-center mb-3">
             <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px; cursor:pointer;" onclick="location.reload()">TED'S FINANCE</h4>
         </div>
@@ -265,7 +300,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // --- 1. Supabase 설정 ---
         const SUPABASE_URL = 'https://vaamifqzjsrflmprihgv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -279,8 +313,60 @@
         let touchStartX = 0;
         window.tempOriginalRowHtml = "";
 
-        // --- 2. 초기화 ---
+        function handleAutoVerify(input) {
+            if (input.value.length === 4) {
+                verifyAccess();
+            }
+        }
+
+        async function verifyAccess() {
+            const inputPw = document.getElementById('access-pw-input').value;
+            const msg = document.getElementById('auth-msg');
+            const btn = document.querySelector('#auth-overlay .btn-pink');
+            
+            btn.innerHTML = "VERIFYING...";
+            btn.disabled = true;
+
+            try {
+                const { data, error } = await _supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('code', 'ACCESS_PW')
+                    .single();
+
+                if (error) throw error;
+
+                if (data.value === inputPw) {
+                    sessionStorage.setItem('is_auth', 'true');
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    document.getElementById('main-app-container').style.display = 'block';
+                    await initApp();
+                } else {
+                    msg.innerText = "ACCESS DENIED. TRY AGAIN.";
+                    document.getElementById('access-pw-input').value = "";
+                    document.getElementById('access-pw-input').focus();
+                    btn.innerHTML = "ACCESS";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                msg.innerText = "CONNECTION ERROR: " + e.message;
+                btn.innerHTML = "ACCESS";
+                btn.disabled = false;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            if (sessionStorage.getItem('is_auth') === 'true') {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-app-container').style.display = 'block';
+                await initApp();
+            } else {
+                setTimeout(() => {
+                    const pwInput = document.getElementById('access-pw-input');
+                    if(pwInput) pwInput.focus();
+                }, 500);
+            }
+
             const triggerTabList = document.querySelectorAll('.nav-link');
             triggerTabList.forEach(el => {
                 el.addEventListener('click', function(e) {
@@ -294,7 +380,6 @@
                     else if(tabId === 'tab-db-btn') loadStats();
                 });
             });
-            await initApp();
         });
 
         async function initApp() {
@@ -316,12 +401,66 @@
                 categories: (catRes.data || []).map(c => c.name),
                 trTypes_raw: setRes.data || [],
                 trTypes: (setRes.data || []).map(s => s.value),
-                fixedList: (fixRes.data || []).map(f => ({ id: f.fixed_link, name: f.name, amt: f.amount, day: f.payment_day }))
+                fixedList: (fixRes.data || []).map(f => ({ id: f.fixed_link, name: f.name, amt: f.amount, day: f.payment_day, acc: f.account_code, cat: f.category_code }))
             };
             loadHistoryTab('OUT');
         }
 
-        // --- 3. UI 렌더링 (편집/수정 모드) ---
+        // [추가] 고정비 선택 시 자동 입력 로직
+        function onFixedLinkChange(selectEl) {
+            const card = selectEl.closest('.custom-card');
+            const fixedId = selectEl.value;
+            if (!fixedId) return;
+
+            const item = dropdownCache.fixedList.find(f => f.id === fixedId);
+            if (!item) return;
+
+            // 1. 금액 입력 (콤마 포함)
+            const amtInput = card.querySelector('[data-field="amount"]');
+            if (amtInput) {
+                amtInput.value = Number(item.amt).toLocaleString();
+            }
+
+            // 2. 날짜 계산 (오늘 기준 해당 월의 고정 결제일)
+            const dateInput = card.querySelector('[data-field="date"]');
+            if (dateInput) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(item.day).padStart(2, '0');
+                dateInput.value = `${year}-${month}-${day}`;
+            }
+
+            // 3. 계좌/카테고리 매핑
+            const accSelect = card.querySelector('[data-field="acc"]') || card.querySelector('[data-field="fromAcc"]');
+            if (accSelect) {
+                const accName = dropdownCache.accounts_raw.find(a => a.code === item.acc)?.name;
+                if (accName) {
+                    accSelect.value = accName;
+                    updateLiveBalance(accSelect, accSelect.dataset.field === 'fromAcc' ? 'from' : '');
+                }
+            }
+
+            const catSelect = card.querySelector('[data-field="cat"]');
+            if (catSelect) {
+                const catName = dropdownCache.categories_raw.find(c => c.code === item.cat)?.name;
+                if (catName) catSelect.value = catName;
+            }
+
+            // 4. 메모 자동 입력
+            const noteInput = card.querySelector('[data-field="note"]');
+            if (noteInput) noteInput.value = item.name;
+        }
+
+        // [추가] 금액 천 단위 콤마 포맷터
+        function formatAmountInput(input) {
+            let val = input.value.replace(/[^0-9]/g, "");
+            if (val) {
+                input.value = Number(val).toLocaleString();
+            } else {
+                input.value = "";
+            }
+        }
 
         function renderTxEditCard(i, source) {
             const fixedOptions = `<option value="">-- 고정비 연결 없음 --</option>` + 
@@ -330,6 +469,8 @@
             return `
             <div class="custom-card edit-mode" data-id="${i.id}">
                 <div class="card-grid">
+                    <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId" onchange="onFixedLinkChange(this)">${fixedOptions}</select></div>
+                    
                     <div><div class="label-mini">DATE</div><input type="date" class="form-control form-control-sm edit-input" data-field="date" value="${i.date}"></div>
                     <div class="text-end"><div class="label-mini">CATEGORY</div>
                         <select class="form-select form-select-sm edit-input" data-field="cat">
@@ -343,9 +484,8 @@
                         </select>
                         <div class="live-balance-main live-balance-box"></div>
                     </div>
-                    <div class="card-full"><div class="label-mini">AMOUNT</div><input type="number" class="form-control form-control-sm edit-input text-end" data-field="amount" value="${i.amount || 0}"></div>
-                    <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId">${fixedOptions}</select></div>
-                    <div class="card-full"><div class="label-mini">MEMO</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}"></div>
+                    <div class="card-full"><div class="label-mini">AMOUNT</div><input type="text" class="form-control form-control-sm edit-input text-end" data-field="amount" value="${i.amount ? Number(i.amount).toLocaleString() : ''}" inputmode="numeric" oninput="formatAmountInput(this)"></div>
+                    <div class="card-full"><div class="label-mini">MEMO</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}" placeholder="메모를 입력하세요"></div>
                     <div class="card-full edit-btn-group">
                         <button class="btn-edit-cancel" onclick="handleCancel('${i.id}', '${source}', this)">CANCEL</button>
                         <button class="btn-edit-save" onclick="saveEdit(this,'${source}','${i.id}')">SAVE</button>
@@ -361,6 +501,8 @@
             return `
             <div class="custom-card edit-mode" style="border-left-color:#fff" data-id="${i.id}">
                 <div class="card-grid">
+                    <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId" onchange="onFixedLinkChange(this)">${fixedOptions}</select></div>
+
                     <div><div class="label-mini">DATE</div><input type="date" class="form-control form-control-sm edit-input" data-field="date" value="${i.date}"></div>
                     <div class="text-end"><div class="label-mini">TYPE</div>
                         <select class="form-select form-select-sm edit-input" data-field="type">
@@ -375,7 +517,7 @@
                             </select>
                             <div class="live-balance-from live-balance-box"></div>
                         </div>
-                        <div class="tr-amt-col"><div class="label-mini text-center">금액</div><input type="number" class="form-control form-control-sm edit-input text-center" data-field="amount" value="${i.amount || 0}"></div>
+                        <div class="tr-amt-col"><div class="label-mini text-center">금액</div><input type="text" class="form-control form-control-sm edit-input text-center" data-field="amount" value="${i.amount ? Number(i.amount).toLocaleString() : ''}" inputmode="numeric" oninput="formatAmountInput(this)"></div>
                         <div class="tr-col text-end">
                             <div class="label-mini">TO</div>
                             <select class="form-select form-select-sm edit-input" data-field="toAcc" onchange="updateLiveBalance(this, 'to')">
@@ -384,8 +526,7 @@
                             <div class="live-balance-to live-balance-box"></div>
                         </div>
                     </div>
-                    <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId">${fixedOptions}</select></div>
-                    <div class="card-full"><div class="label-mini">MEMO</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}"></div>
+                    <div class="card-full"><div class="label-mini">MEMO</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}" placeholder="메모를 입력하세요"></div>
                     <div class="card-full edit-btn-group">
                         <button class="btn-edit-cancel" onclick="handleCancel('${i.id}', 'TR', this)">CANCEL</button>
                         <button class="btn-edit-save" onclick="saveEdit(this,'TR','${i.id}')">SAVE</button>
@@ -393,8 +534,6 @@
                 </div>
             </div>`;
         }
-
-        // --- 4. 데이터 조작 (CRUD) ---
 
         async function saveEdit(btn, source, id) {
             const card = btn.closest('.custom-card');
@@ -404,6 +543,7 @@
             btn.innerHTML = "..."; btn.disabled = true;
 
             try {
+                // [수정] 콤마 제거 후 숫자로 변환하여 저장
                 const amount = parseInt(String(formData.amount).replace(/[^0-9-]/g, "")) || 0;
                 
                 if (source === 'TR' || source === 'MOVE') {
@@ -437,10 +577,8 @@
         async function handleMainEdit(id, source, el, event) {
             const container = el.closest('.ah-row') || el.closest('.swipe-container');
             if (!container) return;
-
             window.tempOriginalRowHtml = container.outerHTML;
             container.innerHTML = `<div class="loading-inline">LOADING...</div>`;
-            
             try {
                 if (source === 'TX') {
                     const { data, error } = await _supabase.from('transactions').select('*').eq('id', id).single();
@@ -461,8 +599,6 @@
                 container.outerHTML = window.tempOriginalRowHtml; 
             }
         }
-
-        // --- 5. 상세 이력 펼치기 ---
 
         async function toggleAssetHistory(accCode, element, event) {
             if (event.target.closest('.label-mini') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.closest('.ah-row')) return;
@@ -491,7 +627,6 @@
                     let code = catName === '대출원금' ? 'TX_LOAN_REPAY' : (catName === '저축' ? 'TX_SAVINGS' : 'TX_SUBSCRIPTION');
                     query = query.eq('type_code', code).gt('change_amount', 0);
                 } else query = query.eq('category_code', catCode);
-
                 const { data } = await query.gte('date', `${targetMonth}-01`).lt('date', getNextMonthDate(targetMonth)).order('date', { ascending: false }).order('id', { ascending: false });
                 renderHistoryRows(data, historyList, 'stats');
             } catch (e) { historyList.innerHTML = `<div class="text-center text-danger py-2">에러: ${e.message}</div>`; }
@@ -516,8 +651,6 @@
             m++; if(m > 12) { m = 1; y++; }
             return `${y}-${String(m).padStart(2, '0')}-01`;
         }
-
-        // --- 6. 조회 및 리스트 로드 ---
 
         async function loadHistoryTab(type, isSearch = false) {
             const pre = type.toLowerCase();
@@ -566,14 +699,11 @@
                         </div>
                     </div>
                 </div>`;
-            
             const renderItems = (items, cls, groupType) => (items || []).map(c => `<div class="stat-item-card" onclick="toggleStatsHistory('${c.name}', '${groupType}', this)"><div class="d-flex justify-content-between mb-2"><span style="font-weight:800;">${c.name}</span><span style="color:var(--bp-pink); font-weight:900;">${c.percent}%</span></div><div class="progress mb-2"><div class="progress-bar ${cls}" style="width:${Math.min(c.percent, 100)}%"></div></div><div class="d-flex justify-content-between small opacity-75"><span>${Math.round(c.actual).toLocaleString()}원</span><span>예산 ${Math.round(c.budget).toLocaleString()}</span></div><div class="expand-container"><div class="history-list"></div></div></div>`).join('');
             document.getElementById('section-income').innerHTML = renderItems(data.topExpenses.income, "bar-income", "income");
             document.getElementById('section-asset').innerHTML = renderItems(data.topExpenses.asset, "bar-asset", "asset");
             document.getElementById('section-expense').innerHTML = renderItems(data.topExpenses.expense, "bar-expense", "expense");
         }
-
-        // --- 7. 정적 카드 렌더링 ---
 
         function renderAssetCard(acc) {
             let borderColor = "#ffffff";
@@ -604,7 +734,6 @@
             return `<div class="swipe-container"><div class="swipe-delete-bg">DEL</div><div class="custom-card swipe-target" style="border-left-color:#fff" data-id="${i.id}" data-source="MOVE" onclick="handleMainEdit('${i.id}', 'MOVE', this, event)" ontouchstart="handleSwipeStart(event)" ontouchmove="handleSwipeMove(event)" ontouchend="handleSwipeEnd(event)"><div class="card-grid"><div><div class="label-mini">DATE</div><div class="val-text">${i.date}</div></div><div class="text-end"><div class="label-mini">TYPE</div><div class="val-text">이체</div></div><div class="card-full tr-row-wrap"><div class="tr-col"><div class="label-mini">FROM</div><div class="val-text">${i.from?.name || i.from_account_code}</div></div><div class="tr-amt-col"><div class="val-amt">${Math.round(i.amount).toLocaleString()}</div></div><div class="tr-col text-end"><div class="label-mini">TO</div><div class="val-text">${i.to?.name || i.to_account_code}</div></div></div><div class="card-full card-note-area">${i.note || '-'}</div></div></div></div>`;
         }
 
-        // --- Helpers ---
         function addNewCard(type) {
             const area = document.getElementById(type.toLowerCase() + '-new-card-area');
             if(area.innerHTML !== "") return;
