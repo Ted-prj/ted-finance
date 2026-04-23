@@ -113,6 +113,7 @@
             const { data: progData } = await _db.schema('workout').from('programs').select('program_name');
             const uniqueProgs = [...new Set(progData?.map(p => p.program_name))];
             const rSelect = document.getElementById('routine-select');
+            rSelect.innerHTML = '<option value="자유운동">자유운동</option>';
             uniqueProgs.forEach(p => rSelect.innerHTML += `<option value="${p}">${p}</option>`);
             const buwis = [...new Set(EX_MASTER.map(e => e.body_part))];
             const bSel = document.getElementById('quick-buwi');
@@ -159,32 +160,25 @@
             const btn = document.getElementById('btn-quick-add');
             if(btn.disabled) return;
             btn.disabled = true;
-
             try {
                 const exId = document.getElementById('quick-ex').value;
                 const ex = EX_MASTER.find(e => e.id === exId);
                 const sets = parseInt(document.getElementById('q-sets').value) || 1;
                 const v1 = Number(document.getElementById('q-val1').value) || 0;
                 const v2 = Number(document.getElementById('q-val2').value) || 0;
-
                 const newSets = [];
                 for(let i=1; i<=sets; i++) {
-                    const row = {
+                    newSets.push({
                         exercise_id: exId, display_name: ex.name, body_part: ex.body_part, set_no: i, 
-                        status: 'TEMP', program_id: '자유운동', unit: ex.unit || 'kg'
-                    };
-                    if(ex.unit === 'min') { row.workout_time = v1; row.level = v2; row.weight = 0; row.reps = 0; }
-                    else { row.weight = v1; row.reps = v2; row.workout_time = 0; row.level = 0; }
-                    newSets.push(row);
+                        status: 'TEMP', program_id: '자유운동', unit: ex.unit || 'kg',
+                        weight: ex.unit === 'kg' ? v1 : 0, reps: ex.unit === 'kg' ? v2 : 0,
+                        workout_time: ex.unit === 'min' ? v1 : 0, level: ex.unit === 'min' ? v2 : 0
+                    });
                 }
-
                 const { error } = await _db.schema('workout').from('active_workout').insert(newSets);
                 if(error) throw error;
                 await refreshActiveList();
-            } catch(e) { 
-                console.error(e);
-                alert("추가 실패 (데이터 타입 오류): " + e.message); 
-            } finally { btn.disabled = false; }
+            } catch(e) { alert("추가 실패: " + e.message); } finally { btn.disabled = false; }
         }
 
         async function handleRoutineChange(progName) {
@@ -203,12 +197,12 @@
                 const idx = sessions.findIndex(s => s.week === lastLog[0].week && s.day === lastLog[0].day);
                 if(idx !== -1 && idx < sessions.length - 1) { nextW = sessions[idx+1].week; nextD = sessions[idx+1].day; }
             }
-
             const { data: plan } = await _db.schema('workout').from('programs').select('*, exercises(name, body_part, unit)').eq('program_name', progName).eq('week', nextW).eq('day', nextD).order('order_no');
             const newLogs = plan.flatMap(p => Array.from({length: p.planned_sets}, (_, i) => ({
                 exercise_id: p.exercise_id, display_name: p.exercises.name, body_part: p.body_part,
-                set_no: i+1, weight: p.planned_weight || 0, reps: p.planned_reps || 0,
-                workout_time: 0, level: 0, status: 'TEMP', program_id: progName, week: p.week, day: p.day, unit: p.exercises.unit || 'kg'
+                set_no: i+1, weight: (p.exercises.unit || 'kg') === 'kg' ? p.planned_weight : 0, reps: (p.exercises.unit || 'kg') === 'kg' ? p.planned_reps : 0,
+                workout_time: (p.exercises.unit || 'kg') === 'min' ? p.planned_weight : 0, level: (p.exercises.unit || 'kg') === 'min' ? p.planned_reps : 0,
+                status: 'TEMP', program_id: progName, week: p.week, day: p.day, unit: p.exercises.unit || 'kg'
             })));
             await _db.schema('workout').from('active_workout').insert(newLogs);
             await refreshActiveList();
@@ -282,38 +276,87 @@
                 const v2 = Number(document.getElementById(`v2-${id}`).value) || 0;
                 const note = document.getElementById(`note-${id}`).value || '';
                 const set = ACTIVE_SETS.find(s => s.id === id);
-                const upData = { status: 'SAVED', note: note };
-                if((set.unit || 'kg') === 'kg') { upData.weight = v1; upData.reps = v2; }
-                else { upData.workout_time = v1; upData.level = v2; }
+                
+                // [핵심수정] 컬럼명 note로 통일
+                const upData = { status: 'SAVED', note: note }; 
+                if((set.unit || 'kg') === 'kg') { upData.weight = v1; upData.reps = v2; upData.workout_time = 0; upData.level = 0; }
+                else { upData.workout_time = v1; upData.level = v2; upData.weight = 0; upData.reps = 0; }
                 const { error } = await _db.schema('workout').from('active_workout').update(upData).eq('id', id);
                 if(error) throw error;
                 await refreshActiveList();
-            } catch(e) { btn.disabled = false; }
+            } catch(e) { alert("SAVE 에러: " + e.message); btn.disabled = false; }
         }
 
         async function finishDay() {
-            if(ACTIVE_SETS.length === 0) return alert("운동을 추가하세요!");
+            if (ACTIVE_SETS.length === 0) return alert("운동을 추가하세요!");
             const unsaved = ACTIVE_SETS.filter(s => s.status === 'TEMP');
-            if(unsaved.length > 0 && !confirm("저장되지 않은 세트가 있습니다. 포함하여 완료할까요?")) return;
-            if(!confirm("오늘의 운동을 최종 완료하고 로그에 저장하시겠습니까?")) return;
+            if (unsaved.length > 0 && !confirm("저장되지 않은 세트가 있습니다. 포함하여 완료할까요?")) return;
+            if (!confirm("오늘의 운동을 최종 완료하고 로그에 저장하시겠습니까?")) return;
 
-            const finalData = ACTIVE_SETS.map(s => {
-                const v1 = Number(document.getElementById(`v1-${s.id}`).value) || 0;
-                const v2 = Number(document.getElementById(`v2-${s.id}`).value) || 0;
-                const note = document.getElementById(`note-${s.id}`).value || '';
-                const { id, created_at, status, ...rest } = s;
-                const row = { ...rest, note: note, status: 'FINAL', workout_date: new Date().toISOString() };
-                if((s.unit || 'kg') === 'kg') { row.weight = v1; row.reps = v2; }
-                else { row.workout_time = v1; row.level = v2; }
-                return row;
-            });
-            const { error } = await _db.schema('workout').from('logs').insert(finalData);
-            if(!error) { await _db.schema('workout').from('active_workout').delete().neq('id', -1); alert("오운완! 🌸"); location.reload(); }
+            try {
+                const now = new Date();
+                const timestamp = now.getTime(); // 통계용 타임스탬프
+
+                const finalData = ACTIVE_SETS.map(s => {
+                    const v1 = Number(document.getElementById(`v1-${s.id}`).value) || 0;
+                    const v2 = Number(document.getElementById(`v2-${s.id}`).value) || 0;
+                    const note = document.getElementById(`note-${s.id}`).value || '';
+                    const { id, created_at, status, ...rest } = s;
+
+                    // [핵심 수정] 새 로그 ID 생성 규칙 적용
+                    // 형식: 타임스탬프_운동ID_세트번호 (예: 1772441561103_EX_SHLD_005_1)
+                    const newLogId = `${timestamp}_${s.exercise_id}_${s.set_no}`;
+
+                    const row = { 
+                        ...rest, 
+                        id: newLogId, // 생성한 ID 주입
+                        note: note, 
+                        status: 'FINAL', 
+                        workout_date: now.toISOString() 
+                    };
+
+                    if (s.unit === 'min') {
+                        row.workout_time = v1;
+                        row.level = v2;
+                        row.weight = 0;
+                        row.reps = 0;
+                    } else {
+                        row.weight = v1;
+                        row.reps = v2;
+                        row.workout_time = 0;
+                        row.level = 0;
+                    }
+                    return row;
+                });
+
+                // logs 테이블에 삽입
+                const { error } = await _db.schema('workout').from('logs').insert(finalData);
+                if (error) throw error;
+
+                // active_workout 비우기
+                await _db.schema('workout').from('active_workout').delete().neq('id', -1);
+                
+                alert("오늘도 고생하셨습니다! 오운완! 🌸");
+                location.reload();
+            } catch (e) { 
+                console.error("최종 저장 실패 상세:", e);
+                alert("완료 실패: " + (e.message || "데이터 형식을 확인하세요.")); 
+            }
         }
 
-        async function deleteSet(id, exId) { await _db.schema('workout').from('active_workout').delete().eq('id', id); const { data } = await _db.schema('workout').from('active_workout').select('id').eq('exercise_id', exId).order('id'); for(let i=0; i<data.length; i++) await _db.schema('workout').from('active_workout').update({set_no: i+1}).eq('id', data[i].id); await refreshActiveList(); }
+        async function deleteSet(id, exId) { 
+            await _db.schema('workout').from('active_workout').delete().eq('id', id); 
+            const { data } = await _db.schema('workout').from('active_workout').select('id').eq('exercise_id', exId).order('id');
+            for(let i=0; i<data.length; i++) await _db.schema('workout').from('active_workout').update({set_no: i+1}).eq('id', data[i].id);
+            await refreshActiveList(); 
+        }
         async function deleteFullEx(exId) { await _db.schema('workout').from('active_workout').delete().eq('exercise_id', exId); await refreshActiveList(); }
-        async function getSetHistory(exId, setNo) { const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).in('status', ['최종', 'FINAL']).order('workout_date', {ascending:false}).limit(20); if(!data?.length) return "-"; const m = data.find(d => d.set_no === setNo) || data[0]; return `${m.weight || m.workout_time} x ${m.reps || m.level}`; }
+        async function getSetHistory(exId, setNo) { 
+            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).in('status', ['최종', 'FINAL']).order('workout_date', {ascending:false}).limit(20); 
+            if(!data?.length) return "-"; 
+            const m = data.find(d => d.set_no === setNo) || data[0]; 
+            return `${m.weight || m.workout_time} x ${m.reps || m.level}`; 
+        }
         function updateProgressBar() { const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length; const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0; document.getElementById('progress-fill').style.width = pct + '%'; document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} COMPLETED (${pct}%)`; }
         function getPartKey(bp) { if(bp?.includes('가슴')) return 'chest'; if(bp?.includes('등')) return 'back'; if(bp?.includes('어깨')) return 'shoulder'; if(bp?.includes('하체')) return 'leg'; return 'etc'; }
     </script>
