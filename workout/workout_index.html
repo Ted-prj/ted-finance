@@ -26,7 +26,7 @@
         .set-row.saved-row { background: #0a0a0a; opacity: 0.7; }
         .history-badge { font-size: 0.62rem; color: var(--text-dim); background: #1a1a1a; padding: 3px 7px; border-radius: 5px; display: inline-block; margin-bottom: 6px; border-left: 3px solid var(--deep-purple); }
         .quick-add-area { margin: 30px 15px 15px 15px; padding: 20px; border: 1px dashed var(--bp-pink); border-radius: 24px; background: rgba(232, 142, 163, 0.02); }
-        .form-select, .form-control { background-color: #121212 !important; border: 1.5px solid #252525 !important; color: #fff !important; border-radius: 12px; font-weight: 600; font-size: 0.85rem; }
+        .form-control, .form-select { background-color: #080808 !important; border: 1.5px solid #252525 !important; color: #fff !important; border-radius: 12px; font-weight: 600; font-size: 0.85rem; }
         .btn-pink { background: var(--bp-pink); color: #000; border: none; border-radius: 14px; font-weight: 900; padding: 10px; }
         .btn-save { background: #222; color: #fff; border: none; border-radius: 10px; font-size: 0.72rem; width: 100%; height: 38px; font-weight: 800; transition: 0.2s; }
         .btn-save.st-saved { background: #1a1a1a; color: #555; border: 1px solid #333; }
@@ -37,6 +37,7 @@
         .border-leg { border-left: 5px solid var(--deep-purple); }
         .label-small { font-size: 0.65rem; color: #666; margin-bottom: 2px; display: block; font-weight: 700; }
         .swiping-left { transform: translateX(-60px); border-right: 5px solid var(--neon-pink) !important; }
+        .best-info-box { line-height: 1.3; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -65,9 +66,13 @@
         <div id="workout-list-area"></div>
 
         <div class="quick-add-area">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <span style="font-weight:900; font-size:0.9rem; color:var(--bp-pink);">+ QUICK ADD</span>
-                <span id="quick-best" style="font-size:0.62rem; color:var(--text-dim); font-weight: 800;">BEST: -</span>
+                <div class="text-end best-info-box">
+                    <div id="quick-best" style="font-size:0.62rem; color:#fff; font-weight: 900;">BEST: -</div>
+                    <div id="quick-best-date" style="font-size:0.52rem; color:var(--text-dim); font-weight: 700;"></div>
+                    <div id="quick-best-note" style="font-size:0.55rem; color:var(--bp-pink); font-weight: 500; font-style: italic; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                </div>
             </div>
             <div class="row g-2 mb-2">
                 <div class="col-4"><select id="quick-buwi" class="form-select form-select-sm" onchange="filterExercises(this.value)"></select></div>
@@ -113,7 +118,6 @@
             const { data: progData } = await _db.schema('workout').from('programs').select('program_name');
             const uniqueProgs = [...new Set(progData?.map(p => p.program_name))];
             const rSelect = document.getElementById('routine-select');
-            rSelect.innerHTML = '<option value="자유운동">자유운동</option>';
             uniqueProgs.forEach(p => rSelect.innerHTML += `<option value="${p}">${p}</option>`);
             const buwis = [...new Set(EX_MASTER.map(e => e.body_part))];
             const bSel = document.getElementById('quick-buwi');
@@ -131,38 +135,49 @@
 
         async function loadExerciseStats(exId) {
             const ex = EX_MASTER.find(e => e.id === exId);
-            const { data: logs } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).in('status', ['최종', 'FINAL']);
+            const { data: logs } = await _db.schema('workout').from('logs')
+                .select('*')
+                .eq('exercise_id', exId)
+                .eq('status', 'FINAL')
+                .order('workout_date', { ascending: false })
+                .order('id', { ascending: false });
+            
             let best = null;
+            const bestDateEl = document.getElementById('quick-best-date');
+            const bestNoteEl = document.getElementById('quick-best-note');
+            
             if(logs?.length > 0) {
                 best = logs.reduce((p, c) => {
                     const pVal = (Number(p.weight||0) || Number(p.workout_time||0)) * (Number(p.reps||0) || Number(p.level||0));
                     const cVal = (Number(c.weight||0) || Number(c.workout_time||0)) * (Number(c.reps||0) || Number(c.level||0));
-                    return pVal >= cVal ? p : c;
+                    return cVal > pVal ? c : p;
                 });
-                document.getElementById('quick-best').innerText = `BEST: ${best.weight || best.workout_time}${ex.unit} x ${best.reps || best.level}`;
-            } else { document.getElementById('quick-best').innerText = "BEST: -"; }
+                document.getElementById('quick-best').innerHTML = `<span style="color:var(--bp-pink)">BEST:</span> ${best.weight || best.workout_time}${ex.unit} x ${best.reps || best.level}`;
+                if(best.workout_date) {
+                    const d = new Date(best.workout_date);
+                    bestDateEl.innerText = `📅 ${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+                } else { bestDateEl.innerText = ""; }
+                bestNoteEl.innerText = best.note ? `💬 ${best.note}` : "";
+            } else { 
+                document.getElementById('quick-best').innerText = "BEST: -"; 
+                bestDateEl.innerText = ""; bestNoteEl.innerText = "";
+            }
 
             const inputArea = document.getElementById('input-fields');
             if(ex.unit === 'kg') {
-                inputArea.innerHTML = `
-                    <div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="3"></div>
-                    <div class="col-4"><label class="label-small">무게(kg)</label><input type="number" id="q-val1" class="form-control" value="${best?.weight || 20}"></div>
-                    <div class="col-4"><label class="label-small">횟수(회)</label><input type="number" id="q-val2" class="form-control" value="${best?.reps || 12}"></div>`;
+                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="3"></div><div class="col-4"><label class="label-small">무게</label><input type="number" id="q-val1" class="form-control" value="${best?.weight || 20}"></div><div class="col-4"><label class="label-small">횟수</label><input type="number" id="q-val2" class="form-control" value="${best?.reps || 12}"></div>`;
             } else {
-                inputArea.innerHTML = `
-                    <div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="1"></div>
-                    <div class="col-4"><label class="label-small">시간(m)</label><input type="number" id="q-val1" class="form-control" value="${best?.workout_time || 20}"></div>
-                    <div class="col-4"><label class="label-small">Level</label><input type="number" id="q-val2" class="form-control" value="${best?.level || 5}"></div>`;
+                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="1"></div><div class="col-4"><label class="label-small">시간(m)</label><input type="number" id="q-val1" class="form-control" value="${best?.workout_time || 20}"></div><div class="col-4"><label class="label-small">Level</label><input type="number" id="q-val2" class="form-control" value="${best?.level || 5}"></div>`;
             }
         }
 
         async function addWorkoutFromQuick() {
             const btn = document.getElementById('btn-quick-add');
-            if(btn.disabled) return;
-            btn.disabled = true;
+            if(btn.disabled) return; btn.disabled = true;
             try {
                 const exId = document.getElementById('quick-ex').value;
                 const ex = EX_MASTER.find(e => e.id === exId);
+                const u = ex.unit || 'kg';
                 const sets = parseInt(document.getElementById('q-sets').value) || 1;
                 const v1 = Number(document.getElementById('q-val1').value) || 0;
                 const v2 = Number(document.getElementById('q-val2').value) || 0;
@@ -170,9 +185,9 @@
                 for(let i=1; i<=sets; i++) {
                     newSets.push({
                         exercise_id: exId, display_name: ex.name, body_part: ex.body_part, set_no: i, 
-                        status: 'TEMP', program_id: '자유운동', unit: ex.unit || 'kg',
-                        weight: ex.unit === 'kg' ? v1 : 0, reps: ex.unit === 'kg' ? v2 : 0,
-                        workout_time: ex.unit === 'min' ? v1 : 0, level: ex.unit === 'min' ? v2 : 0
+                        status: 'TEMP', program_id: '자유운동', unit: u,
+                        weight: u === 'kg' ? v1 : 0, reps: u === 'kg' ? v2 : 0,
+                        workout_time: u === 'min' ? v1 : 0, level: u === 'min' ? v2 : 0
                     });
                 }
                 const { error } = await _db.schema('workout').from('active_workout').insert(newSets);
@@ -239,6 +254,7 @@
                 const isSaved = set.status === 'SAVED';
 
                 const row = document.createElement('div');
+                row.id = `row-${set.id}`; // Row 아이디 추가
                 row.className = `set-row ${isSaved ? 'saved-row' : ''}`;
                 row.addEventListener('touchstart', (e) => touchStartX = e.touches[0].clientX);
                 row.addEventListener('touchend', (e) => handleSwipe(e, () => deleteSet(set.id, set.exercise_id), row));
@@ -267,81 +283,80 @@
             else { btn.innerText = "SAVE"; btn.className = "btn-save"; }
         }
 
+        // [개선 사항] 전체 재로딩 없이 버튼만 변경
         async function saveOneSet(id) {
             const btn = document.getElementById(`btn-${id}`);
-            if(btn.disabled) return;
-            btn.disabled = true;
+            if(btn.disabled) return; btn.disabled = true;
             try {
                 const v1 = Number(document.getElementById(`v1-${id}`).value) || 0;
                 const v2 = Number(document.getElementById(`v2-${id}`).value) || 0;
                 const note = document.getElementById(`note-${id}`).value || '';
-                const set = ACTIVE_SETS.find(s => s.id === id);
+                const setIndex = ACTIVE_SETS.findIndex(s => s.id === id);
+                const set = ACTIVE_SETS[setIndex];
                 
-                // [핵심수정] 컬럼명 note로 통일
                 const upData = { status: 'SAVED', note: note }; 
-                if((set.unit || 'kg') === 'kg') { upData.weight = v1; upData.reps = v2; upData.workout_time = 0; upData.level = 0; }
-                else { upData.workout_time = v1; upData.level = v2; upData.weight = 0; upData.reps = 0; }
+                if((set.unit || 'kg') === 'kg') { 
+                    upData.weight = v1; upData.reps = v2; upData.workout_time = 0; upData.level = 0; 
+                } else { 
+                    upData.workout_time = v1; upData.level = v2; upData.weight = 0; upData.reps = 0; 
+                }
+
                 const { error } = await _db.schema('workout').from('active_workout').update(upData).eq('id', id);
                 if(error) throw error;
-                await refreshActiveList();
+
+                // [중요] 메모리 내 데이터 동기화 (재로딩 대신)
+                ACTIVE_SETS[setIndex].status = 'SAVED';
+                ACTIVE_SETS[setIndex].note = note;
+                if((set.unit || 'kg') === 'kg') { ACTIVE_SETS[setIndex].weight = v1; ACTIVE_SETS[setIndex].reps = v2; }
+                else { ACTIVE_SETS[setIndex].workout_time = v1; ACTIVE_SETS[setIndex].level = v2; }
+
+                // [중요] UI 부분 업데이트
+                btn.innerText = "SAVED";
+                btn.className = "btn-save st-saved";
+                document.getElementById(`row-${id}`).classList.add('saved-row'); // 줄 흐리게 처리
+                
+                updateProgressBar(); // 진행바만 갱신
+                btn.disabled = false; // 버튼 다시 활성화 (나중에 UPDATE 가능하도록)
+
             } catch(e) { alert("SAVE 에러: " + e.message); btn.disabled = false; }
         }
 
         async function finishDay() {
-            if (ACTIVE_SETS.length === 0) return alert("운동을 추가하세요!");
-            const unsaved = ACTIVE_SETS.filter(s => s.status === 'TEMP');
-            if (unsaved.length > 0 && !confirm("저장되지 않은 세트가 있습니다. 포함하여 완료할까요?")) return;
-            if (!confirm("오늘의 운동을 최종 완료하고 로그에 저장하시겠습니까?")) return;
+            if(ACTIVE_SETS.length === 0) return;
+            const savedSets = ACTIVE_SETS.filter(s => s.status === 'SAVED');
+            const tempSets = ACTIVE_SETS.filter(s => s.status === 'TEMP');
+            
+            if(savedSets.length === 0) return alert("저장된 세트가 없습니다. SAVE를 먼저 눌러주세요!");
+
+            if(tempSets.length > 0) {
+                if(!confirm(`저장되지 않은 세트가 ${tempSets.length}개 있습니다. 완료된 ${savedSets.length}개 세트만 저장할까요?`)) return;
+            } else {
+                if(!confirm(`총 ${savedSets.length}개 세트를 최종 저장하고 완료하시겠습니까?`)) return;
+            }
 
             try {
                 const now = new Date();
-                const timestamp = now.getTime(); // 통계용 타임스탬프
-
-                const finalData = ACTIVE_SETS.map(s => {
+                const timestamp = now.getTime();
+                const finalData = savedSets.map(s => {
                     const v1 = Number(document.getElementById(`v1-${s.id}`).value) || 0;
                     const v2 = Number(document.getElementById(`v2-${s.id}`).value) || 0;
                     const note = document.getElementById(`note-${s.id}`).value || '';
                     const { id, created_at, status, ...rest } = s;
-
-                    // [핵심 수정] 새 로그 ID 생성 규칙 적용
-                    // 형식: 타임스탬프_운동ID_세트번호 (예: 1772441561103_EX_SHLD_005_1)
                     const newLogId = `${timestamp}_${s.exercise_id}_${s.set_no}`;
-
-                    const row = { 
-                        ...rest, 
-                        id: newLogId, // 생성한 ID 주입
-                        note: note, 
-                        status: 'FINAL', 
-                        workout_date: now.toISOString() 
-                    };
-
-                    if (s.unit === 'min') {
-                        row.workout_time = v1;
-                        row.level = v2;
-                        row.weight = 0;
-                        row.reps = 0;
-                    } else {
-                        row.weight = v1;
-                        row.reps = v2;
-                        row.workout_time = 0;
-                        row.level = 0;
-                    }
+                    const row = { ...rest, id: newLogId, note: note, status: 'FINAL', workout_date: now.toISOString() };
+                    if(s.unit === 'min') { row.workout_time = v1; row.level = v2; row.weight = 0; row.reps = 0; }
+                    else { row.weight = v1; row.reps = v2; row.workout_time = 0; row.level = 0; }
                     return row;
                 });
-
-                // logs 테이블에 삽입
                 const { error } = await _db.schema('workout').from('logs').insert(finalData);
-                if (error) throw error;
-
-                // active_workout 비우기
+                if(error) throw error;
                 await _db.schema('workout').from('active_workout').delete().neq('id', -1);
                 
+                ACTIVE_SETS = []; 
+                document.getElementById('routine-select').value = "자유운동";
+                await renderUI();
                 alert("오늘도 고생하셨습니다! 오운완! 🌸");
-                location.reload();
-            } catch (e) { 
-                console.error("최종 저장 실패 상세:", e);
-                alert("완료 실패: " + (e.message || "데이터 형식을 확인하세요.")); 
-            }
+            } catch(e) { alert("완료 실패: " + e.message); }
         }
 
         async function deleteSet(id, exId) { 
@@ -352,12 +367,17 @@
         }
         async function deleteFullEx(exId) { await _db.schema('workout').from('active_workout').delete().eq('exercise_id', exId); await refreshActiveList(); }
         async function getSetHistory(exId, setNo) { 
-            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).in('status', ['최종', 'FINAL']).order('workout_date', {ascending:false}).limit(20); 
+            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', {ascending:false}).limit(20); 
             if(!data?.length) return "-"; 
             const m = data.find(d => d.set_no === setNo) || data[0]; 
             return `${m.weight || m.workout_time} x ${m.reps || m.level}`; 
         }
-        function updateProgressBar() { const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length; const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0; document.getElementById('progress-fill').style.width = pct + '%'; document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} COMPLETED (${pct}%)`; }
+        function updateProgressBar() { 
+            const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length; 
+            const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0; 
+            document.getElementById('progress-fill').style.width = pct + '%'; 
+            document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} COMPLETED (${pct}%)`; 
+        }
         function getPartKey(bp) { if(bp?.includes('가슴')) return 'chest'; if(bp?.includes('등')) return 'back'; if(bp?.includes('어깨')) return 'shoulder'; if(bp?.includes('하체')) return 'leg'; return 'etc'; }
     </script>
 </body>
