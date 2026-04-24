@@ -25,17 +25,17 @@
             overflow-x: hidden; 
         }
         /* --- 보안 레이어 스타일 --- */
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bp-black); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px;
+        #auth-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bp-black); z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
         }
         .auth-box { width: 100%; max-width: 300px; text-align: center; }
         .auth-input {
-            letter-spacing: 10px; text-align: center; font-size: 1.5rem;
-            margin-bottom: 20px; border: 2px solid #333 !important;
-            -webkit-text-security: disc;
+            max-width: 200px; font-size: 1.5rem; letter-spacing: 10px; 
+            background: #000 !important; border: 2px solid #333 !important;
+            text-align: center; margin: 20px auto; color: var(--bp-pink) !important;
+        }
         }
         /* --- 컨테이너 및 탭 --- */
         .container { 
@@ -155,10 +155,17 @@
 <body>
     <div id="auth-overlay">
         <div class="auth-box">
-            <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px; margin-bottom: 30px;">IDENTITY REQUIRED</h4>
-            <input type="password" id="access-pw-input" class="form-control auth-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus oninput="handleAutoVerify(this)">
-            <button class="btn-pink" onclick="verifyAccess()">ACCESS</button>
-            <div id="auth-msg" style="font-size: 0.7rem; color: #844; margin-top: 10px; font-weight: 800;"></div>
+            <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px;">IDENTITY</h4>
+            <input type="password" 
+                id="access-pw-input" 
+                class="form-control auth-input" 
+                maxlength="4" 
+                inputmode="numeric" 
+                pattern="[0-9]*"
+                autocomplete="one-time-code"
+                autofocus 
+                oninput="handleAutoVerify(this)">
+            <div id="auth-msg" style="font-size: 0.7rem; color: #844; margin-top: 10px; font-weight: 800; min-height: 15px;"></div>
         </div>
     </div>
 
@@ -242,24 +249,46 @@
         let touchStartX = 0;
         window.tempOriginalRowHtml = "";
 
-        function handleAutoVerify(input) { if (input.value.length === 4) verifyAccess(); }
+        window.onload = () => {
+            const pwInput = document.getElementById('access-pw-input');
+            if(pwInput) pwInput.focus();
+        };
+
+        function handleAutoVerify(input) {
+            if (input.value.length === 4) {
+                verifyAccess();
+            }
+        }
 
         async function verifyAccess() {
-            const inputPw = document.getElementById('access-pw-input').value;
-            const btn = document.querySelector('#auth-overlay .btn-pink');
-            btn.innerHTML = "VERIFYING..."; btn.disabled = true;
+            const pwInput = document.getElementById('access-pw-input');
+            const inputPw = pwInput.value;
+            const msg = document.getElementById('auth-msg');
+            
+            msg.innerText = "VERIFYING...";
+
             try {
-                const { data } = await _supabase.from('settings').select('value').eq('code', 'ACCESS_PW').single();
+                const { data, error } = await _supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('code', 'ACCESS_PW')
+                    .single();
+
+                if (error) throw error;
+
                 if (data.value === inputPw) {
                     sessionStorage.setItem('is_auth', 'true');
                     document.getElementById('auth-overlay').style.display = 'none';
                     document.getElementById('main-app-container').style.display = 'block';
                     await initApp();
                 } else {
-                    alert("WRONG PASSWORD"); document.getElementById('access-pw-input').value = "";
-                    btn.innerHTML = "ACCESS"; btn.disabled = false;
+                    msg.innerText = "WRONG PASSWORD";
+                    pwInput.value = "";
+                    pwInput.focus();
                 }
-            } catch (e) { alert("ERROR: " + e.message); btn.innerHTML = "ACCESS"; btn.disabled = false; }
+            } catch (e) {
+                msg.innerText = "CONNECTION ERROR";
+            }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
