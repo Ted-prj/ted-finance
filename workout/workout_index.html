@@ -237,10 +237,8 @@
 
         async function processFinalSave() {
             const savedSets = ACTIVE_SETS.filter(s => s.status === 'SAVED');
-            const tempSets = ACTIVE_SETS.filter(s => s.status === 'TEMP');
-            if(tempSets.length > 0) return alert(`저장되지 않은 세트가 ${tempSets.length}개 있습니다. 모두 SAVE 해주세요.`);
             if(savedSets.length === 0) return alert("저장된 운동이 없습니다.");
-            
+
             const duration = document.getElementById('s-duration').value || "0";
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
@@ -248,14 +246,13 @@
             try {
                 const hasWeight = savedSets.some(s => s.unit === 'kg');
                 const hasCardio = savedSets.some(s => s.unit === 'min');
-                let typeCode = "M";
-                if(hasWeight && !hasCardio) typeCode = "W";
-                if(!hasWeight && hasCardio) typeCode = "C";
+                let typeCode = (hasWeight && hasCardio) ? "M" : (hasWeight ? "W" : "C");
 
                 const { data: existingSessions } = await _db.schema('workout').from('session_logs').select('id').like('id', `${dateStr}_%`);
                 const sessionCount = (existingSessions?.length || 0) + 1;
                 const customSessionId = `${dateStr}_${typeCode}_S${sessionCount}`;
 
+                // 1. session_logs 저장
                 const { error: sErr } = await _db.schema('workout').from('session_logs').insert([{
                     id: customSessionId,
                     duration_min: parseInt(duration),
@@ -268,7 +265,7 @@
                 }]);
                 if(sErr) throw sErr;
 
-                // ✅ [중요] 데이터 매핑 시 id를 명시적으로 제외하여 DB SERIAL 작동 보장
+                // 2. logs 저장 (id를 절대 포함하지 않도록 명시적으로 매핑)
                 const logs = savedSets.map(s => ({
                     exercise_id: s.exercise_id,
                     display_name: s.display_name,
@@ -286,15 +283,22 @@
                     status: 'FINAL',
                     session_id: customSessionId,
                     workout_date: now.toISOString()
+                    // id: s.id 를 절대 넣지 않음! (DB가 알아서 매김)
                 }));
 
                 const { error: lErr } = await _db.schema('workout').from('logs').insert(logs);
                 if(lErr) throw lErr;
 
+                // 3. active_workout 비우기
                 await _db.schema('workout').from('active_workout').delete().neq('id', -1);
+                
                 alert(`세션 [${customSessionId}] 저장 완료! 🔥`);
                 location.reload();
-            } catch(e) { alert("완료 실패: " + e.message); }
+
+            } catch(e) { 
+                alert("저장 실패: " + e.message); 
+                console.error(e);
+            }
         }
 
         function getPartKey(bp) { if(bp?.includes('가슴')) return 'chest'; if(bp?.includes('등')) return 'back'; if(bp?.includes('어깨')) return 'shoulder'; if(bp?.includes('하체')) return 'leg'; return 'etc'; }
