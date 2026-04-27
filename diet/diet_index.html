@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>TED DIET ADMIN v3.3</title>
+    <title>TED DIET ADMIN v3.5</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -73,7 +73,7 @@
             <div class="tab-pane fade show active" id="v-extract">
                 <div class="hub-card">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="small fw-bold">TABLE LIST</span>
+                        <span class="small fw-bold">TABLE LIST (DIET & WORKOUT)</span>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="all-check" onchange="toggleAllCheck(this)">
                             <label class="form-check-label small" for="all-check">전체 선택</label>
@@ -81,11 +81,11 @@
                     </div>
                     <div id="table-select-list" class="row g-2 mb-3"></div>
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button class="btn-outline" onclick="processExport('col')">컬럼명 복사</button>
-                        <button class="btn-outline" onclick="processExport('data')">데이터 복사</button>
-                        <button class="btn-outline" onclick="processExport('both')">컬럼&데이터 복사</button>
+                        <button class="btn-outline" onclick="processExport('col')">컬럼명 추출</button>
+                        <button class="btn-outline" onclick="processExport('data')">데이터 추출</button>
+                        <button class="btn-outline" onclick="processExport('both')">컬럼&데이터 추출</button>
                     </div>
-                    <textarea id="export-csv-output" class="form-control csv-box mb-2" rows="10" readonly></textarea>
+                    <textarea id="export-csv-output" class="form-control csv-box mb-2" rows="12" readonly placeholder="추출 결과가 여기에 표시됩니다."></textarea>
                     <button class="btn-action w-100" onclick="copyResult()">CSV 클립보드 복사</button>
                 </div>
             </div>
@@ -137,15 +137,17 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
         const _db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // 스키마 정보를 포함한 통합 테이블 리스트
         const DIET_TABLES = [
-            { id: 'ai_rulebook', name: '1. AI 룰셋', dateCol: false },
-            { id: 'user_goals', name: '2. 사용자 정보', dateCol: false },
-            { id: 'project_goals', name: '3. 프로젝트 목표', dateCol: false }, // 추가
-            { id: 'inbody_logs', name: '4. 인바디 기록', dateCol: 'test_date' },
-            { id: 'meal_logs', name: '5. 식단 로그', dateCol: 'log_date' },
-            { id: 'exercise_logs', name: '6. 운동 로그', dateCol: 'log_date' },
-            { id: 'condition_logs', name: '7. 생활/컨디션', dateCol: 'log_date' },
-            { id: 'strategies', name: '8. 다이어트 전략', dateCol: false }
+            { schema: 'diet', id: 'ai_rulebook', name: '1. AI 룰셋', dateCol: false },
+            { schema: 'diet', id: 'user_goals', name: '2. 사용자 정보', dateCol: false },
+            { schema: 'diet', id: 'project_goals', name: '3. 프로젝트 목표', dateCol: false },
+            { schema: 'diet', id: 'inbody_logs', name: '4. 인바디 기록', dateCol: 'test_date' },
+            { schema: 'diet', id: 'meal_logs', name: '5. 식단 로그', dateCol: 'log_date' },
+            { schema: 'diet', id: 'condition_logs', name: '6. 생활/컨디션', dateCol: 'log_date' },
+            { schema: 'diet', id: 'strategies', name: '7. 다이어트 전략', dateCol: false },
+            { schema: 'workout', id: 'session_logs', name: 'W1. 운동 세션 로그', dateCol: 'workout_date' },
+            { schema: 'workout', id: 'logs', name: 'W2. 운동 상세 로그', dateCol: 'workout_date' }
         ];
 
         let PENDING_UPDATES = {}; 
@@ -172,45 +174,57 @@
             area.innerHTML = DIET_TABLES.map(t => `
                 <div class="col-6">
                     <div class="form-check">
-                        <input class="form-check-input chk-item" type="checkbox" value="${t.id}" id="e-${t.id}">
+                        <input class="form-check-input chk-item" type="checkbox" value="${t.id}" id="e-${t.id}" data-schema="${t.schema}">
                         <label class="form-check-label small text-truncate" for="e-${t.id}">${t.name}</label>
                     </div>
                 </div>`).join('');
         }
         function toggleAllCheck(el) { document.querySelectorAll('.chk-item').forEach(c => c.checked = el.checked); }
+        
         async function processExport(mode) {
-            const checked = Array.from(document.querySelectorAll('.chk-item:checked')).map(c => c.value);
-            if(!checked.length) return alert("테이블을 선택하세요.");
-            let res = "";
-            for(const tid of checked) {
-                const { data } = await _db.schema('diet').from(tid).select('*').order('id', { ascending: true });
-                res += `[${DIET_TABLES.find(x=>x.id===tid).name}]\n`;
+            const checkedItems = Array.from(document.querySelectorAll('.chk-item:checked'));
+            if(!checkedItems.length) return alert("추출할 테이블을 선택하세요.");
+            
+            let finalCsv = "";
+            for(const item of checkedItems) {
+                const tableId = item.value;
+                const schemaName = item.getAttribute('data-schema');
+                const tableInfo = DIET_TABLES.find(t => t.id === tableId && t.schema === schemaName);
+                
+                const { data } = await _db.schema(schemaName).from(tableId).select('*').order('id', { ascending: true });
+                
+                finalCsv += `[${tableInfo.name}]\n`;
                 if(data?.length) {
                     const cols = Object.keys(data[0]);
-                    if(mode !== 'data') res += cols.join(',') + '\n';
+                    if(mode !== 'data') finalCsv += cols.join(',') + '\n';
                     if(mode !== 'col') {
                         data.forEach(row => {
-                            res += cols.map(c => {
+                            finalCsv += cols.map(c => {
                                 let v = row[c] === null ? "" : row[c];
-                                return String(v).includes(',') ? `"${v}"` : v;
+                                let strV = String(v);
+                                return (strV.includes(',') || strV.includes('\n')) ? `"${strV.replace(/"/g, '""')}"` : strV;
                             }).join(',') + '\n';
                         });
                     }
+                } else {
+                    finalCsv += "(데이터 없음)\n";
                 }
-                res += '\n';
+                finalCsv += '\n';
             }
-            document.getElementById('export-csv-output').value = res.trim();
+            document.getElementById('export-csv-output').value = finalCsv.trim();
         }
+        
         function copyResult() { 
             const box = document.getElementById('export-csv-output');
+            if(!box.value) return alert("추출된 데이터가 없습니다.");
             box.select(); document.execCommand('copy');
-            alert("복사 완료! 🖤💖");
+            alert("복사 완료! 루카에게 공유하세요. 🖤💖");
         }
 
         // --- 탭 2 (VIEW & EDIT) ---
         function initViewUI() {
             const sel = document.getElementById('view-table-select');
-            sel.innerHTML = DIET_TABLES.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            sel.innerHTML = DIET_TABLES.map(t => `<option value="${t.id}" data-schema="${t.schema}">${t.name}</option>`).join('');
         }
 
         function resetDateFilter() {
@@ -221,23 +235,24 @@
         function onTableSelectChange() {
             const tid = document.getElementById('view-table-select').value;
             const t = DIET_TABLES.find(x => x.id === tid);
-            const dateTables = ['condition_logs', 'exercise_logs', 'inbody_logs', 'meal_logs'];
-            document.getElementById('date-filter-area').style.display = dateTables.includes(tid) ? 'block' : 'none';
-            document.getElementById('view-date').value = ""; // 기본 전체표시
+            document.getElementById('date-filter-area').style.display = t.dateCol ? 'block' : 'none';
+            document.getElementById('view-date').value = ""; 
             loadTableData();
         }
 
         async function loadTableData() {
-            const tid = document.getElementById('view-table-select').value;
-            const tInfo = DIET_TABLES.find(x => x.id === tid);
+            const sel = document.getElementById('view-table-select');
+            const tid = sel.value;
+            const schemaName = sel.options[sel.selectedIndex].getAttribute('data-schema');
+            const tInfo = DIET_TABLES.find(x => x.id === tid && x.schema === schemaName);
             const dateVal = document.getElementById('view-date').value;
+            
             PENDING_UPDATES = {};
             document.getElementById('update-btn-bar').style.display = 'none';
 
-            let query = _db.schema('diet').from(tid).select('*');
+            let query = _db.schema(schemaName).from(tid).select('*');
             if(tInfo.dateCol && dateVal) query = query.eq(tInfo.dateCol, dateVal);
             
-            // 정렬 기준: ID 오름차순 (id 기준 오름차순 요청사항 반영)
             const { data } = await query.order('id', { ascending: true });
             const area = document.getElementById('table-data-area');
             
@@ -253,7 +268,7 @@
                     const val = row[k] === null ? '' : row[k];
                     const isEditable = (k !== 'id' && k !== 'created_at');
                     return `<td class="${k==='id'?'sticky-col':''}" 
-                                onclick="${isEditable ? `makeEditable(this, '${tid}', ${row.id}, '${k}')` : ''}">
+                                onclick="${isEditable ? `makeEditable(this, '${schemaName}', '${tid}', '${row.id}', '${k}')` : ''}">
                                 ${val}
                             </td>`;
                 }).join('')}</tr>`;
@@ -261,28 +276,28 @@
             area.innerHTML = html + "</tbody></table>";
         }
 
-        function makeEditable(cell, table, id, col) {
+        function makeEditable(cell, schema, table, id, col) {
             if(cell.classList.contains('editing-cell')) return;
             const oldVal = cell.innerText.trim();
             cell.classList.add('editing-cell');
 
             let inputType = "text";
             if(col.includes('date') || col.includes('_at')) inputType = "date";
-            if(col.includes('weight') || col.includes('score') || col.includes('mass') || col.includes('percentage')) inputType = "number";
+            if(col.includes('weight') || col.includes('score') || col.includes('mass') || col.includes('calories') || col.includes('heart_rate')) inputType = "number";
 
             cell.innerHTML = `<input type="${inputType}" value="${oldVal}" class="edit-input" 
-                               onblur="finishEdit(this, '${table}', ${id}, '${col}', '${oldVal}')" 
+                               onblur="finishEdit(this, '${schema}', '${table}', '${id}', '${col}', '${oldVal}')" 
                                onkeydown="if(event.key==='Enter') this.blur()">`;
             cell.querySelector('input').focus();
         }
 
-        function finishEdit(input, table, id, col, oldVal) {
+        function finishEdit(input, schema, table, id, col, oldVal) {
             const newVal = input.value;
             const cell = input.parentElement;
             cell.classList.remove('editing-cell');
             cell.innerText = newVal;
             if(newVal != oldVal) {
-                if(!PENDING_UPDATES[id]) PENDING_UPDATES[id] = {};
+                if(!PENDING_UPDATES[id]) PENDING_UPDATES[id] = { _schema: schema, _table: table };
                 PENDING_UPDATES[id][col] = newVal;
                 document.getElementById('update-btn-bar').style.display = 'flex';
                 cell.style.color = 'var(--neon-pink)';
@@ -291,10 +306,10 @@
         }
 
         async function commitUpdate() {
-            const tid = document.getElementById('view-table-select').value;
             try {
                 for(const id in PENDING_UPDATES) {
-                    const { error } = await _db.schema('diet').from(tid).update(PENDING_UPDATES[id]).eq('id', id);
+                    const { _schema, _table, ...updateData } = PENDING_UPDATES[id];
+                    const { error } = await _db.schema(_schema).from(_table).update(updateData).eq('id', id);
                     if(error) throw error;
                 }
                 alert("성공적으로 업데이트되었습니다! 🥗"); loadTableData();
@@ -315,21 +330,27 @@
             const val = document.getElementById('import-input').value.trim();
             if(!val) return;
             try {
-                const sections = val.split(/\[\d+\.\s[^\]]+\]/);
-                const headers = val.match(/\[\d+\.\s[^\]]+\]/g);
+                const sections = val.split(/\[(?:\d+|W\d+)\.\s[^\]]+\]/);
+                const headers = val.match(/\[(?:\d+|W\d+)\.\s[^\]]+\]/g);
                 if(!headers) return alert("데이터 형식이 올바르지 않습니다.");
                 for(let i=0; i<headers.length; i++) {
-                    const tableId = DIET_TABLES.find(t => headers[i].includes(t.name.split('.')[1].trim()))?.id;
-                    if(!tableId) continue;
+                    const tInfo = DIET_TABLES.find(t => headers[i].includes(t.name.split('.')[1]?.trim() || t.name.split(' ')[1]?.trim()));
+                    if(!tInfo) continue;
                     const lines = sections[i+1].trim().split('\n');
                     const cols = lines[0].split(',').map(c => c.trim());
                     const data = lines.slice(1).map(l => {
-                        const cells = l.split(',');
+                        const cells = l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // CSV 쉼표 분리 (따옴표 내부 무시)
                         let obj = {};
-                        cols.forEach((c, idx) => { if(c !== 'id' && c !== 'created_at') obj[c] = cells[idx]?.trim() || null; });
+                        cols.forEach((c, idx) => { 
+                            if(c !== 'id' && c !== 'created_at') {
+                                let v = cells[idx]?.trim() || null;
+                                if(v && v.startsWith('"') && v.endsWith('"')) v = v.substring(1, v.length-1).replace(/""/g, '"');
+                                obj[c] = v;
+                            }
+                        });
                         return obj;
                     });
-                    const { error } = await _db.schema('diet').from(tableId).insert(data);
+                    const { error } = await _db.schema(tInfo.schema).from(tInfo.id).insert(data);
                     if(error) throw error;
                 }
                 alert("데이터 삽입 성공!");
