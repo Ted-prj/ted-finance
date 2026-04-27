@@ -3,40 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>TED DIET - Data Hub</title>
+    <title>TED DIET ADMIN v3.2</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --bp-pink: rgb(232, 142, 163);
-            --bp-black: #000;
-            --bp-dark-gray: #121212;
-            --neon-pink: #FF3F7E;
-            --text-dim: #888;
-        }
+        :root { --bp-pink: rgb(232, 142, 163); --bp-black: #000; --bp-dark-gray: #121212; --neon-pink: #FF3F7E; --text-dim: #888; }
         body { background-color: var(--bp-black); color: #fff; font-family: 'Pretendard', sans-serif; padding-bottom: 50px; }
         
         /* 로그인 오버레이 */
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
         .auth-input { max-width: 200px; font-size: 1.5rem; letter-spacing: 10px; background: #000 !important; border: 2px solid #333 !important; text-align: center; color: var(--bp-pink) !important; }
-
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; display: none; }
         
-        /* 탭 스타일 */
-        .nav-pills .nav-link { color: var(--bp-pink); font-weight: 800; border-radius: 12px; margin: 5px; border: 1px solid transparent; }
+        .container { max-width: 800px; margin: 0 auto; padding: 15px; display: none; position: relative; z-index: 1; }
+        
+        /* 탭 버튼 스타일 */
+        .nav-pills { background: #000; border-radius: 16px; padding: 5px; }
+        .nav-pills .nav-link { color: var(--bp-pink); font-weight: 800; border-radius: 12px; margin: 2px; font-size: 0.75rem; border: none; background: transparent; }
         .nav-pills .nav-link.active { background-color: var(--bp-pink) !important; color: #000 !important; }
         
-        /* 카드 및 텍스트박스 */
-        .hub-card { background: var(--bp-dark-gray); border-radius: 24px; padding: 20px; border: 1px solid #252525; margin-bottom: 20px; }
-        .form-check-input:checked { background-color: var(--bp-pink); border-color: var(--bp-pink); }
-        .csv-box { background: #080808 !important; color: #00ff41 !important; font-family: 'Courier New', monospace; font-size: 0.75rem; border-radius: 15px; border: 1px solid #333 !important; white-space: pre; overflow-x: auto; }
+        .hub-card { background: var(--bp-dark-gray); border-radius: 20px; padding: 15px; border: 1px solid #252525; margin-bottom: 15px; }
+        .csv-box { background: #080808 !important; color: #00ff41 !important; font-family: 'Courier New', monospace; font-size: 0.7rem; border-radius: 12px; border: 1px solid #333 !important; width: 100%; }
         
-        .btn-action { background: var(--bp-pink); color: #000; border: none; border-radius: 12px; font-weight: 900; padding: 10px 15px; font-size: 0.8rem; transition: 0.2s; }
+        .btn-action { background: var(--bp-pink); color: #000; border: none; border-radius: 10px; font-weight: 900; padding: 10px 15px; font-size: 0.8rem; transition: 0.2s; }
         .btn-action:active { transform: scale(0.95); }
-        .btn-outline { background: transparent; color: var(--bp-pink); border: 1px solid var(--bp-pink); border-radius: 12px; font-weight: 800; padding: 8px 12px; font-size: 0.75rem; }
+        .btn-outline { background: transparent; color: var(--bp-pink); border: 1px solid var(--bp-pink); border-radius: 10px; font-weight: 800; padding: 6px 10px; font-size: 0.7rem; }
         
-        .table-badge { background: #1a1a1a; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; color: var(--text-dim); border: 1px solid #333; margin-right: 5px; margin-bottom: 5px; display: inline-block; }
-        .table-badge.active { border-color: var(--bp-pink); color: var(--bp-pink); }
+        /* 테이블 스타일 및 가로 스크롤 */
+        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid #333; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; color: #ccc; font-size: 0.7rem; }
+        th { background: #1a1a1a; color: var(--bp-pink); padding: 12px 10px; border-bottom: 1px solid #333; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+        td { padding: 12px 10px; border-bottom: 1px solid #222; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+        td:hover { background: #1a1a1a; }
+        
+        /* Sticky 컬럼 (ID 고정) */
+        .sticky-col { position: sticky; left: 0; background: #121212; z-index: 5; border-right: 1px solid #333; }
+        
+        /* 수정 모드 */
+        .editing-cell { padding: 0 !important; background: var(--neon-pink) !important; }
+        .edit-input { width: 100%; border: none; background: transparent; color: #fff; padding: 12px 8px; font-weight: 800; outline: none; text-align: center; }
+        
+        .table-badge { background: #1a1a1a; padding: 4px 10px; border-radius: 15px; font-size: 0.65rem; color: var(--bp-pink); border: 1px solid #333; margin: 2px; display: inline-block; }
+        
+        /* 업데이트 바 */
+        .update-bar { display: none; gap: 10px; margin-bottom: 15px; padding: 10px; background: rgba(255, 63, 126, 0.1); border: 1px solid var(--neon-pink); border-radius: 12px; }
     </style>
 </head>
 <body>
@@ -44,51 +53,89 @@
         <div class="text-center w-75">
             <h4 style="color:var(--bp-pink); font-weight:900; letter-spacing:3px; margin-bottom: 20px;">DIET IDENTITY</h4>
             <input type="password" id="pw-input" class="form-control auth-input mx-auto" maxlength="4" inputmode="numeric" autofocus oninput="if(this.value.length===4) verify()">
-            <div id="auth-msg" class="text-danger mt-3 small" style="font-weight: 800;"></div>
+            <div id="auth-msg" class="text-danger mt-3 small"></div>
         </div>
     </div>
 
     <div class="container" id="main-app">
-        <div class="text-center mb-4">
-            <h3 style="color:var(--bp-pink); font-weight:900; cursor:pointer;" onclick="location.href='workout_index.html'">TED'S DIET HUB</h3>
-            <p style="font-size:0.7rem; color:var(--text-dim);">LUKA COACHING BRIDGE SYSTEM</p>
+        <div class="text-center mb-3">
+            <h4 style="color:var(--bp-pink); font-weight:900;" onclick="location.reload()">TED DIET HUB</h4>
         </div>
 
-        <ul class="nav nav-pills nav-fill mb-4" id="dietTab" role="tablist">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-extract">EXPORT</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-insert">IMPORT</button></li>
+        <ul class="nav nav-pills nav-fill mb-3" id="dietTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="t-extract-btn" data-bs-toggle="pill" data-bs-target="#v-extract" type="button">EXPORT</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="t-view-btn" data-bs-toggle="pill" data-bs-target="#v-view" type="button" onclick="setTimeout(onTableSelectChange, 50)">VIEW & EDIT</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="t-import-btn" data-bs-toggle="pill" data-bs-target="#v-import" type="button">IMPORT</button>
+            </li>
         </ul>
 
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="tab-extract">
+        <div class="tab-content" id="dietTabContent">
+            <div class="tab-pane fade show active" id="v-extract" role="tabpanel">
                 <div class="hub-card">
-                    <h6 style="font-weight:900; color:var(--bp-pink); margin-bottom:15px;">SELECT TABLES</h6>
-                    <div id="table-select-list" class="row g-2 mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small fw-bold">TABLE LIST</span>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-check" onchange="toggleAllCheck(this)">
+                            <label class="form-check-label small" for="all-check">전체 선택</label>
                         </div>
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button class="btn-outline" onclick="processExport('col')">칼럼명만</button>
-                        <button class="btn-outline" onclick="processExport('data')">데이터만</button>
-                        <button class="btn-outline" onclick="processExport('both')">전체 CSV</button>
                     </div>
-                    <textarea id="export-csv-output" class="form-control csv-box mb-3" rows="10" placeholder="추출된 데이터가 여기에 표시됩니다."></textarea>
-                    <button class="btn-action w-100" onclick="copyToClipboard()">CSV 복사하기 (루카에게 전달)</button>
+                    <div id="table-select-list" class="row g-2 mb-3"></div>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn-outline" onclick="processExport('col')">컬럼명 복사</button>
+                        <button class="btn-outline" onclick="processExport('data')">데이터 복사</button>
+                        <button class="btn-outline" onclick="processExport('both')">컬럼&데이터 복사</button>
+                    </div>
+                    <textarea id="export-csv-output" class="form-control csv-box mb-2" rows="10" readonly></textarea>
+                    <button class="btn-action w-100" onclick="copyResult()">CSV 클립보드 복사</button>
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="tab-insert">
+            <div class="tab-pane fade" id="v-view" role="tabpanel">
                 <div class="hub-card">
-                    <h6 style="font-weight:900; color:var(--bp-pink); margin-bottom:15px;">PASTE LUKA'S CSV</h6>
-                    <textarea id="import-csv-input" class="form-control csv-box mb-3" rows="10" placeholder="루카가 준 CSV 데이터를 입력하세요." oninput="analyzeCSV()"></textarea>
-                    
-                    <div id="detected-tables-area" style="display:none;">
-                        <p style="font-size:0.7rem; color:var(--text-dim); margin-bottom:5px;">입력 감지된 테이블:</p>
-                        <div id="detected-badges" class="mb-3"></div>
-                        <button id="btn-final-insert" class="btn-action w-100" onclick="finalInsert()">데이터 최종 INSERT</button>
+                    <div class="row g-2 mb-3 align-items-end">
+                        <div class="col-6">
+                            <label class="small text-dim mb-1">TABLE</label>
+                            <select id="view-table-select" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="onTableSelectChange()"></select>
+                        </div>
+                        <div class="col-6" id="date-filter-area" style="display:none;">
+                            <div class="d-flex justify-content-between">
+                                <label class="small text-dim mb-1">DATE FILTER</label>
+                                <span class="small text-info" style="cursor:pointer; font-size:10px;" onclick="resetDateFilter()">전체보기</span>
+                            </div>
+                            <input type="date" id="view-date" class="form-control form-control-sm bg-dark text-white border-secondary" onchange="loadTableData()">
+                        </div>
                     </div>
+                    
+                    <div id="update-btn-bar" class="update-bar">
+                        <button class="btn-action flex-fill" style="background:var(--neon-pink); color:#fff;" onclick="commitUpdate()">UPDATE (DB 저장)</button>
+                        <button class="btn-outline flex-fill" onclick="loadTableData()">되돌리기</button>
+                    </div>
+
+                    <div class="table-wrap">
+                        <div id="table-data-area">
+                            <p class="text-center opacity-50 my-5">데이터를 불러오는 중...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="v-import" role="tabpanel">
+                <div class="hub-card">
+                    <h6 class="small fw-bold mb-2">CSV IMPORT (루카 데이터 입력)</h6>
+                    <textarea id="import-input" class="form-control csv-box mb-3" rows="12" placeholder="[4. 식단 로그] 형식을 포함한 CSV를 붙여넣으세요." oninput="detectImportInfo()"></textarea>
+                    <div id="import-tables-area" class="mb-3"></div>
+                    <button class="btn-action w-100" onclick="processInsert()">데이터 최종 INSERT</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const SUPABASE_URL = 'https://vaamifqzjsrflmprihgv.supabase.co';
@@ -96,14 +143,16 @@
         const _db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const DIET_TABLES = [
-            { id: 'ai_rulebook', name: '1. AI 룰셋' },
-            { id: 'user_goals', name: '2. 사용자 정보' },
-            { id: 'inbody_logs', name: '3. 인바디 기록' },
-            { id: 'meal_logs', name: '4. 식단 로그' },
-            { id: 'exercise_logs', name: '5. 운동 로그' },
-            { id: 'condition_logs', name: '6. 생활/컨디션' },
-            { id: 'strategies', name: '7. 다이어트 전략' }
+            { id: 'ai_rulebook', name: '1. AI 룰셋', dateCol: false },
+            { id: 'user_goals', name: '2. 사용자 정보', dateCol: false },
+            { id: 'inbody_logs', name: '3. 인바디 기록', dateCol: 'test_date' },
+            { id: 'meal_logs', name: '4. 식단 로그', dateCol: 'log_date' },
+            { id: 'exercise_logs', name: '5. 운동 로그', dateCol: 'log_date' },
+            { id: 'condition_logs', name: '6. 생활/컨디션', dateCol: 'log_date' },
+            { id: 'strategies', name: '7. 다이어트 전략', dateCol: false }
         ];
+
+        let PENDING_UPDATES = {}; 
 
         window.onload = () => { document.getElementById('pw-input').focus(); };
 
@@ -113,131 +162,185 @@
             if(data?.value === pw) {
                 document.getElementById('auth-overlay').style.display='none';
                 document.getElementById('main-app').style.display='block';
-                initUI();
-            } else {
-                document.getElementById('auth-msg').innerText = "WRONG PASSWORD";
-                document.getElementById('pw-input').value = "";
+                initExtractUI();
+                initViewUI();
+            } else { 
+                document.getElementById('auth-msg').innerText = "WRONG PASSWORD"; 
+                document.getElementById('pw-input').value = ""; 
             }
         }
 
-        function initUI() {
-            const list = document.getElementById('table-select-list');
-            list.innerHTML = DIET_TABLES.map(t => `
+        // --- 탭 1 (EXPORT) ---
+        function initExtractUI() {
+            const area = document.getElementById('table-select-list');
+            area.innerHTML = DIET_TABLES.map(t => `
                 <div class="col-6">
                     <div class="form-check">
-                        <input class="form-check-input table-check" type="checkbox" value="${t.id}" id="chk-${t.id}">
-                        <label class="form-check-label small" for="chk-${t.id}">${t.name}</label>
+                        <input class="form-check-input chk-item" type="checkbox" value="${t.id}" id="e-${t.id}">
+                        <label class="form-check-label small text-truncate" for="e-${t.id}">${t.name}</label>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
-
-        // --- 탭 1: CSV 추출 로직 ---
+        function toggleAllCheck(el) { document.querySelectorAll('.chk-item').forEach(c => c.checked = el.checked); }
+        
         async function processExport(mode) {
-            const selectedTables = Array.from(document.querySelectorAll('.table-check:checked')).map(el => el.value);
-            if(selectedTables.length === 0) return alert("테이블을 선택하세요.");
-            
-            let finalCsv = "";
-            for(const tableId of selectedTables) {
-                const tableInfo = DIET_TABLES.find(t => t.id === tableId);
-                finalCsv += `[${tableInfo.name}]\n`;
-                
-                const { data, error } = await _db.schema('diet').from(tableId).select('*').order('id');
-                if (data && data.length > 0) {
-                    const columns = Object.keys(data[0]);
-                    if(mode === 'col' || mode === 'both') {
-                        finalCsv += columns.join(',') + '\n';
-                    }
-                    if(mode === 'data' || mode === 'both') {
+            const checked = Array.from(document.querySelectorAll('.chk-item:checked')).map(c => c.value);
+            if(!checked.length) return alert("테이블을 선택하세요.");
+            let res = "";
+            for(const tid of checked) {
+                const { data } = await _db.schema('diet').from(tid).select('*').order('id');
+                res += `[${DIET_TABLES.find(x=>x.id===tid).name}]\n`;
+                if(data?.length) {
+                    const cols = Object.keys(data[0]);
+                    if(mode !== 'data') res += cols.join(',') + '\n';
+                    if(mode !== 'col') {
                         data.forEach(row => {
-                            finalCsv += columns.map(col => {
-                                let val = row[col] === null ? "" : row[col];
-                                if (typeof val === 'string' && val.includes(',')) val = `"${val}"`;
-                                return val;
+                            res += cols.map(c => {
+                                let v = row[c] === null ? "" : row[c];
+                                return String(v).includes(',') ? `"${v}"` : v;
                             }).join(',') + '\n';
                         });
                     }
                 }
-                finalCsv += '\n';
+                res += '\n';
             }
-            document.getElementById('export-csv-output').value = finalCsv.trim();
+            document.getElementById('export-csv-output').value = res.trim();
         }
-
-        function copyToClipboard() {
+        function copyResult() { 
             const box = document.getElementById('export-csv-output');
-            box.select();
-            document.execCommand('copy');
-            alert("CSV가 클립보드에 복사되었습니다! 루카에게 전달하세요. 🖤💖");
+            box.select(); document.execCommand('copy');
+            alert("복사 완료! 루카에게 공유하세요. 🖤💖");
         }
 
-        // --- 탭 2: 데이터 입력 분석 로직 ---
-        let DETECTED_DATA = {};
+        // --- 탭 2 (VIEW & EDIT) ---
+        function initViewUI() {
+            const sel = document.getElementById('view-table-select');
+            sel.innerHTML = DIET_TABLES.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        }
 
-        function analyzeCSV() {
-            const input = document.getElementById('import-csv-input').value;
-            const area = document.getElementById('detected-tables-area');
-            const badgeContainer = document.getElementById('detected-badges');
+        function resetDateFilter() {
+            document.getElementById('view-date').value = "";
+            loadTableData();
+        }
+
+        function onTableSelectChange() {
+            const tid = document.getElementById('view-table-select').value;
+            const t = DIET_TABLES.find(x => x.id === tid);
+            document.getElementById('date-filter-area').style.display = t.dateCol ? 'block' : 'none';
+            // 테이블 변경 시 날짜 필터는 초기화(전체보기)
+            document.getElementById('view-date').value = "";
+            loadTableData();
+        }
+
+        async function loadTableData() {
+            const tid = document.getElementById('view-table-select').value;
+            const tInfo = DIET_TABLES.find(x => x.id === tid);
+            const dateVal = document.getElementById('view-date').value;
+            PENDING_UPDATES = {};
+            document.getElementById('update-btn-bar').style.display = 'none';
+
+            let query = _db.schema('diet').from(tid).select('*');
+            if(tInfo.dateCol && dateVal) query = query.eq(tInfo.dateCol, dateVal);
             
-            if(!input.trim()) { area.style.display = 'none'; return; }
+            const { data } = await query.order('id', { ascending: false });
+            const area = document.getElementById('table-data-area');
             
-            DETECTED_DATA = {};
-            badgeContainer.innerHTML = "";
+            if(!data || data.length === 0) { 
+                area.innerHTML = `<p class='text-center mt-5 opacity-50'>데이터가 없습니다.</p>`; 
+                return; 
+            }
             
-            // 단순 분석 로직: [테이블명] 패턴 탐색
-            DIET_TABLES.forEach(t => {
-                if(input.includes(`[${t.name}]`)) {
-                    DETECTED_DATA[t.id] = true;
-                    badgeContainer.innerHTML += `<span class="table-badge active">${t.name}</span>`;
-                }
+            const cols = Object.keys(data[0]);
+            let html = `<table><thead><tr>${cols.map(k => `<th class="${k==='id'?'sticky-col':''}">${k}</th>`).join('')}</tr></thead><tbody>`;
+            data.forEach(row => {
+                html += `<tr>${cols.map(k => {
+                    const val = row[k] === null ? '' : row[k];
+                    const isEditable = (k !== 'id' && k !== 'created_at');
+                    return `<td class="${k==='id'?'sticky-col':''}" 
+                                onclick="${isEditable ? `makeEditable(this, '${tid}', ${row.id}, '${k}')` : ''}">
+                                ${val}
+                            </td>`;
+                }).join('')}</tr>`;
             });
+            area.innerHTML = html + "</tbody></table>";
+        }
 
-            if(Object.keys(DETECTED_DATA).length > 0) {
-                area.style.display = 'block';
-            } else {
-                area.style.display = 'none';
+        function makeEditable(cell, table, id, col) {
+            if(cell.classList.contains('editing-cell')) return;
+            const oldVal = cell.innerText.trim();
+            cell.classList.add('editing-cell');
+
+            let inputType = "text";
+            if(col.includes('date')) inputType = "date";
+            if(col.includes('weight') || col.includes('score') || col.includes('calories')) inputType = "number";
+
+            cell.innerHTML = `<input type="${inputType}" value="${oldVal}" class="edit-input" 
+                               onblur="finishEdit(this, '${table}', ${id}, '${col}', '${oldVal}')" 
+                               onkeydown="if(event.key==='Enter') this.blur()">`;
+            cell.querySelector('input').focus();
+        }
+
+        function finishEdit(input, table, id, col, oldVal) {
+            const newVal = input.value;
+            const cell = input.parentElement;
+            cell.classList.remove('editing-cell');
+            cell.innerText = newVal;
+            if(newVal != oldVal) {
+                if(!PENDING_UPDATES[id]) PENDING_UPDATES[id] = {};
+                PENDING_UPDATES[id][col] = newVal;
+                document.getElementById('update-btn-bar').style.display = 'flex';
+                cell.style.color = 'var(--neon-pink)';
+                cell.style.fontWeight = '900';
             }
         }
 
-        async function finalInsert() {
-            const input = document.getElementById('import-csv-input').value;
-            if(!confirm("감지된 테이블의 데이터를 DB에 추가하시겠습니까?")) return;
-
-            const sections = input.split(/\[\d+\.\s[^\]]+\]/); // [숫자. 명칭] 패턴으로 분할
-            const headers = input.match(/\[\d+\.\s[^\]]+\]/g);
-
+        async function commitUpdate() {
+            const tid = document.getElementById('view-table-select').value;
             try {
-                for(let i=0; i<headers.length; i++) {
-                    const tableName = headers[i].replace(/[\[\]]/g, '').trim();
-                    const tableId = DIET_TABLES.find(t => tableName.includes(t.name.split('.')[1].trim()))?.id;
-                    
-                    if(!tableId) continue;
-
-                    const rows = sections[i+1].trim().split('\n');
-                    const cols = rows[0].split(',');
-                    const dataRows = rows.slice(1).map(r => {
-                        const vals = r.split(',');
-                        let obj = {};
-                        cols.forEach((c, idx) => {
-                            let cleanCol = c.trim();
-                            // ID와 created_at은 DB 자동생성을 위해 제외하는 것이 안전
-                            if(cleanCol !== 'id' && cleanCol !== 'created_at') {
-                                obj[cleanCol] = vals[idx]?.replace(/^"|"$/g, '').trim() || null;
-                            }
-                        });
-                        return obj;
-                    }).filter(obj => Object.keys(obj).length > 0);
-
-                    if(dataRows.length > 0) {
-                        const { error } = await _db.schema('diet').from(tableId).insert(dataRows);
-                        if(error) throw error;
-                    }
+                for(const id in PENDING_UPDATES) {
+                    const { error } = await _db.schema('diet').from(tid).update(PENDING_UPDATES[id]).eq('id', id);
+                    if(error) throw error;
                 }
-                alert("데이터 이관 완료! 🥗");
-                document.getElementById('import-csv-input').value = "";
-                analyzeCSV();
-            } catch(e) {
-                alert("INSERT 중 오류 발생: " + e.message);
-            }
+                alert("업데이트 완료! 🥗"); loadTableData();
+            } catch(e) { alert("에러: " + e.message); }
+        }
+
+        // --- 탭 3 (IMPORT) ---
+        function detectImportInfo() {
+            const val = document.getElementById('import-input').value;
+            const badgeArea = document.getElementById('import-tables-area');
+            badgeArea.innerHTML = "";
+            DIET_TABLES.forEach(t => {
+                if(val.includes(`[${t.name}]`)) badgeArea.innerHTML += `<span class="table-badge">${t.name}</span>`;
+            });
+        }
+
+        async function processInsert() {
+            const val = document.getElementById('import-input').value.trim();
+            if(!val) return;
+            try {
+                const sections = val.split(/\[\d+\.\s[^\]]+\]/);
+                const headers = val.match(/\[\d+\.\s[^\]]+\]/g);
+                if(!headers) return alert("데이터 형식이 올바르지 않습니다. (제목 포함 필수)");
+                
+                for(let i=0; i<headers.length; i++) {
+                    const tableId = DIET_TABLES.find(t => headers[i].includes(t.name.split('.')[1].trim()))?.id;
+                    if(!tableId) continue;
+                    const lines = sections[i+1].trim().split('\n');
+                    const cols = lines[0].split(',').map(c => c.trim());
+                    const data = lines.slice(1).map(l => {
+                        const cells = l.split(',');
+                        let obj = {};
+                        cols.forEach((c, idx) => { if(c !== 'id' && c !== 'created_at') obj[c] = cells[idx]?.trim() || null; });
+                        return obj;
+                    });
+                    const { error } = await _db.schema('diet').from(tableId).insert(data);
+                    if(error) throw error;
+                }
+                alert("데이터 삽입 성공!");
+                document.getElementById('import-input').value = "";
+                detectImportInfo();
+            } catch(e) { alert("오류: " + e.message); }
         }
     </script>
 </body>
