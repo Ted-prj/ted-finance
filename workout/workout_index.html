@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>BLACKPINK WORKOUT v2</title>
+    <title>BLACKPINK WORKOUT v3.3</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -16,64 +16,69 @@
             --text-dim: #888;
         }
         body { background-color: var(--bp-black); color: #fff; font-family: 'Pretendard', sans-serif; padding-bottom: 50px; }
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .sticky-top-group { position: sticky; top: 0; z-index: 1000; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #222; padding: 15px; }
-        .progress-mini-bar { width: 100%; height: 4px; background: #222; border-radius: 2px; margin-top: 8px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--bp-pink); width: 0%; transition: width 0.3s ease; }
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .sticky-top-group { position: sticky; top: 0; z-index: 1000; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); border-bottom: 1px solid #222; padding: 15px; }
+        .progress-mini-bar { width: 100%; height: 6px; background: #222; border-radius: 3px; margin-top: 10px; overflow: hidden; border: 1px solid #333; }
+        .progress-fill { height: 100%; background: var(--bp-pink); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 10px var(--bp-pink); }
+        #session-input-area { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; }
         .workout-card { background: var(--bp-dark-gray); border-radius: 24px; margin: 15px; border: 1px solid #252525; overflow: hidden; }
-        .card-header { padding: 12px 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; position: relative; transition: transform 0.2s; }
-        .set-row { padding: 12px 20px; border-bottom: 1px solid #222; position: relative; transition: 0.2s; background: var(--bp-dark-gray); }
-        .set-row.saved-row { background: #0a0a0a; opacity: 0.7; }
+        .card-header { padding: 12px 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+        .set-row { padding: 12px 20px; border-bottom: 1px solid #222; background: var(--bp-dark-gray); transition: 0.2s; }
+        .set-row.saved-row { background: #0a0a0a; opacity: 0.6; }
         .history-badge { font-size: 0.62rem; color: var(--text-dim); background: #1a1a1a; padding: 3px 7px; border-radius: 5px; display: inline-block; margin-bottom: 6px; border-left: 3px solid var(--deep-purple); }
-        .quick-add-area { margin: 30px 15px 15px 15px; padding: 20px; border: 1px dashed var(--bp-pink); border-radius: 24px; background: rgba(232, 142, 163, 0.02); }
-        .form-control, .form-select { background-color: #080808 !important; border: 1.5px solid #252525 !important; color: #fff !important; border-radius: 12px; font-weight: 600; font-size: 0.85rem; }
+        .form-control, .form-select { background-color: #080808 !important; border: 1.5px solid #252525 !important; color: #fff !important; border-radius: 12px; font-size: 0.85rem; }
         .btn-pink { background: var(--bp-pink); color: #000; border: none; border-radius: 14px; font-weight: 900; padding: 10px; }
-        .btn-save { background: #222; color: #fff; border: none; border-radius: 10px; font-size: 0.72rem; width: 100%; height: 38px; font-weight: 800; transition: 0.2s; }
+        .btn-save { background: #222; color: #fff; border: none; border-radius: 10px; font-size: 0.72rem; width: 100%; height: 38px; font-weight: 800; }
         .btn-save.st-saved { background: #1a1a1a; color: #555; border: 1px solid #333; }
-        .btn-save.st-update { background: var(--bp-pink); color: #000; box-shadow: 0 0 10px rgba(232,142,163,0.3); }
+        .btn-save.st-update { background: var(--bp-pink); color: #000; }
         .border-chest { border-left: 5px solid #FF5E9B; }
         .border-back { border-left: 5px solid #FFBBDC; }
         .border-shoulder { border-left: 5px solid var(--neon-pink); }
         .border-leg { border-left: 5px solid var(--deep-purple); }
         .label-small { font-size: 0.65rem; color: #666; margin-bottom: 2px; display: block; font-weight: 700; }
-        .swiping-left { transform: translateX(-60px); border-right: 5px solid var(--neon-pink) !important; }
-        .best-info-box { line-height: 1.3; margin-left: 10px; }
     </style>
 </head>
 <body>
     <div id="auth-overlay">
         <div class="text-center w-75">
-            <h4 style="color:var(--bp-pink); font-weight:900; letter-spacing:3px; margin-bottom: 20px;">IDENTITY</h4>
-            <input type="password" id="pw-input" class="form-control text-center mx-auto" style="max-width: 200px; font-size: 1.5rem; letter-spacing: 10px; background: #000 !important; border-color: #333 !important;" maxlength="4" inputmode="numeric" pattern="[0-9]*" autofocus oninput="if(this.value.length===4) verify()">
-            <div id="auth-msg" class="text-danger mt-3 small" style="font-weight: 800;"></div>
+            <h4 style="color:var(--bp-pink); font-weight:900; letter-spacing:3px; margin-bottom: 20px;">WORKOUT IDENTITY</h4>
+            <input type="password" id="pw-input" class="form-control text-center mx-auto" style="max-width: 200px; font-size: 1.5rem; letter-spacing: 10px;" maxlength="4" inputmode="numeric" autofocus oninput="if(this.value.length===4) verify()">
+            <div id="auth-msg" class="text-danger mt-3 small"></div>
         </div>
     </div>
 
     <div id="main-app" style="display:none;">
         <div class="sticky-top-group">
             <div class="d-flex justify-content-between align-items-center">
-                <select id="routine-select" class="form-select form-select-sm" style="width:145px;" onchange="handleRoutineChange(this.value)">
+                <select id="routine-select" class="form-select form-select-sm" style="width:140px;" onchange="handleRoutineChange(this.value)">
                     <option value="자유운동">자유운동</option>
                 </select>
-                <button type="button" class="finish-btn" style="background:var(--neon-pink); color:#fff; border:none; border-radius:12px; padding:6px 18px; font-weight:900; font-size:0.8rem;" onclick="finishDay()">운동 완료</button>
-            </div>
-            <div class="d-flex justify-content-between mt-3">
-                <span id="progress-text" style="font-size:0.7rem; font-weight:800; color:var(--bp-pink);">0 / 0 COMPLETED (0%)</span>
+                <button type="button" id="btn-finish-toggle" class="btn-action" style="background:var(--neon-pink); color:#fff; border:none; border-radius:12px; padding:6px 15px; font-weight:900; font-size:0.8rem;" onclick="toggleFinishArea()">운동 완료</button>
             </div>
             <div class="progress-mini-bar"><div id="progress-fill" class="progress-fill"></div></div>
-        </div>
-
-        <div id="workout-list-area"></div>
-
-        <div class="quick-add-area">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <span style="font-weight:900; font-size:0.9rem; color:var(--bp-pink);">+ QUICK ADD</span>
-                <div class="text-end best-info-box">
-                    <div id="quick-best" style="font-size:0.62rem; color:#fff; font-weight: 900;">BEST: -</div>
-                    <div id="quick-best-date" style="font-size:0.52rem; color:var(--text-dim); font-weight: 700;"></div>
-                    <div id="quick-best-note" style="font-size:0.55rem; color:var(--bp-pink); font-weight: 500; font-style: italic; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+            <div class="d-flex justify-content-between mt-1">
+                <span id="progress-text" style="font-size:0.65rem; font-weight:800; color:var(--bp-pink);">0 / 0 SAVED (0%)</span>
+            </div>
+            <div id="session-input-area">
+                <div class="row g-2 mb-2">
+                    <div class="col-4"><label class="label-small">시간(분)</label><input type="number" id="s-duration" class="form-control form-control-sm" placeholder="60"></div>
+                    <div class="col-4"><label class="label-small">활동kcal</label><input type="number" id="s-active-cal" class="form-control form-control-sm" placeholder="300"></div>
+                    <div class="col-4"><label class="label-small">총kcal</label><input type="number" id="s-total-cal" class="form-control form-control-sm" placeholder="400"></div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-4"><label class="label-small">평균 심박</label><input type="number" id="s-avg-hr" class="form-control form-control-sm" placeholder="130"></div>
+                    <div class="col-4"><label class="label-small">최소 심박</label><input type="number" id="s-min-hr" class="form-control form-control-sm" placeholder="80"></div>
+                    <div class="col-4"><label class="label-small">최대 심박</label><input type="number" id="s-max-hr" class="form-control form-control-sm" placeholder="160"></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary flex-fill" style="border-radius:10px; font-size:0.75rem;" onclick="toggleFinishArea()">취소</button>
+                    <button class="btn btn-sm btn-pink flex-fill" style="font-size:0.75rem;" onclick="processFinalSave()">최종 로그 저장 & 리셋</button>
                 </div>
             </div>
+        </div>
+        <div id="workout-list-area"></div>
+        <div class="quick-add-area">
+            <span style="font-weight:900; font-size:0.9rem; color:var(--bp-pink); display:block; margin-bottom:10px;">+ QUICK ADD</span>
             <div class="row g-2 mb-2">
                 <div class="col-4"><select id="quick-buwi" class="form-select form-select-sm" onchange="filterExercises(this.value)"></select></div>
                 <div class="col-8"><select id="quick-ex" class="form-select form-select-sm" onchange="loadExerciseStats(this.value)"></select></div>
@@ -90,12 +95,6 @@
 
         let EX_MASTER = [];
         let ACTIVE_SETS = [];
-        let touchStartX = 0;
-
-        const handleSwipe = (e, callback, el) => {
-            const diff = touchStartX - e.changedTouches[0].clientX;
-            if (diff > 80) { el.classList.add('swiping-left'); setTimeout(() => { if(confirm("삭제할까요?")) callback(); else el.classList.remove('swiping-left'); }, 10); }
-        };
 
         window.onload = () => { document.getElementById('pw-input').focus(); };
 
@@ -106,10 +105,7 @@
                 document.getElementById('auth-overlay').style.display='none';
                 document.getElementById('main-app').style.display='block';
                 await init();
-            } else {
-                document.getElementById('auth-msg').innerText = "WRONG PASSWORD";
-                document.getElementById('pw-input').value = "";
-            }
+            } else { document.getElementById('auth-msg').innerText = "WRONG PASSWORD"; document.getElementById('pw-input').value = ""; }
         }
 
         async function init() {
@@ -135,89 +131,43 @@
 
         async function loadExerciseStats(exId) {
             const ex = EX_MASTER.find(e => e.id === exId);
-            const { data: logs } = await _db.schema('workout').from('logs')
-                .select('*')
-                .eq('exercise_id', exId)
-                .eq('status', 'FINAL')
-                .order('workout_date', { ascending: false })
-                .order('id', { ascending: false });
-            
-            let best = null;
-            const bestDateEl = document.getElementById('quick-best-date');
-            const bestNoteEl = document.getElementById('quick-best-note');
-            
-            if(logs?.length > 0) {
-                best = logs.reduce((p, c) => {
-                    const pVal = (Number(p.weight||0) || Number(p.workout_time||0)) * (Number(p.reps||0) || Number(p.level||0));
-                    const cVal = (Number(c.weight||0) || Number(c.workout_time||0)) * (Number(c.reps||0) || Number(c.level||0));
-                    return cVal > pVal ? c : p;
-                });
-                document.getElementById('quick-best').innerHTML = `<span style="color:var(--bp-pink)">BEST:</span> ${best.weight || best.workout_time}${ex.unit} x ${best.reps || best.level}`;
-                if(best.workout_date) {
-                    const d = new Date(best.workout_date);
-                    bestDateEl.innerText = `📅 ${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-                } else { bestDateEl.innerText = ""; }
-                bestNoteEl.innerText = best.note ? `💬 ${best.note}` : "";
-            } else { 
-                document.getElementById('quick-best').innerText = "BEST: -"; 
-                bestDateEl.innerText = ""; bestNoteEl.innerText = "";
-            }
-
+            const { data: logs } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', { ascending: false }).limit(1);
             const inputArea = document.getElementById('input-fields');
             if(ex.unit === 'kg') {
-                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="3"></div><div class="col-4"><label class="label-small">무게</label><input type="number" id="q-val1" class="form-control" value="${best?.weight || 20}"></div><div class="col-4"><label class="label-small">횟수</label><input type="number" id="q-val2" class="form-control" value="${best?.reps || 12}"></div>`;
+                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="3"></div><div class="col-4"><label class="label-small">무게</label><input type="number" id="q-val1" class="form-control" value="${logs?.[0]?.weight || 20}"></div><div class="col-4"><label class="label-small">횟수</label><input type="number" id="q-val2" class="form-control" value="${logs?.[0]?.reps || 12}"></div>`;
             } else {
-                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="1"></div><div class="col-4"><label class="label-small">시간(m)</label><input type="number" id="q-val1" class="form-control" value="${best?.workout_time || 20}"></div><div class="col-4"><label class="label-small">Level</label><input type="number" id="q-val2" class="form-control" value="${best?.level || 5}"></div>`;
+                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="1"></div><div class="col-4"><label class="label-small">시간(m)</label><input type="number" id="q-val1" class="form-control" value="${logs?.[0]?.workout_time || 20}"></div><div class="col-4"><label class="label-small">Level</label><input type="number" id="q-val2" class="form-control" value="${logs?.[0]?.level || 5}"></div>`;
             }
         }
 
         async function addWorkoutFromQuick() {
-            const btn = document.getElementById('btn-quick-add');
-            if(btn.disabled) return; btn.disabled = true;
-            try {
-                const exId = document.getElementById('quick-ex').value;
-                const ex = EX_MASTER.find(e => e.id === exId);
-                const u = ex.unit || 'kg';
-                const sets = parseInt(document.getElementById('q-sets').value) || 1;
-                const v1 = Number(document.getElementById('q-val1').value) || 0;
-                const v2 = Number(document.getElementById('q-val2').value) || 0;
-                const newSets = [];
-                for(let i=1; i<=sets; i++) {
-                    newSets.push({
-                        exercise_id: exId, display_name: ex.name, body_part: ex.body_part, set_no: i, 
-                        status: 'TEMP', program_id: '자유운동', unit: u,
-                        weight: u === 'kg' ? v1 : 0, reps: u === 'kg' ? v2 : 0,
-                        workout_time: u === 'min' ? v1 : 0, level: u === 'min' ? v2 : 0
-                    });
-                }
-                const { error } = await _db.schema('workout').from('active_workout').insert(newSets);
-                if(error) throw error;
-                await refreshActiveList();
-            } catch(e) { alert("추가 실패: " + e.message); } finally { btn.disabled = false; }
+            const exId = document.getElementById('quick-ex').value;
+            const ex = EX_MASTER.find(e => e.id === exId);
+            const sets = parseInt(document.getElementById('q-sets').value) || 1;
+            const v1 = Number(document.getElementById('q-val1').value) || 0;
+            const v2 = Number(document.getElementById('q-val2').value) || 0;
+            const newSets = [];
+            for(let i=1; i<=sets; i++) {
+                newSets.push({
+                    exercise_id: exId, display_name: ex.name, body_part: ex.body_part, set_no: i, 
+                    status: 'TEMP', program_id: '자유운동', unit: ex.unit || 'kg',
+                    weight: ex.unit === 'kg' ? v1 : 0, reps: ex.unit === 'kg' ? v2 : 0,
+                    workout_time: ex.unit === 'min' ? v1 : 0, level: ex.unit === 'min' ? v2 : 0
+                });
+            }
+            await _db.schema('workout').from('active_workout').insert(newSets);
+            await refreshActiveList();
         }
 
         async function handleRoutineChange(progName) {
-            if(ACTIVE_SETS.length > 0 && !confirm("진행 중인 운동을 초기화하고 루틴을 불러올까요?")) {
-                document.getElementById('routine-select').value = ACTIVE_SETS[0]?.program_id || "자유운동";
-                return;
-            }
             await _db.schema('workout').from('active_workout').delete().neq('id', -1);
             if(progName === "자유운동") { await refreshActiveList(); return; }
-
-            const { data: fullProg } = await _db.schema('workout').from('programs').select('week, day').eq('program_name', progName).order('week').order('day');
-            const sessions = fullProg.reduce((acc, cur) => { if(!acc.find(s => s.week === cur.week && s.day === cur.day)) acc.push(cur); return acc; }, []);
-            const { data: lastLog } = await _db.schema('workout').from('logs').select('week, day').eq('program_id', progName).eq('status', 'FINAL').order('workout_date', {ascending:false}).limit(1);
-            let nextW = sessions[0].week, nextD = sessions[0].day;
-            if(lastLog?.length > 0) {
-                const idx = sessions.findIndex(s => s.week === lastLog[0].week && s.day === lastLog[0].day);
-                if(idx !== -1 && idx < sessions.length - 1) { nextW = sessions[idx+1].week; nextD = sessions[idx+1].day; }
-            }
-            const { data: plan } = await _db.schema('workout').from('programs').select('*, exercises(name, body_part, unit)').eq('program_name', progName).eq('week', nextW).eq('day', nextD).order('order_no');
+            const { data: plan } = await _db.schema('workout').from('programs').select('*, exercises(name, body_part, unit)').eq('program_name', progName).order('order_no');
             const newLogs = plan.flatMap(p => Array.from({length: p.planned_sets}, (_, i) => ({
                 exercise_id: p.exercise_id, display_name: p.exercises.name, body_part: p.body_part,
-                set_no: i+1, weight: (p.exercises.unit || 'kg') === 'kg' ? p.planned_weight : 0, reps: (p.exercises.unit || 'kg') === 'kg' ? p.planned_reps : 0,
-                workout_time: (p.exercises.unit || 'kg') === 'min' ? p.planned_weight : 0, level: (p.exercises.unit || 'kg') === 'min' ? p.planned_reps : 0,
-                status: 'TEMP', program_id: progName, week: p.week, day: p.day, unit: p.exercises.unit || 'kg'
+                set_no: i+1, weight: p.exercises.unit === 'kg' ? p.planned_weight : 0, reps: p.exercises.unit === 'kg' ? p.planned_reps : 0,
+                workout_time: p.exercises.unit === 'min' ? p.planned_weight : 0, level: p.exercises.unit === 'min' ? p.planned_reps : 0,
+                status: 'TEMP', program_id: progName, unit: p.exercises.unit || 'kg'
             })));
             await _db.schema('workout').from('active_workout').insert(newLogs);
             await refreshActiveList();
@@ -226,158 +176,127 @@
         async function refreshActiveList() {
             const { data } = await _db.schema('workout').from('active_workout').select('*').order('id');
             ACTIVE_SETS = data || [];
-            await renderUI();
+            renderUI();
         }
 
-        async function renderUI() {
+        function renderUI() {
             const container = document.getElementById('workout-list-area');
             container.innerHTML = '';
             let currentEx = '';
             let currentDiv = null;
-
-            for(const set of ACTIVE_SETS) {
+            ACTIVE_SETS.forEach(set => {
                 if(set.display_name !== currentEx) {
                     currentEx = set.display_name;
                     currentDiv = document.createElement('div');
                     currentDiv.className = `workout-card border-${getPartKey(set.body_part)}`;
-                    const header = document.createElement('div');
-                    header.className = 'card-header';
-                    header.innerHTML = `<span class="fw-bold">${set.display_name}</span><small class="text-dim" style="font-size:0.6rem;">${set.body_part}</small>`;
-                    header.addEventListener('touchstart', (e) => touchStartX = e.touches[0].clientX);
-                    header.addEventListener('touchend', (e) => handleSwipe(e, () => deleteFullEx(set.exercise_id), header));
-                    currentDiv.appendChild(header);
+                    currentDiv.innerHTML = `<div class="card-header"><span class="fw-bold">${set.display_name}</span><small class="text-dim">${set.body_part}</small></div>`;
                     container.appendChild(currentDiv);
                 }
-
-                const hist = await getSetHistory(set.exercise_id, set.set_no);
-                const isKg = (set.unit || 'kg') === 'kg';
                 const isSaved = set.status === 'SAVED';
-
                 const row = document.createElement('div');
-                row.id = `row-${set.id}`; // Row 아이디 추가
                 row.className = `set-row ${isSaved ? 'saved-row' : ''}`;
-                row.addEventListener('touchstart', (e) => touchStartX = e.touches[0].clientX);
-                row.addEventListener('touchend', (e) => handleSwipe(e, () => deleteSet(set.id, set.exercise_id), row));
-
                 row.innerHTML = `
                     <div class="row align-items-center g-2">
                         <div class="col-2 text-center fw-bold" style="color:var(--bp-pink)">${set.set_no}S</div>
                         <div class="col-7">
-                            <div class="history-badge">⏮ Last: ${hist}</div>
                             <div class="d-flex gap-1 mb-1">
-                                <input type="number" id="v1-${set.id}" class="form-control form-control-sm text-center" value="${isKg ? (set.weight || '') : (set.workout_time || '')}" oninput="markChanged(${set.id}, '${set.status}')">
-                                <input type="number" id="v2-${set.id}" class="form-control form-control-sm text-center" value="${isKg ? (set.reps || '') : (set.level || '')}" oninput="markChanged(${set.id}, '${set.status}')">
+                                <input type="number" id="v1-${set.id}" class="form-control form-control-sm text-center" value="${set.unit==='kg' ? (set.weight||'') : (set.workout_time||'')}">
+                                <input type="number" id="v2-${set.id}" class="form-control form-control-sm text-center" value="${set.unit==='kg' ? (set.reps||'') : (set.level||'')}">
                             </div>
-                            <input type="text" id="note-${set.id}" class="form-control form-control-sm" style="font-size:0.65rem; padding:4px 8px;" placeholder="Note..." value="${set.note || ''}" oninput="markChanged(${set.id}, '${set.status}')">
                         </div>
-                        <div class="col-3"><button type="button" id="btn-${set.id}" class="btn-save ${isSaved ? 'st-saved' : ''}" onclick="saveOneSet(${set.id})">${isSaved ? 'SAVED' : 'SAVE'}</button></div>
+                        <div class="col-3"><button id="btn-${set.id}" class="btn-save ${isSaved ? 'st-saved' : ''}" onclick="saveOneSet(${set.id})">${isSaved ? 'SAVED' : 'SAVE'}</button></div>
                     </div>`;
                 currentDiv.appendChild(row);
-            }
+            });
             updateProgressBar();
         }
 
-        function markChanged(id, currentStatus) {
-            const btn = document.getElementById(`btn-${id}`);
-            if(currentStatus === 'SAVED') { btn.innerText = "UPDATE"; btn.className = "btn-save st-update"; }
-            else { btn.innerText = "SAVE"; btn.className = "btn-save"; }
-        }
-
-        // [개선 사항] 전체 재로딩 없이 버튼만 변경
         async function saveOneSet(id) {
-            const btn = document.getElementById(`btn-${id}`);
-            if(btn.disabled) return; btn.disabled = true;
-            try {
-                const v1 = Number(document.getElementById(`v1-${id}`).value) || 0;
-                const v2 = Number(document.getElementById(`v2-${id}`).value) || 0;
-                const note = document.getElementById(`note-${id}`).value || '';
-                const setIndex = ACTIVE_SETS.findIndex(s => s.id === id);
-                const set = ACTIVE_SETS[setIndex];
-                
-                const upData = { status: 'SAVED', note: note }; 
-                if((set.unit || 'kg') === 'kg') { 
-                    upData.weight = v1; upData.reps = v2; upData.workout_time = 0; upData.level = 0; 
-                } else { 
-                    upData.workout_time = v1; upData.level = v2; upData.weight = 0; upData.reps = 0; 
-                }
-
-                const { error } = await _db.schema('workout').from('active_workout').update(upData).eq('id', id);
-                if(error) throw error;
-
-                // [중요] 메모리 내 데이터 동기화 (재로딩 대신)
-                ACTIVE_SETS[setIndex].status = 'SAVED';
-                ACTIVE_SETS[setIndex].note = note;
-                if((set.unit || 'kg') === 'kg') { ACTIVE_SETS[setIndex].weight = v1; ACTIVE_SETS[setIndex].reps = v2; }
-                else { ACTIVE_SETS[setIndex].workout_time = v1; ACTIVE_SETS[setIndex].level = v2; }
-
-                // [중요] UI 부분 업데이트
-                btn.innerText = "SAVED";
-                btn.className = "btn-save st-saved";
-                document.getElementById(`row-${id}`).classList.add('saved-row'); // 줄 흐리게 처리
-                
-                updateProgressBar(); // 진행바만 갱신
-                btn.disabled = false; // 버튼 다시 활성화 (나중에 UPDATE 가능하도록)
-
-            } catch(e) { alert("SAVE 에러: " + e.message); btn.disabled = false; }
+            const v1 = Number(document.getElementById(`v1-${id}`).value);
+            const v2 = Number(document.getElementById(`v2-${id}`).value);
+            const set = ACTIVE_SETS.find(s => s.id === id);
+            const upData = { status: 'SAVED' };
+            if(set.unit === 'kg') { upData.weight = v1; upData.reps = v2; } else { upData.workout_time = v1; upData.level = v2; }
+            await _db.schema('workout').from('active_workout').update(upData).eq('id', id);
+            await refreshActiveList();
         }
 
-        async function finishDay() {
-            if(ACTIVE_SETS.length === 0) return;
+        function updateProgressBar() {
+            const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length;
+            const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0;
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} SAVED (${pct}%)`;
+        }
+
+        function toggleFinishArea() {
+            const area = document.getElementById('session-input-area');
+            const isVisible = area.style.display === 'block';
+            area.style.display = isVisible ? 'none' : 'block';
+            if(!isVisible) window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function processFinalSave() {
             const savedSets = ACTIVE_SETS.filter(s => s.status === 'SAVED');
             const tempSets = ACTIVE_SETS.filter(s => s.status === 'TEMP');
+            if(tempSets.length > 0) return alert(`저장되지 않은 세트가 ${tempSets.length}개 있습니다. 모두 SAVE 해주세요.`);
+            if(savedSets.length === 0) return alert("저장된 운동이 없습니다.");
             
-            if(savedSets.length === 0) return alert("저장된 세트가 없습니다. SAVE를 먼저 눌러주세요!");
-
-            if(tempSets.length > 0) {
-                if(!confirm(`저장되지 않은 세트가 ${tempSets.length}개 있습니다. 완료된 ${savedSets.length}개 세트만 저장할까요?`)) return;
-            } else {
-                if(!confirm(`총 ${savedSets.length}개 세트를 최종 저장하고 완료하시겠습니까?`)) return;
-            }
+            const duration = document.getElementById('s-duration').value || "0";
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
 
             try {
-                const now = new Date();
-                const timestamp = now.getTime();
-                const finalData = savedSets.map(s => {
-                    const v1 = Number(document.getElementById(`v1-${s.id}`).value) || 0;
-                    const v2 = Number(document.getElementById(`v2-${s.id}`).value) || 0;
-                    const note = document.getElementById(`note-${s.id}`).value || '';
-                    const { id, created_at, status, ...rest } = s;
-                    const newLogId = `${timestamp}_${s.exercise_id}_${s.set_no}`;
-                    const row = { ...rest, id: newLogId, note: note, status: 'FINAL', workout_date: now.toISOString() };
-                    if(s.unit === 'min') { row.workout_time = v1; row.level = v2; row.weight = 0; row.reps = 0; }
-                    else { row.weight = v1; row.reps = v2; row.workout_time = 0; row.level = 0; }
-                    return row;
-                });
-                const { error } = await _db.schema('workout').from('logs').insert(finalData);
-                if(error) throw error;
+                const hasWeight = savedSets.some(s => s.unit === 'kg');
+                const hasCardio = savedSets.some(s => s.unit === 'min');
+                let typeCode = "M";
+                if(hasWeight && !hasCardio) typeCode = "W";
+                if(!hasWeight && hasCardio) typeCode = "C";
+
+                const { data: existingSessions } = await _db.schema('workout').from('session_logs').select('id').like('id', `${dateStr}_%`);
+                const sessionCount = (existingSessions?.length || 0) + 1;
+                const customSessionId = `${dateStr}_${typeCode}_S${sessionCount}`;
+
+                const { error: sErr } = await _db.schema('workout').from('session_logs').insert([{
+                    id: customSessionId,
+                    duration_min: parseInt(duration),
+                    active_calories: parseFloat(document.getElementById('s-active-cal').value || 0),
+                    total_calories: parseFloat(document.getElementById('s-total-cal').value || 0),
+                    avg_heart_rate: parseInt(document.getElementById('s-avg-hr').value || 0),
+                    min_heart_rate: parseInt(document.getElementById('s-min-hr').value || 0),
+                    max_heart_rate: parseInt(document.getElementById('s-max-hr').value || 0),
+                    workout_date: now.toISOString().split('T')[0]
+                }]);
+                if(sErr) throw sErr;
+
+                // ✅ [중요] 데이터 매핑 시 id를 명시적으로 제외하여 DB SERIAL 작동 보장
+                const logs = savedSets.map(s => ({
+                    exercise_id: s.exercise_id,
+                    display_name: s.display_name,
+                    body_part: s.body_part,
+                    set_no: s.set_no,
+                    weight: s.weight,
+                    reps: s.reps,
+                    workout_time: s.workout_time,
+                    level: s.level,
+                    unit: s.unit,
+                    note: s.note,
+                    program_id: s.program_id,
+                    week: s.week,
+                    day: s.day,
+                    status: 'FINAL',
+                    session_id: customSessionId,
+                    workout_date: now.toISOString()
+                }));
+
+                const { error: lErr } = await _db.schema('workout').from('logs').insert(logs);
+                if(lErr) throw lErr;
+
                 await _db.schema('workout').from('active_workout').delete().neq('id', -1);
-                
-                ACTIVE_SETS = []; 
-                document.getElementById('routine-select').value = "자유운동";
-                await renderUI();
-                alert("오늘도 고생하셨습니다! 오운완! 🌸");
+                alert(`세션 [${customSessionId}] 저장 완료! 🔥`);
+                location.reload();
             } catch(e) { alert("완료 실패: " + e.message); }
         }
 
-        async function deleteSet(id, exId) { 
-            await _db.schema('workout').from('active_workout').delete().eq('id', id); 
-            const { data } = await _db.schema('workout').from('active_workout').select('id').eq('exercise_id', exId).order('id');
-            for(let i=0; i<data.length; i++) await _db.schema('workout').from('active_workout').update({set_no: i+1}).eq('id', data[i].id);
-            await refreshActiveList(); 
-        }
-        async function deleteFullEx(exId) { await _db.schema('workout').from('active_workout').delete().eq('exercise_id', exId); await refreshActiveList(); }
-        async function getSetHistory(exId, setNo) { 
-            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', {ascending:false}).limit(20); 
-            if(!data?.length) return "-"; 
-            const m = data.find(d => d.set_no === setNo) || data[0]; 
-            return `${m.weight || m.workout_time} x ${m.reps || m.level}`; 
-        }
-        function updateProgressBar() { 
-            const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length; 
-            const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0; 
-            document.getElementById('progress-fill').style.width = pct + '%'; 
-            document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} COMPLETED (${pct}%)`; 
-        }
         function getPartKey(bp) { if(bp?.includes('가슴')) return 'chest'; if(bp?.includes('등')) return 'back'; if(bp?.includes('어깨')) return 'shoulder'; if(bp?.includes('하체')) return 'leg'; return 'etc'; }
     </script>
 </body>
