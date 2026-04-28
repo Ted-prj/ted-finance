@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>TED DIET ADMIN v3.6.1</title>
+    <title>TED DIET ADMIN v3.7.1</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --bp-pink: rgb(232, 142, 163); --bp-black: #000; --bp-dark-gray: #121212; --neon-pink: #FF3F7E; --text-dim: #888; }
         body { background-color: var(--bp-black); color: #fff; font-family: 'Pretendard', sans-serif; padding-bottom: 50px; }
         
-        /* 로그인 오버레이 */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; }
         .auth-input { max-width: 200px; font-size: 1.5rem; letter-spacing: 10px; background: #000 !important; border: 2px solid #333 !important; text-align: center; color: var(--bp-pink) !important; }
         
         .container { max-width: 800px; margin: 0 auto; padding: 15px; display: none; position: relative; z-index: 1; }
         
-        /* 탭 버튼 스타일 */
         .nav-pills { background: #000; border-radius: 16px; padding: 5px; }
         .nav-pills .nav-link { color: var(--bp-pink); font-weight: 800; border-radius: 12px; margin: 2px; font-size: 0.75rem; border: none; background: transparent; }
         .nav-pills .nav-link.active { background-color: var(--bp-pink) !important; color: #000 !important; }
@@ -28,14 +26,12 @@
         .btn-action:active { transform: scale(0.95); }
         .btn-outline { background: transparent; color: var(--bp-pink); border: 1px solid var(--bp-pink); border-radius: 10px; font-weight: 800; padding: 6px 10px; font-size: 0.7rem; }
         
-        /* 테이블 스타일 */
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid #333; position: relative; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; color: #ccc; font-size: 0.7rem; }
         th { background: #1a1a1a; color: var(--bp-pink); padding: 12px 10px; border-bottom: 1px solid #333; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
         td { padding: 12px 10px; border-bottom: 1px solid #222; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
         .sticky-col { position: sticky; left: 0; background: #121212; z-index: 5; border-right: 1px solid #444; }
         
-        /* 편집 모드 */
         .editing-cell { padding: 0 !important; background: var(--neon-pink) !important; }
         .edit-input { width: 100%; border: none; background: transparent; color: #fff; padding: 12px 8px; font-weight: 800; outline: none; text-align: center; }
         
@@ -92,7 +88,7 @@
                         <button class="btn-outline" onclick="processExport('data')">데이터 추출</button>
                         <button class="btn-outline" onclick="processExport('both')">칼럼&데이터 추출</button>
                     </div>
-                    <textarea id="export-csv-output" class="form-control csv-box mb-2" rows="12" placeholder="추출 결과가 여기에 표시됩니다."></textarea>
+                    <textarea id="export-csv-output" class="form-control csv-box mb-2" rows="12" placeholder="추출 결과가 여기에 표시됩니다." readonly></textarea>
                     <button class="btn-action w-100" onclick="copyResult()">복사하기 (Clipboard)</button>
                 </div>
             </div>
@@ -143,7 +139,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
         const _db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 테이블 구성 정보 (스키마 및 날짜 컬럼 정보 포함)
+        // [Update] diet 스키마 전부 + workout 핵심 테이블 반영
         const DIET_TABLES = [
             { schema: 'diet', id: 'ai_rulebook', name: '1. AI 룰셋', dateCol: false },
             { schema: 'diet', id: 'user_goals', name: '2. 사용자 정보', dateCol: false },
@@ -152,6 +148,7 @@
             { schema: 'diet', id: 'meal_logs', name: '5. 식단 로그', dateCol: 'log_date' },
             { schema: 'diet', id: 'condition_logs', name: '6. 생활/컨디션', dateCol: 'log_date' },
             { schema: 'diet', id: 'strategies', name: '7. 다이어트 전략', dateCol: false },
+            { schema: 'diet', id: 'snacks', name: '8. 간식 라이브러리', dateCol: false },
             { schema: 'workout', id: 'session_logs', name: 'W1. 운동 세션 로그', dateCol: 'workout_date' },
             { schema: 'workout', id: 'logs', name: 'W2. 운동 상세 로그', dateCol: 'workout_date' }
         ];
@@ -174,7 +171,6 @@
             }
         }
 
-        // --- 탭 1 (EXPORT) 기능 ---
         function initExtractUI() {
             const area = document.getElementById('table-select-list');
             area.innerHTML = DIET_TABLES.map(t => `
@@ -202,15 +198,12 @@
                 const tInfo = DIET_TABLES.find(t => t.id === tableId && t.schema === schemaName);
                 
                 let query = _db.schema(schemaName).from(tableId).select('*');
-                
-                // 기간 필터 적용 (날짜 컬럼이 정의된 테이블만)
                 if (tInfo.dateCol) {
                     if (startDate) query = query.gte(tInfo.dateCol, startDate);
                     if (endDate) query = query.lte(tInfo.dateCol, endDate);
                 }
                 
                 const { data, error } = await query.order('id', { ascending: true });
-                
                 finalCsv += `[${tInfo.name}]\n`;
                 if(data?.length) {
                     const cols = Object.keys(data[0]);
@@ -224,9 +217,7 @@
                             }).join(',') + '\n';
                         });
                     }
-                } else {
-                    finalCsv += "(데이터 없음)\n";
-                }
+                } else { finalCsv += "(데이터 없음)\n"; }
                 finalCsv += '\n';
             }
             document.getElementById('export-csv-output').value = finalCsv.trim();
@@ -239,16 +230,12 @@
             alert("CSV 데이터가 복사되었습니다! 🖤💖");
         }
 
-        // --- 탭 2 (VIEW & EDIT) 기능 ---
         function initViewUI() {
             const sel = document.getElementById('view-table-select');
             sel.innerHTML = DIET_TABLES.map(t => `<option value="${t.id}" data-schema="${t.schema}">${t.name}</option>`).join('');
         }
 
-        function resetDateFilter() {
-            document.getElementById('view-date').value = "";
-            loadTableData();
-        }
+        function resetDateFilter() { document.getElementById('view-date').value = ""; loadTableData(); }
 
         function onTableSelectChange() {
             const sel = document.getElementById('view-table-select');
@@ -274,11 +261,7 @@
             
             const { data } = await query.order('id', { ascending: true });
             const area = document.getElementById('table-data-area');
-            
-            if(!data || data.length === 0) { 
-                area.innerHTML = `<p class='text-center mt-5 opacity-50'>데이터가 없습니다.</p>`; 
-                return; 
-            }
+            if(!data || data.length === 0) { area.innerHTML = `<p class='text-center mt-5 opacity-50'>데이터가 없습니다.</p>`; return; }
             
             const cols = Object.keys(data[0]);
             let html = `<table><thead><tr>${cols.map(k => `<th class="${k==='id'?'sticky-col':''}">${k}</th>`).join('')}</tr></thead><tbody>`;
@@ -296,10 +279,9 @@
             if(cell.classList.contains('editing-cell')) return;
             const oldVal = cell.innerText.trim();
             cell.classList.add('editing-cell');
-
             let inputType = "text";
             if(col.includes('date') || col.includes('_at')) inputType = "date";
-            if(col.includes('weight') || col.includes('score') || col.includes('mass') || col.includes('calories') || col.includes('heart_rate')) inputType = "number";
+            if(col.includes('weight') || col.includes('score') || col.includes('mass') || col.includes('calories') || col.includes('volume')) inputType = "number";
 
             cell.innerHTML = `<input type="${inputType}" value="${oldVal}" class="edit-input" onblur="finishEdit(this, '${schema}', '${table}', '${id}', '${col}', '${oldVal}')" onkeydown="if(event.key==='Enter') this.blur()">`;
             cell.querySelector('input').focus();
@@ -330,14 +312,11 @@
             } catch(e) { alert("업데이트 중 오류 발생: " + e.message); }
         }
 
-        // --- 탭 3 (IMPORT) 기능 ---
         function detectImportInfo() {
             const val = document.getElementById('import-input').value;
             const badgeArea = document.getElementById('import-tables-area');
             badgeArea.innerHTML = "";
-            DIET_TABLES.forEach(t => {
-                if(val.includes(`[${t.name}]`)) badgeArea.innerHTML += `<span class="table-badge">${t.name}</span>`;
-            });
+            DIET_TABLES.forEach(t => { if(val.includes(`[${t.name}]`)) badgeArea.innerHTML += `<span class="table-badge">${t.name}</span>`; });
         }
 
         async function processInsert() {
@@ -355,13 +334,11 @@
                     const data = lines.slice(1).map(l => {
                         const cells = l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         let obj = {};
-                        cols.forEach((c, idx) => { 
-                            if(c !== 'id' && c !== 'created_at') {
-                                let v = cells[idx]?.trim() || null;
-                                if(v && v.startsWith('"') && v.endsWith('"')) v = v.substring(1, v.length-1).replace(/""/g, '"');
-                                obj[c] = v;
-                            }
-                        });
+                        cols.forEach((c, idx) => { if(c !== 'id' && c !== 'created_at') {
+                            let v = cells[idx]?.trim() || null;
+                            if(v && v.startsWith('"') && v.endsWith('"')) v = v.substring(1, v.length-1).replace(/""/g, '"');
+                            obj[c] = v;
+                        }});
                         return obj;
                     });
                     const { error } = await _db.schema(tInfo.schema).from(tInfo.id).insert(data);
