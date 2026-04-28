@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>BLACKPINK WORKOUT v3.4.5</title>
+    <title>BLACKPINK WORKOUT v3.4.6</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -291,22 +291,13 @@
             await refreshActiveList();
         }
 
-        // [Update] 세트 삭제 후 번호 재정렬 로직 추가
         async function deleteOneSet(id, displayName) {
             const { error: delError } = await _db.schema('workout').from('active_workout').delete().eq('id', id);
             if(delError) return alert("삭제 실패: " + delError.message);
-
-            // 남은 해당 종목의 세트들을 가져와서 set_no 순차 재정렬
-            const { data: remaining } = await _db.schema('workout').from('active_workout')
-                .select('id')
-                .eq('display_name', displayName)
-                .order('id', { ascending: true });
-
+            const { data: remaining } = await _db.schema('workout').from('active_workout').select('id').eq('display_name', displayName).order('id', { ascending: true });
             if(remaining && remaining.length > 0) {
                 for(let i=0; i<remaining.length; i++) {
-                    await _db.schema('workout').from('active_workout')
-                        .update({ set_no: i + 1 })
-                        .eq('id', remaining[i].id);
+                    await _db.schema('workout').from('active_workout').update({ set_no: i + 1 }).eq('id', remaining[i].id);
                 }
             }
             await refreshActiveList();
@@ -332,14 +323,44 @@
             if(!isVisible) window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // [Fix] 날짜 및 타임스탬프 계산 함수 (새벽 6시 로직 포함)
+        function getSmartWorkoutDate() {
+            const now = new Date();
+            const hours = now.getHours();
+            let targetDate = new Date(now);
+
+            // 자정(0시) 이후 ~ 새벽 6시 이전일 경우 확인 팝업
+            if (hours >= 0 && hours < 6) {
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const yStr = yesterday.toISOString().split('T')[0];
+                const tStr = now.toISOString().split('T')[0];
+                
+                const useYesterday = confirm(`현재 새벽 시간입니다.\n운동 날짜를 [어제(${yStr})]로 기록할까요?\n(취소 클릭 시 오늘(${tStr})로 기록됩니다.)`);
+                if (useYesterday) {
+                    targetDate = yesterday;
+                }
+            }
+            
+            return {
+                dbTimestamp: targetDate.toISOString(), // Timestamptz용 ISO 문자열
+                idDateStr: targetDate.getFullYear() + String(targetDate.getMonth() + 1).padStart(2, '0') + String(targetDate.getDate()).padStart(2, '0'),
+                justDate: targetDate.toISOString().split('T')[0]
+            };
+        }
+
         async function processFinalSave() {
             const savedSets = ACTIVE_SETS.filter(s => s.status === 'SAVED');
             const tempSets = ACTIVE_SETS.filter(s => s.status === 'TEMP');
             if(tempSets.length > 0) return alert(`저장되지 않은 세트가 ${tempSets.length}개 있습니다. 모두 SAVE 해주세요.`);
             if(savedSets.length === 0) return alert("저장된 운동이 없습니다.");
+
             const duration = document.getElementById('s-duration').value || "0";
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+            
+            // [Fix] 스마트 날짜 결정
+            const smartDate = getSmartWorkoutDate();
+            const dateStr = smartDate.idDateStr;
+
             try {
                 const { data: existingSessions } = await _db.schema('workout').from('session_logs').select('id').like('id', `${dateStr}_%`);
                 const sessionCount = (existingSessions?.length || 0) + 1;
@@ -347,6 +368,7 @@
                 const hasCardio = savedSets.some(s => s.unit === 'min');
                 let typeCode = (hasWeight && hasCardio) ? "M" : (hasWeight ? "W" : "C");
                 const customSessionId = `${dateStr}_${typeCode}_S${sessionCount}`;
+
                 const { error: sErr } = await _db.schema('workout').from('session_logs').insert([{
                     id: customSessionId, duration_min: parseInt(duration),
                     active_calories: parseFloat(document.getElementById('s-active-cal').value || 0),
@@ -354,17 +376,21 @@
                     avg_heart_rate: parseInt(document.getElementById('s-avg-hr').value || 0),
                     min_heart_rate: parseInt(document.getElementById('s-min-hr').value || 0),
                     max_heart_rate: parseInt(document.getElementById('s-max-hr').value || 0),
-                    workout_date: now.toISOString().split('T')[0]
+                    workout_date: smartDate.justDate
                 }]);
                 if(sErr) throw sErr;
+
                 const logs = savedSets.map(s => ({
                     exercise_id: s.exercise_id, display_name: s.display_name, body_part: s.body_part,
                     set_no: s.set_no, weight: s.weight, reps: s.reps, workout_time: s.workout_time,
                     level: s.level, unit: s.unit, note: s.note, program_id: s.program_id,
-                    week: s.week, day: s.day, status: 'FINAL', session_id: customSessionId, workout_date: now.toISOString()
+                    week: s.week, day: s.day, status: 'FINAL', session_id: customSessionId,
+                    workout_date: smartDate.dbTimestamp // 한국 시간 기준 반영된 ISO String
                 }));
+
                 const { error: lErr } = await _db.schema('workout').from('logs').insert(logs);
                 if(lErr) throw lErr;
+
                 await _db.schema('workout').from('active_workout').delete().neq('id', -1);
                 alert(`운동 세션 [${customSessionId}] 저장 성공! 🔥`);
                 location.reload();
