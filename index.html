@@ -14,9 +14,10 @@
             --pink-light: #ffb6c1; 
             --text-dim: #999; 
             --asset-pink: #e83e8c; 
+            --neon-pink: #FF3F7E;
         }
         body { 
-            padding: 10px; /* 여백 축소 */
+            padding: 10px;
             background-color: var(--bp-black); 
             color: #fff; 
             font-family: 'Pretendard', -apple-system, sans-serif; 
@@ -24,31 +25,27 @@
             overflow-x: hidden; 
         }
         /* --- 보안 레이어 스타일 --- */
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bp-black); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px;
+        #auth-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bp-black); z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
         }
-        .auth-box {
-            width: 100%; max-width: 300px; text-align: center;
-        }
+        .auth-box { width: 100%; max-width: 300px; text-align: center; }
         .auth-input {
-            letter-spacing: 10px; text-align: center; font-size: 1.5rem;
-            margin-bottom: 20px; border: 2px solid #333 !important;
-            -webkit-text-security: disc;
+            max-width: 200px; font-size: 1.5rem; letter-spacing: 10px; 
+            background: #000 !important; border: 2px solid #333 !important;
+            text-align: center; margin: 20px auto; color: var(--bp-pink) !important;
         }
-        /* ----------------------- */
+        
+        /* --- 컨테이너 및 탭 --- */
         .container { 
-            width: 100%; /* 모바일 꽉 채우기 */
-            max-width: 500px; 
+            width: 100%; max-width: 500px; 
             background: var(--bp-dark-gray); 
-            padding: 15px; /* 내부 여백 최적화 */
+            padding: 15px; 
             border-radius: 28px; 
             border: 1px solid rgba(232, 142, 163, 0.2); 
             margin-bottom: 30px; 
-            margin-left: auto; 
-            margin-right: auto; 
+            margin-left: auto; margin-right: auto; 
             display: none; 
         }
         
@@ -59,66 +56,41 @@
         }
         .nav-pills .nav-link.active { background-color: var(--bp-pink) !important; color: #000 !important; font-weight: 900; }
         
+        /* --- 폼 요소 --- */
         .form-control, .form-select { 
             background-color: #080808 !important; border: 1.5px solid #252525 !important; 
-            color: #fff !important; border-radius: 18px; padding: 12px 14px; font-size: 0.9rem; /* 폰트 소폭 축소 */
+            color: #fff !important; border-radius: 18px; padding: 12px 14px; font-size: 0.9rem;
             font-weight: 600; transition: all 0.2s ease;
         }
         .form-control:focus, .form-select:focus { 
             border-color: var(--bp-pink) !important; box-shadow: 0 0 8px rgba(232, 142, 163, 0.15) !important; outline: none; 
         }
-        .form-select { 
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e88ea3' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-            background-size: 10px;
-        }
 
-        /* [수정] Date Input - 줄바꿈 방지 및 가독성 */
         input[type="date"], input[type="month"] {
-            appearance: none; -webkit-appearance: none;
-            position: relative;
-            text-transform: uppercase;
-            letter-spacing: 0px; /* 간격 축소 */
-            min-height: 45px;
-            color: var(--bp-pink) !important; /* 기본 컬러 강제 부여 */
+            color: var(--bp-pink) !important;
+            font-weight: 900;
         }
-        input[type="date"]::-webkit-datetime-edit-fields-wrapper { display: flex; justify-content: center; gap: 2px; padding: 0; }
-        input[type="date"]::-webkit-datetime-edit-year-field { color: var(--text-dim); font-size: 0.75rem; }
-        input[type="date"]::-webkit-datetime-edit-month-field, 
-        input[type="date"]::-webkit-datetime-edit-day-field { color: var(--bp-pink); font-weight: 900; font-size: 0.85rem; }
-        input[type="date"]::-webkit-datetime-edit-text { color: rgba(232, 142, 163, 0.3); padding: 0 2px; }
 
+        /* --- 버튼 --- */
         .btn-pink { 
             width: 100%; padding: 18px; font-weight: 900; border-radius: 20px; border: none !important; 
             background-color: var(--bp-pink) !important; color: #000 !important; font-size: 1.05rem; 
             box-shadow: 0 6px 20px rgba(232, 142, 163, 0.2); margin-bottom: 25px; display: block; 
             text-transform: uppercase; letter-spacing: 1px;
         }
-        .btn-edit-save { 
-            background: var(--bp-pink) !important; color: #000 !important; flex: 1; 
-            border-radius: 15px; font-weight: 900; font-size: 0.85rem; padding: 14px; border: none !important; cursor: pointer; 
-        }
-        .btn-edit-cancel { 
-            background: #252525 !important; color: #aaa !important; flex: 1; 
-            border-radius: 15px; font-weight: 900; font-size: 0.85rem; padding: 14px; border: none !important; cursor: pointer; 
-        }
+        .btn-edit-save { background: var(--bp-pink) !important; color: #000 !important; flex: 1; border-radius: 15px; font-weight: 900; font-size: 0.85rem; padding: 14px; border: none !important; }
+        .btn-edit-cancel { background: #252525 !important; color: #aaa !important; flex: 1; border-radius: 15px; font-weight: 900; font-size: 0.85rem; padding: 14px; border: none !important; }
+        .btn-query { background: var(--bp-pink) !important; color: #000 !important; border: none; border-radius: 12px; padding: 0 12px; font-weight: 900; font-size: 0.7rem; height: 34px; flex-shrink: 0; }
 
+        /* --- 필터 및 요약 --- */
         .slim-filter { 
             background: #000; border-radius: 22px; padding: 8px; margin-bottom: 15px; 
-            border: 1px solid #222; display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; overflow: hidden; 
+            border: 1px solid #222; display: flex; align-items: center; gap: 5px; 
         }
-        .slim-filter input[type="date"], .slim-filter input[type="month"] { 
-            background: #0a0a0a !important; border: 1px solid #333 !important; color: var(--bp-pink) !important; 
-            border-radius: 12px; padding: 6px 2px; font-size: 0.7rem; flex: 1; min-width: 0; text-align: center; outline: none; 
-            font-weight: 800;
-        }
+        .slim-filter input { background: #0a0a0a !important; border: 1px solid #333 !important; color: var(--bp-pink) !important; border-radius: 12px; padding: 6px 2px; font-size: 0.7rem; flex: 1; text-align: center; font-weight: 800; }
+        .total-summary-row { text-align: right; padding: 0 8px 12px 0; font-size: 0.8rem; font-weight: 900; color: var(--bp-pink); opacity: 0.9; }
 
-        .btn-query { 
-            background: var(--bp-pink) !important; color: #000 !important; border: none; 
-            border-radius: 12px; padding: 0 12px; font-weight: 900; font-size: 0.7rem; height: 34px; flex-shrink: 0; 
-        }
-
-        .total-summary-row { text-align: right; padding: 0 8px 12px 0; font-size: 0.8rem; font-weight: 900; color: var(--bp-pink); letter-spacing: 0.5px; opacity: 0.9; }
-
+        /* --- 카드 시스템 --- */
         .custom-card { 
             position: relative; background: var(--bp-black); border-radius: 24px; padding: 18px; 
             border-left: 6px solid var(--bp-pink); border-top: 1px solid #222; border-right: 1px solid #222; 
@@ -126,90 +98,56 @@
             overflow: hidden; cursor: pointer; 
         }
         .label-mini { font-size: 0.62rem; color: var(--text-dim) !important; font-weight: 900; margin-bottom: 4px; letter-spacing: 0.5px; }
-        
         .acc-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
         .acc-main { color: #fff !important; font-weight: 700; font-size: 1.05rem; }
         .acc-amount { color: var(--pink-light) !important; font-weight: 900; font-size: 1.3rem; }
-
         .val-text { font-size: 0.82rem; font-weight: 700; color: #fff !important; min-height: 18px; }
         .val-amt { font-size: 1.1rem; font-weight: 900; color: var(--pink-light) !important; }
         .card-balance-badge { font-weight: 800; font-size: 0.6rem; color: var(--bp-pink) !important; opacity: 0.9; margin-top: 4px; text-align: right; display: block; }
-        .card-note-area { font-size: 0.7rem; color: #aaa !important; border-top: 1px solid #222; margin-top: 8px; padding-top: 8px; font-weight: 500; }
+        .card-note-area { font-size: 0.7rem; color: #aaa !important; border-top: 1px solid #222; margin-top: 8px; padding-top: 8px; }
         
         .tr-row-wrap { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #222; margin-top: 8px; padding: 10px 0 0 0; gap: 4px; }
         .tr-col { flex: 1; min-width: 0; }
         .tr-amt-col { flex: 1; text-align: center; min-width: 0; }
         
-        /* [수정] 입력 카드 그리드 비율 최적화 */
         .card-grid { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 10px; }
         .card-full { grid-column: span 2; }
-
-        .edit-mode { border: 1.5px solid var(--bp-pink) !important; background: #050505 !important; cursor: default; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .edit-mode { border: 1.5px solid var(--bp-pink) !important; background: #050505 !important; cursor: default; }
         .edit-btn-group { display: flex; gap: 10px; margin-top: 18px; }
         .live-balance-box { font-size: 0.68rem; font-weight: 800; color: var(--bp-pink); margin-top: 4px; text-align: right; }
 
+        /* --- 확장 영역 및 히스토리 --- */
         .expand-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
         .expand-container.expanded { max-height: 5000px; padding-bottom: 10px; }
-
-        .history-list { margin-top: 15px; border-top: 1px solid #222; padding-top: 10px; }
         .ah-row { 
             display: flex; flex-direction: column; 
             padding: 10px; background: #0a0a0a; border-radius: 12px; margin-bottom: 8px; 
             border: 1px solid #222; border-left: 3px solid var(--bp-pink);
             cursor: pointer; transition: 0.2s;
         }
-        .ah-row:active { background: #1a1a1a; transform: scale(0.98); }
         .ah-main { display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         .ah-date { font-size: 0.65rem; color: var(--bp-pink); font-weight: 800; width: 40px; }
         .ah-note { font-size: 0.75rem; color: #fff; flex: 1; margin: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .ah-amt { font-size: 0.8rem; font-weight: 900; color: var(--pink-light); }
-        .ah-balance { font-size: 0.6rem; color: var(--text-dim); text-align: right; margin-top: 2px; pointer-events: none; }
+        .ah-balance { font-size: 0.6rem; color: var(--text-dim); text-align: right; margin-top: 2px; }
 
-        .loan-detail-box { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px 10px; 
-            background: #0a0a0a; 
-            padding: 15px; 
-            border-radius: 14px; 
-            margin-top: 10px; 
-            border: 1px solid #222; 
-        }
-        .loan-item { display: flex; flex-direction: column; }
-        .loan-label { font-size: 0.6rem; color: var(--bp-pink); font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
-        .loan-val { font-size: 0.8rem; color: #eee; font-weight: 700; }
-
+        /* --- 통계 --- */
         .stats-stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .stats-card { background: var(--bp-black); border-radius: 20px; padding: 20px; border: 1px solid #222; border-top: 4px solid var(--bp-pink); cursor: pointer; transition: transform 0.2s; }
-        .stats-card:active { transform: scale(0.98); }
-        .stats-card.fixed { border-top-color: var(--asset-pink); }
+        .stats-card { background: var(--bp-black); border-radius: 20px; padding: 20px; border: 1px solid #222; border-top: 4px solid var(--bp-pink); cursor: pointer; }
         .stats-label { font-size: 0.7rem; color: var(--text-dim); font-weight: 800; letter-spacing: 1.5px; }
         .stats-val { font-size: 1.7rem; font-weight: 900; color: var(--pink-light); }
-        
-        .stat-item-card { 
-            background: #0a0a0a; border-radius: 18px; padding: 15px; border: 1px solid #222; 
-            margin-top: 10px; cursor: pointer; transition: 0.2s;
-        }
-        .stat-item-card:active { transform: scale(0.98); background: #111; }
-
+        .stat-item-card { background: #0a0a0a; border-radius: 18px; padding: 15px; border: 1px solid #222; margin-top: 10px; cursor: pointer; }
         .progress { background-color: #1a1a1a; height: 6px !important; border-radius: 10px; }
         .bar-income { background: #fff !important; }
         .bar-asset { background: var(--asset-pink) !important; }
         .bar-expense { background: var(--bp-pink) !important; }
-        
-        .fixed-chip { 
-            background: rgba(232, 142, 163, 0.1); padding: 6px 12px; border-radius: 12px; 
-            font-size: 0.65rem; border: 1px solid rgba(232, 142, 163, 0.2); color: var(--pink-light); 
-            display: inline-block; margin: 3px; font-weight: 700; 
-        }
+        .fixed-chip { background: rgba(232, 142, 163, 0.1); padding: 6px 12px; border-radius: 12px; font-size: 0.65rem; border: 1px solid rgba(232, 142, 163, 0.2); color: var(--pink-light); display: inline-block; margin: 3px; font-weight: 700; }
 
+        /* --- 스와이프 --- */
         .swipe-container { position: relative; overflow: hidden; border-radius: 20px; margin-bottom: 12px; background: #200; display: flex; align-items: stretch; }
-        .swipe-delete-bg { 
-            position: absolute; top: 0; right: 0; width: 100%; height: 100%; 
-            color: #844; display: flex; align-items: center; justify-content: flex-end; 
-            padding-right: 25px; font-weight: 900; font-size: 0.75rem; z-index: 1; 
-        }
+        .swipe-delete-bg { position: absolute; top: 0; right: 0; width: 100%; height: 100%; color: #844; display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; font-weight: 900; font-size: 0.75rem; z-index: 1; }
         .swipe-target { z-index: 2; position: relative; width: 100%; margin-bottom: 0 !important; transition: transform 0.2s ease-out; }
+        
         .loading-inline { text-align: center; padding: 40px 0; color: var(--bp-pink); font-weight: 900; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     </style>
@@ -217,10 +155,17 @@
 <body>
     <div id="auth-overlay">
         <div class="auth-box">
-            <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px; margin-bottom: 30px;">IDENTITY REQUIRED</h4>
-            <input type="password" id="access-pw-input" class="form-control auth-input" maxlength="4" placeholder="••••" inputmode="numeric" autofocus oninput="handleAutoVerify(this)">
-            <button class="btn-pink" onclick="verifyAccess()">ACCESS</button>
-            <div id="auth-msg" style="font-size: 0.7rem; color: #844; margin-top: 10px; font-weight: 800;"></div>
+            <h4 style="color: var(--bp-pink); font-weight: 900; letter-spacing: 3px;">IDENTITY</h4>
+            <input type="password" 
+                id="access-pw-input" 
+                class="form-control auth-input" 
+                maxlength="4" 
+                inputmode="numeric" 
+                pattern="[0-9]*"
+                autocomplete="one-time-code"
+                autofocus 
+                oninput="handleAutoVerify(this)">
+            <div id="auth-msg" style="font-size: 0.7rem; color: #844; margin-top: 10px; font-weight: 800; min-height: 15px;"></div>
         </div>
     </div>
 
@@ -280,23 +225,13 @@
                     <input type="month" id="stats-month" onchange="loadStats()">
                     <button class="btn-query" onclick="loadStats()">조회</button>
                 </div>
-                
                 <div class="stats-stack" id="stats-summary-area"></div>
-
                 <div id="db-sections">
-                    <div class="section-header" onclick="toggleStatSection('section-income')" style="background:#111; border:1px solid #333; border-left:4px solid var(--bp-pink); padding:16px 20px; border-radius:18px; display:flex; justify-content:space-between; margin-top:15px; cursor:pointer;">
-                        <span style="font-size:0.85rem; font-weight:900;">INCOME STATUS</span><span>▼</span>
-                    </div>
+                    <div class="section-header" onclick="toggleStatSection('section-income')" style="background:#111; border:1px solid #333; border-left:4px solid var(--bp-pink); padding:16px 20px; border-radius:18px; display:flex; justify-content:space-between; margin-top:15px; cursor:pointer;"><span style="font-size:0.85rem; font-weight:900;">INCOME STATUS</span><span>▼</span></div>
                     <div id="section-income" class="expand-container"></div>
-                    
-                    <div class="section-header" onclick="toggleStatSection('section-asset')" style="background:#111; border:1px solid #333; border-left:4px solid var(--bp-pink); padding:16px 20px; border-radius:18px; display:flex; justify-content:space-between; margin-top:15px; cursor:pointer;">
-                        <span style="font-size:0.85rem; font-weight:900;">ASSET BUILDING</span><span>▼</span>
-                    </div>
+                    <div class="section-header" onclick="toggleStatSection('section-asset')" style="background:#111; border:1px solid #333; border-left:4px solid var(--bp-pink); padding:16px 20px; border-radius:18px; display:flex; justify-content:space-between; margin-top:15px; cursor:pointer;"><span style="font-size:0.85rem; font-weight:900;">ASSET BUILDING</span><span>▼</span></div>
                     <div id="section-asset" class="expand-container"></div>
-                    
-                    <div class="section-header" onclick="toggleStatSection('section-expense')" style="background:#111; border:1px solid #333; border-left:4px solid var(--bp-pink); padding:16px 20px; border-radius:18px; display:flex; justify-content:space-between; margin-top:15px; cursor:pointer;">
-                        <span style="font-size:0.85rem; font-weight:900;">EXPENSE STATUS</span><span>▼</span>
-                    </div>
+                    <div class="section-header" onclick="toggleStatSection('section-expense')" style="background:#111; border:1px solid #333; border-left:4px solid var(--bp-pink); padding:16px 20px; border-radius:18px; display:flex; justify-content:space-between; margin-top:15px; cursor:pointer;"><span style="font-size:0.85rem; font-weight:900;">EXPENSE STATUS</span><span>▼</span></div>
                     <div id="section-expense" class="expand-container"></div>
                 </div>
             </div>
@@ -310,14 +245,14 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dropdownCache = { 
-            accounts: [], accounts_raw: [], 
-            categories: [], categories_raw: [], 
-            trTypes: [], trTypes_raw: [], 
-            fixedList: [] 
-        };
+        let dropdownCache = { accounts: [], accounts_raw: [], categories: [], categories_raw: [], trTypes: [], trTypes_raw: [], fixedList: [] };
         let touchStartX = 0;
         window.tempOriginalRowHtml = "";
+
+        window.onload = () => {
+            const pwInput = document.getElementById('access-pw-input');
+            if(pwInput) pwInput.focus();
+        };
 
         function handleAutoVerify(input) {
             if (input.value.length === 4) {
@@ -326,12 +261,11 @@
         }
 
         async function verifyAccess() {
-            const inputPw = document.getElementById('access-pw-input').value;
+            const pwInput = document.getElementById('access-pw-input');
+            const inputPw = pwInput.value;
             const msg = document.getElementById('auth-msg');
-            const btn = document.querySelector('#auth-overlay .btn-pink');
             
-            btn.innerHTML = "VERIFYING...";
-            btn.disabled = true;
+            msg.innerText = "VERIFYING...";
 
             try {
                 const { data, error } = await _supabase
@@ -348,16 +282,12 @@
                     document.getElementById('main-app-container').style.display = 'block';
                     await initApp();
                 } else {
-                    msg.innerText = "ACCESS DENIED. TRY AGAIN.";
-                    document.getElementById('access-pw-input').value = "";
-                    document.getElementById('access-pw-input').focus();
-                    btn.innerHTML = "ACCESS";
-                    btn.disabled = false;
+                    msg.innerText = "WRONG PASSWORD";
+                    pwInput.value = "";
+                    pwInput.focus();
                 }
             } catch (e) {
-                msg.innerText = "CONNECTION ERROR: " + e.message;
-                btn.innerHTML = "ACCESS";
-                btn.disabled = false;
+                msg.innerText = "CONNECTION ERROR";
             }
         }
 
@@ -367,23 +297,17 @@
                 document.getElementById('main-app-container').style.display = 'block';
                 await initApp();
             } else {
-                setTimeout(() => {
-                    const pwInput = document.getElementById('access-pw-input');
-                    if(pwInput) pwInput.focus();
-                }, 500);
+                setTimeout(() => document.getElementById('access-pw-input').focus(), 500);
             }
-
-            const triggerTabList = document.querySelectorAll('.nav-link');
-            triggerTabList.forEach(el => {
+            document.querySelectorAll('.nav-link').forEach(el => {
                 el.addEventListener('click', function(e) {
                     e.preventDefault();
                     new bootstrap.Tab(this).show();
-                    const tabId = this.id;
-                    if(tabId === 'tab-out-btn') loadHistoryTab('OUT');
-                    else if(tabId === 'tab-in-btn') loadHistoryTab('IN');
-                    else if(tabId === 'tab-tr-btn') loadHistoryTab('TR');
-                    else if(tabId === 'tab-acc-btn') loadAssets();
-                    else if(tabId === 'tab-db-btn') loadStats();
+                    if(this.id === 'tab-out-btn') loadHistoryTab('OUT');
+                    else if(this.id === 'tab-in-btn') loadHistoryTab('IN');
+                    else if(this.id === 'tab-tr-btn') loadHistoryTab('TR');
+                    else if(this.id === 'tab-acc-btn') loadAssets();
+                    else if(this.id === 'tab-db-btn') loadStats();
                 });
             });
         });
@@ -392,11 +316,7 @@
             const now = new Date();
             const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
             const dateStr = monthStr + '-' + String(now.getDate()).padStart(2, '0');
-            
-            // [수정] 초기 로드시 날짜 필터에 오늘 날짜 기본 세팅 (표시 안되는 문제 해결)
-            const dateInputs = document.querySelectorAll('input[type="date"]');
-            dateInputs.forEach(ipt => { if(!ipt.value) ipt.value = dateStr; });
-
+            document.querySelectorAll('input[type="date"]').forEach(ipt => ipt.value = dateStr);
             if(document.getElementById('stats-month')) document.getElementById('stats-month').value = monthStr;
 
             const [accRes, catRes, setRes, fixRes] = await Promise.all([
@@ -418,124 +338,6 @@
             loadHistoryTab('OUT');
         }
 
-        function onFixedLinkChange(selectEl) {
-            const card = selectEl.closest('.custom-card');
-            const fixedId = selectEl.value;
-            if (!fixedId) return;
-
-            const item = dropdownCache.fixedList.find(f => f.id === fixedId);
-            if (!item) return;
-
-            const amtInput = card.querySelector('[data-field="amount"]');
-            if (amtInput) amtInput.value = Number(item.amt).toLocaleString();
-
-            const dateInput = card.querySelector('[data-field="date"]');
-            if (dateInput) {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(item.day).padStart(2, '0');
-                dateInput.value = `${year}-${month}-${day}`;
-            }
-
-            const accSelect = card.querySelector('[data-field="acc"]') || card.querySelector('[data-field="fromAcc"]');
-            if (accSelect) {
-                const accName = dropdownCache.accounts_raw.find(a => a.code === item.acc)?.name;
-                if (accName) {
-                    accSelect.value = accName;
-                    updateLiveBalance(accSelect, accSelect.dataset.field === 'fromAcc' ? 'from' : '');
-                }
-            }
-
-            const catSelect = card.querySelector('[data-field="cat"]');
-            if (catSelect) {
-                const catName = dropdownCache.categories_raw.find(c => c.code === item.cat)?.name;
-                if (catName) catSelect.value = catName;
-            }
-
-            const noteInput = card.querySelector('[data-field="note"]');
-            if (noteInput) noteInput.value = item.name;
-        }
-
-        function formatAmountInput(input) {
-            let val = input.value.replace(/[^0-9]/g, "");
-            if (val) input.value = Number(val).toLocaleString();
-            else input.value = "";
-        }
-
-        function renderTxEditCard(i, source) {
-            const fixedOptions = `<option value="">-- 고정비 연결 없음 --</option>` + 
-                dropdownCache.fixedList.map(f => `<option value="${f.id}" ${i.fixed_link === f.id ? 'selected' : ''}>${f.day}일 | ${f.name} (${f.amt.toLocaleString()}원)</option>`).join('');
-            
-            return `
-            <div class="custom-card edit-mode" data-id="${i.id}">
-                <div class="card-grid">
-                    <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId" onchange="onFixedLinkChange(this)">${fixedOptions}</select></div>
-                    
-                    <div><div class="label-mini">DATE</div><input type="date" class="form-control form-control-sm edit-input" data-field="date" value="${i.date}"></div>
-                    <div class="text-end"><div class="label-mini">CATEGORY</div>
-                        <select class="form-select form-select-sm edit-input" data-field="cat">
-                            ${dropdownCache.categories.map(c => `<option ${c === i.cat ? 'selected' : ''}>${c}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="card-full">
-                        <div class="label-mini">ACCOUNT</div>
-                        <select class="form-select form-select-sm edit-input" data-field="acc" onchange="updateLiveBalance(this)">
-                            ${dropdownCache.accounts.map(a => `<option ${a === i.acc ? 'selected' : ''}>${a}</option>`).join('')}
-                        </select>
-                        <div class="live-balance-main live-balance-box"></div>
-                    </div>
-                    <div class="card-full"><div class="label-mini">AMOUNT</div><input type="text" class="form-control form-control-sm edit-input text-end" data-field="amount" value="${i.amount ? Number(i.amount).toLocaleString() : ''}" inputmode="numeric" oninput="formatAmountInput(this)"></div>
-                    <div class="card-full"><div class="label-mini">MEMO</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}" placeholder="메모를 입력하세요"></div>
-                    <div class="card-full edit-btn-group">
-                        <button class="btn-edit-cancel" onclick="handleCancel('${i.id}', '${source}', this)">CANCEL</button>
-                        <button class="btn-edit-save" onclick="saveEdit(this,'${source}','${i.id}')">SAVE</button>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        function renderTrEditCard(i) {
-            const fixedOptions = `<option value="">-- 고정비 연결 없음 --</option>` + 
-                dropdownCache.fixedList.map(f => `<option value="${f.id}" ${i.fixed_link === f.id ? 'selected' : ''}>${f.day}일 | ${f.name} (${f.amt.toLocaleString()}원)</option>`).join('');
-
-            return `
-            <div class="custom-card edit-mode" style="border-left-color:#fff" data-id="${i.id}">
-                <div class="card-grid">
-                    <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId" onchange="onFixedLinkChange(this)">${fixedOptions}</select></div>
-
-                    <div><div class="label-mini">DATE</div><input type="date" class="form-control form-control-sm edit-input" data-field="date" value="${i.date}"></div>
-                    <div class="text-end"><div class="label-mini">TYPE</div>
-                        <select class="form-select form-select-sm edit-input" data-field="type">
-                            ${dropdownCache.trTypes.map(t => `<option ${t === i.type ? 'selected' : ''}>${t}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="card-full tr-row-wrap">
-                        <div class="tr-col">
-                            <div class="label-mini">FROM</div>
-                            <select class="form-select form-select-sm edit-input" data-field="fromAcc" onchange="updateLiveBalance(this, 'from')">
-                                ${dropdownCache.accounts.map(a => `<option ${a === i.fromAcc ? 'selected' : ''}>${a}</option>`).join('')}
-                            </select>
-                            <div class="live-balance-from live-balance-box"></div>
-                        </div>
-                        <div class="tr-amt-col"><div class="label-mini text-center">금액</div><input type="text" class="form-control form-control-sm edit-input text-center" data-field="amount" value="${i.amount ? Number(i.amount).toLocaleString() : ''}" inputmode="numeric" oninput="formatAmountInput(this)"></div>
-                        <div class="tr-col text-end">
-                            <div class="label-mini">TO</div>
-                            <select class="form-select form-select-sm edit-input" data-field="toAcc" onchange="updateLiveBalance(this, 'to')">
-                                ${dropdownCache.accounts.map(a => `<option ${a === i.toAcc ? 'selected' : ''}>${a}</option>`).join('')}
-                            </select>
-                            <div class="live-balance-to live-balance-box"></div>
-                        </div>
-                    </div>
-                    <div class="card-full"><div class="label-mini">MEMO</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}" placeholder="메모를 입력하세요"></div>
-                    <div class="card-full edit-btn-group">
-                        <button class="btn-edit-cancel" onclick="handleCancel('${i.id}', 'TR', this)">CANCEL</button>
-                        <button class="btn-edit-save" onclick="saveEdit(this,'TR','${i.id}')">SAVE</button>
-                    </div>
-                </div>
-            </div>`;
-        }
-
         async function saveEdit(btn, source, id) {
             const card = btn.closest('.custom-card');
             const inputs = card.querySelectorAll('.edit-input');
@@ -545,99 +347,91 @@
 
             try {
                 const amount = parseInt(String(formData.amount).replace(/[^0-9-]/g, "")) || 0;
-                
+                const commonData = { date: formData.date, amount: amount, note: formData.note };
+
                 if (source === 'TR' || source === 'MOVE') {
                     const from_code = dropdownCache.accounts_raw.find(a => a.name === formData.fromAcc)?.code;
                     const to_code = dropdownCache.accounts_raw.find(a => a.name === formData.toAcc)?.code;
                     const type_code = dropdownCache.trTypes_raw.find(s => s.value === formData.type)?.code || 'TX_TRANSFER';
-                    const payload = { date: formData.date, from_account_code: from_code, to_account_code: to_code, amount: amount, type_code: type_code, transfer_code: type_code, note: formData.note };
+                    
+                    // [중복 에러 해결 핵심] 타임스탬프를 이용한 고유 transfer_code 생성
+                    const uniqueTransferCode = `TR_${new Date().getTime()}_${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+                    const payload = { 
+                        ...commonData, 
+                        from_account_code: from_code, 
+                        to_account_code: to_code, 
+                        type_code: type_code, 
+                        // 신규일 때만 생성, 수정일 때는 필드 제외 (기존 키 유지)
+                        transfer_code: (id === 'NEW') ? uniqueTransferCode : undefined 
+                    };
+                    
+                    if(payload.transfer_code === undefined) delete payload.transfer_code;
+
                     const { error } = (id === 'NEW') ? await _supabase.from('transfer').insert([payload]) : await _supabase.from('transfer').update(payload).eq('id', id);
                     if (error) throw error;
                 } else {
                     const acc_code = dropdownCache.accounts_raw.find(a => a.name === formData.acc)?.code;
                     const cat_code = dropdownCache.categories_raw.find(c => c.name === formData.cat)?.code;
-                    const payload = { date: formData.date, amount: amount, account_code: acc_code, category_code: cat_code, type_code: source === 'IN' ? 'TX_INCOME' : (source === 'OUT' ? 'TX_EXPENSE' : (amount < 0 ? 'TX_EXPENSE' : 'TX_INCOME')), note: formData.note, fixed_link: formData.fixedLinkId || null };
+                    let typeCode = (source === 'IN' ? 'TX_INCOME' : 'TX_EXPENSE');
+                    const payload = { ...commonData, account_code: acc_code, category_code: cat_code, type_code: typeCode, fixed_link: formData.fixedLinkId || null };
                     const { error } = (id === 'NEW') ? await _supabase.from('transactions').insert([payload]) : await _supabase.from('transactions').update(payload).eq('id', id);
                     if (error) throw error;
                 }
                 if(id === 'NEW') btn.closest('[id$="-new-card-area"]').innerHTML = "";
                 refreshView();
-            } catch (err) { alert("저장 오류: " + err.message); btn.innerHTML = "SAVE"; btn.disabled = false; }
+            } catch (err) { 
+                console.error(err); 
+                alert("SAVE ERROR: " + (err.message || "스키마 미스매치")); 
+                btn.innerHTML = "SAVE"; btn.disabled = false; 
+            }
         }
 
         async function handleMainEdit(id, source, el, event) {
-            const container = el.closest('.ah-row') || el.closest('.swipe-container');
-            if (!container) return;
+            if (event.target.closest('.swipe-delete-bg')) return;
+            const container = el.closest('.swipe-container') || el;
             window.tempOriginalRowHtml = container.outerHTML;
             container.innerHTML = `<div class="loading-inline">LOADING...</div>`;
             try {
                 if (source === 'TX') {
-                    const { data, error } = await _supabase.from('transactions').select('*').eq('id', id).single();
-                    if (error) throw error;
+                    const { data } = await _supabase.from('transactions').select('*').eq('id', id).single();
                     data.acc = dropdownCache.accounts_raw.find(a => a.code === data.account_code)?.name;
                     data.cat = dropdownCache.categories_raw.find(c => c.code === data.category_code)?.name;
                     container.outerHTML = renderTxEditCard(data, data.type_code === 'TX_INCOME' ? 'IN' : 'OUT');
                 } else {
-                    const { data, error } = await _supabase.from('transfer').select('*').eq('id', id).single();
-                    if (error) throw error;
+                    const { data } = await _supabase.from('transfer').select('*').eq('id', id).single();
                     data.fromAcc = dropdownCache.accounts_raw.find(a => a.code === data.from_account_code)?.name;
                     data.toAcc = dropdownCache.accounts_raw.find(a => a.code === data.to_account_code)?.name;
                     data.type = dropdownCache.trTypes_raw.find(s => s.code === (data.transfer_code || data.type_code))?.value || '이체';
                     container.outerHTML = renderTrEditCard(data);
                 }
-            } catch (e) { alert("데이터 로드 실패: " + e.message); container.outerHTML = window.tempOriginalRowHtml; }
+            } catch (e) { container.outerHTML = window.tempOriginalRowHtml; }
         }
 
-        async function toggleAssetHistory(accCode, element, event) {
-            if (event.target.closest('.label-mini') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.closest('.ah-row')) return;
-            const expandBox = element.querySelector('.expand-container');
-            if (expandBox.classList.contains('expanded')) { expandBox.classList.remove('expanded'); return; }
-            const historyList = expandBox.querySelector('.history-list');
-            historyList.innerHTML = `<div class="loading-inline" style="padding:10px;">LOADING...</div>`;
-            expandBox.classList.add('expanded');
-            try {
-                const { data } = await _supabase.from('v_running_balance').select('*').eq('account_code', accCode).order('date', { ascending: false }).order('id', { ascending: false }).limit(30);
-                renderHistoryRows(data, historyList, 'asset');
-            } catch (e) { historyList.innerHTML = `<div class="text-center text-danger py-2">에러: ${e.message}</div>`; }
+        function renderTxEditCard(i, source) {
+            return `<div class="custom-card edit-mode" data-id="${i.id}"><div class="card-grid">
+                <div class="card-full"><div class="label-mini">FIXED LINK</div><select class="form-select form-select-sm edit-input" data-field="fixedLinkId" onchange="onFixedLinkChange(this)"><option value="">-- 없음 --</option>${dropdownCache.fixedList.map(f => `<option value="${f.id}" ${i.fixed_link === f.id ? 'selected' : ''}>${f.day}일 | ${f.name}</option>`).join('')}</select></div>
+                <div><div class="label-mini">DATE</div><input type="date" class="form-control form-control-sm edit-input" data-field="date" value="${i.date}"></div>
+                <div class="text-end"><div class="label-mini">CAT</div><select class="form-select form-select-sm edit-input" data-field="cat">${dropdownCache.categories.map(c => `<option ${c === i.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+                <div class="card-full"><div class="label-mini">ACC</div><select class="form-select form-select-sm edit-input" data-field="acc" onchange="updateLiveBalance(this)">${dropdownCache.accounts.map(a => `<option ${a === i.acc ? 'selected' : ''}>${a}</option>`).join('')}</select><div class="live-balance-main live-balance-box"></div></div>
+                <div class="card-full"><div class="label-mini">AMT</div><input type="text" class="form-control form-control-sm edit-input text-end" data-field="amount" value="${i.amount ? Number(i.amount).toLocaleString() : ''}" inputmode="numeric" oninput="formatAmountInput(this)"></div>
+                <div class="card-full"><div class="label-mini">NOTE</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}" placeholder="메모 입력"></div>
+                <div class="card-full edit-btn-group"><button class="btn-edit-cancel" onclick="handleCancel('${i.id}', '${source}', this)">CANCEL</button><button class="btn-edit-save" onclick="saveEdit(this,'${source}','${i.id}')">SAVE</button></div>
+            </div></div>`;
         }
 
-        async function toggleStatsHistory(catName, groupType, element) {
-            const expandBox = element.querySelector('.expand-container');
-            if (expandBox.classList.contains('expanded')) { expandBox.classList.remove('expanded'); return; }
-            const historyList = expandBox.querySelector('.history-list');
-            historyList.innerHTML = `<div class="loading-inline" style="padding:10px;">LOADING...</div>`;
-            expandBox.classList.add('expanded');
-            const targetMonth = document.getElementById('stats-month').value;
-            const catCode = dropdownCache.categories_raw.find(c => c.name === catName)?.code;
-            try {
-                let query = _supabase.from('v_running_balance').select('*');
-                if (groupType === 'asset') {
-                    let code = catName === '대출원금' ? 'TX_LOAN_REPAY' : (catName === '저축' ? 'TX_SAVINGS' : 'TX_SUBSCRIPTION');
-                    query = query.eq('type_code', code).gt('change_amount', 0);
-                } else query = query.eq('category_code', catCode);
-                const { data } = await query.gte('date', `${targetMonth}-01`).lt('date', getNextMonthDate(targetMonth)).order('date', { ascending: false }).order('id', { ascending: false });
-                renderHistoryRows(data, historyList, 'stats');
-            } catch (e) { historyList.innerHTML = `<div class="text-center text-danger py-2">에러: ${e.message}</div>`; }
-        }
-
-        function renderHistoryRows(data, container, mode) {
-            if (!data || data.length === 0) { container.innerHTML = `<div class="text-center opacity-50 py-3">내역이 없습니다.</div>`; return; }
-            container.innerHTML = data.map(h => {
-                const isMove = (h.category_code === 'TRANSFER' || h.type_code.startsWith('TX_LOAN') || h.type_code === 'TX_SAVINGS' || h.type_code === 'TX_SUBSCRIPTION');
-                const source = isMove ? 'MOVE' : 'TX';
-                const amt = (mode === 'asset') ? h.change_amount : h.amount;
-                const color = (amt < 0) ? 'var(--asset-pink)' : 'var(--pink-light)';
-                return `<div class="ah-row" onclick="handleMainEdit('${h.id}', '${source}', this, event)">
-                    <div class="ah-main"><div class="ah-date">${h.date.slice(5)}</div><div class="ah-note">${h.note || h.category_name || h.account_name}</div><div class="ah-amt" style="color: ${color}">${Math.round(amt).toLocaleString()}</div></div>
-                    <div class="ah-balance">${mode === 'stats' ? h.account_name + ' | ' : ''}잔액: ${Math.round(h.running_balance).toLocaleString()}원</div>
-                </div>`;
-            }).join('');
-        }
-
-        function getNextMonthDate(monthStr) {
-            let [y, m] = monthStr.split('-').map(Number);
-            m++; if(m > 12) { m = 1; y++; }
-            return `${y}-${String(m).padStart(2, '0')}-01`;
+        function renderTrEditCard(i) {
+            return `<div class="custom-card edit-mode" style="border-left-color:#fff" data-id="${i.id}"><div class="card-grid">
+                <div><div class="label-mini">DATE</div><input type="date" class="form-control form-control-sm edit-input" data-field="date" value="${i.date}"></div>
+                <div class="text-end"><div class="label-mini">TYPE</div><select class="form-select form-select-sm edit-input" data-field="type">${dropdownCache.trTypes.map(t => `<option ${t === i.type ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+                <div class="card-full tr-row-wrap">
+                    <div class="tr-col"><div class="label-mini">FROM</div><select class="form-select form-select-sm edit-input" data-field="fromAcc" onchange="updateLiveBalance(this, 'from')">${dropdownCache.accounts.map(a => `<option ${a === i.fromAcc ? 'selected' : ''}>${a}</option>`).join('')}</select><div class="live-balance-from live-balance-box"></div></div>
+                    <div class="tr-amt-col"><div class="label-mini">AMT</div><input type="text" class="form-control form-control-sm edit-input text-center" data-field="amount" value="${i.amount ? Number(i.amount).toLocaleString() : ''}" inputmode="numeric" oninput="formatAmountInput(this)"></div>
+                    <div class="tr-col text-end"><div class="label-mini">TO</div><select class="form-select form-select-sm edit-input" data-field="toAcc" onchange="updateLiveBalance(this, 'to')">${dropdownCache.accounts.map(a => `<option ${a === i.toAcc ? 'selected' : ''}>${a}</option>`).join('')}</select><div class="live-balance-to live-balance-box"></div></div>
+                </div>
+                <div class="card-full"><div class="label-mini">NOTE</div><input type="text" class="form-control form-control-sm edit-input" data-field="note" value="${i.note || ''}" placeholder="메모 입력"></div>
+                <div class="card-full edit-btn-group"><button class="btn-edit-cancel" onclick="handleCancel('${i.id}', 'TR', this)">CANCEL</button><button class="btn-edit-save" onclick="saveEdit(this,'TR','${i.id}')">SAVE</button></div>
+            </div></div>`;
         }
 
         async function loadHistoryTab(type, isSearch = false) {
@@ -646,19 +440,35 @@
             container.innerHTML = `<div class="loading-inline">...</div>`;
             const start = isSearch ? document.getElementById(pre + '-start').value : null;
             const end = isSearch ? document.getElementById(pre + '-end').value : null;
-            let query = (type === 'TR') ? _supabase.from('transfer').select('*, from:accounts!from_account_code(name), to:accounts!to_account_code(name)') : _supabase.from('v_running_balance').select('*').eq('type_code', type === 'IN' ? 'TX_INCOME' : 'TX_EXPENSE');
+            
+            let query;
+            if (type === 'TR') query = _supabase.from('transfer').select('*, from:accounts!from_account_code(name), to:accounts!to_account_code(name)');
+            else query = _supabase.from('v_running_balance').select('*').eq('type_code', type === 'IN' ? 'TX_INCOME' : 'TX_EXPENSE');
+            
             if (start) query = query.gte('date', start);
             if (end) query = query.lte('date', end);
+            
             const { data } = await query.order('date', { ascending: false }).order('id', { ascending: false }).limit(20);
-            if (document.getElementById(pre + '-total-area')) document.getElementById(pre + '-total-area').innerText = `TOTAL: ${(data || []).reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}원`;
+            if (document.getElementById(pre + '-total-area')) {
+                const total = (data || []).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                document.getElementById(pre + '-total-area').innerText = `TOTAL: ${total.toLocaleString()}원`;
+            }
             container.innerHTML = (data || []).map(i => type === 'TR' ? renderTrCardOriginal(i) : renderTxCardOriginal(i)).join('') || "<p class='text-center py-5 opacity-50'>No data</p>";
+        }
+
+        function renderTxCardOriginal(i) {
+            return `<div class="swipe-container"><div class="swipe-delete-bg">DEL</div><div class="custom-card swipe-target" data-id="${i.id}" data-source="TX" onclick="handleMainEdit('${i.id}', 'TX', this, event)" ontouchstart="handleSwipeStart(event)" ontouchmove="handleSwipeMove(event)" ontouchend="handleSwipeEnd(event)"><div class="card-grid"><div><div class="label-mini">DATE</div><div class="val-text">${i.date}</div></div><div class="text-end"><div class="label-mini">CAT</div><div class="val-text">${i.category_name || '기타'}</div></div><div class="card-full"><div class="label-mini">ACC</div><div class="val-text">${i.account_name}</div></div><div class="card-full text-end"><div class="val-amt">${Math.round(i.amount).toLocaleString()}원</div><div class="card-balance-badge">Bal: ${Math.round(i.running_balance).toLocaleString()}원</div></div><div class="card-full card-note-area">${i.note || '-'}</div></div></div></div>`;
+        }
+
+        function renderTrCardOriginal(i) {
+            return `<div class="swipe-container"><div class="swipe-delete-bg">DEL</div><div class="custom-card swipe-target" style="border-left-color:#fff" data-id="${i.id}" data-source="MOVE" onclick="handleMainEdit('${i.id}', 'MOVE', this, event)" ontouchstart="handleSwipeStart(event)" ontouchmove="handleSwipeMove(event)" ontouchend="handleSwipeEnd(event)"><div class="card-grid"><div><div class="label-mini">DATE</div><div class="val-text">${i.date}</div></div><div class="text-end"><div class="label-mini">TYPE</div><div class="val-text">이체</div></div><div class="card-full tr-row-wrap"><div class="tr-col"><div class="label-mini">FROM</div><div class="val-text">${i.from?.name || i.from_account_code}</div></div><div class="tr-amt-col"><div class="val-amt">${Math.round(i.amount).toLocaleString()}</div></div><div class="tr-col text-end"><div class="label-mini">TO</div><div class="val-text">${i.to?.name || i.to_account_code}</div></div></div><div class="card-full card-note-area">${i.note || '-'}</div></div></div></div>`;
         }
 
         async function loadAssets() {
             const list = document.getElementById('acc-balance-list');
             list.innerHTML = `<div class="loading-inline">...</div>`;
             const { data: assets } = await _supabase.from('v_account_balances').select(`*, loans!loans_account_code_fkey (*, linked_acc:accounts!linked_account_code (name))`).order('account_id');
-            const total = (assets || []).reduce((sum, acc) => sum + acc.current_balance, 0);
+            const total = (assets || []).reduce((sum, acc) => sum + Number(acc.current_balance || 0), 0);
             list.innerHTML = `<div class="text-end mb-4"><small class="label-mini">TOTAL ASSETS</small><h4 style="font-weight:900; font-size:2.1rem; color:var(--pink-light)">${Math.round(total).toLocaleString()}원</h4></div>` + (assets || []).map(acc => renderAssetCard(acc)).join('');
         }
 
@@ -682,9 +492,7 @@
                     <div class="stats-label">FIXED REMAINING</div>
                     <div class="stats-val">${Math.round(data.fixedStats.remainingAmt).toLocaleString()}원</div>
                     <div class="expand-container" id="fixed-list-wrapper">
-                        <div id="fixed-list-container" class="mt-3">
-                            ${(data.fixedStats.remainingItems || []).map(i => `<div class="fixed-chip">${i.day}일 | ${i.name}</div>`).join('') || "완료! 🌸"}
-                        </div>
+                        <div id="fixed-list-container" class="mt-3">${(data.fixedStats.remainingItems || []).map(i => `<div class="fixed-chip">${i.day}일 | ${i.name}</div>`).join('') || "완료! 🌸"}</div>
                     </div>
                 </div>`;
             const renderItems = (items, cls, groupType) => (items || []).map(c => `<div class="stat-item-card" onclick="toggleStatsHistory('${c.name}', '${groupType}', this)"><div class="d-flex justify-content-between mb-2"><span style="font-weight:800;">${c.name}</span><span style="color:var(--bp-pink); font-weight:900;">${c.percent}%</span></div><div class="progress mb-2"><div class="progress-bar ${cls}" style="width:${Math.min(c.percent, 100)}%"></div></div><div class="d-flex justify-content-between small opacity-75"><span>${Math.round(c.actual).toLocaleString()}원</span><span>예산 ${Math.round(c.budget).toLocaleString()}</span></div><div class="expand-container"><div class="history-list"></div></div></div>`).join('');
@@ -694,43 +502,68 @@
         }
 
         function renderAssetCard(acc) {
-            let borderColor = "#ffffff";
-            if (acc.account_type === "신용카드" || acc.account_type === "대출계좌") borderColor = "#e83e8c";
-            else if (acc.account_type === "현금" || acc.account_type === "은행계좌") borderColor = "var(--bp-pink)";
+            let borderColor = "var(--bp-pink)";
+            if (acc.account_type === "신용카드" || acc.account_type === "대출계좌") borderColor = "var(--asset-pink)";
             const loan = (acc.loans && acc.loans.length > 0) ? acc.loans[0] : null;
             let loanHtml = "";
             if (loan) {
-                const linkedAccName = (loan.linked_acc && Array.isArray(loan.linked_acc) && loan.linked_acc.length > 0) ? loan.linked_acc[0].name : (loan.linked_acc?.name || "연결 정보 없음");
-                loanHtml = `<div class="loan-detail-box"><div class="loan-item"><div class="loan-label">금리</div><div class="loan-val">${loan.interest_rate}%</div></div><div class="loan-item"><div class="loan-label">월 이자</div><div class="loan-val">${Math.round(loan.monthly_interest || 0).toLocaleString()}원</div></div><div class="loan-item"><div class="loan-label">납부일</div><div class="loan-val">${loan.payment_day}일</div></div><div class="loan-item"><div class="loan-label">만기일</div><div class="loan-val">${loan.expiry_date}</div></div><div style="grid-column: span 2; border-top: 1px solid rgba(232, 142, 163, 0.1); padding-top: 8px; margin-top: 5px;"><div class="loan-label">연결 계좌</div><div class="loan-val" style="color: var(--bp-pink); font-size: 0.8rem;">${linkedAccName}</div></div></div>`;
+                const linkedAccName = (loan.linked_acc && Array.isArray(loan.linked_acc) && loan.linked_acc.length > 0) ? loan.linked_acc[0].name : (loan.linked_acc?.name || "정보없음");
+                loanHtml = `<div class="loan-detail-box"><div class="loan-item"><div class="loan-label">금리</div><div class="loan-val">${loan.interest_rate}%</div></div><div class="loan-item"><div class="loan-label">월이자</div><div class="loan-val">${Math.round(loan.monthly_interest || 0).toLocaleString()}원</div></div><div class="loan-item"><div class="loan-label">납부일</div><div class="loan-val">${loan.payment_day}일</div></div><div class="loan-item"><div class="loan-label">만기일</div><div class="loan-val">${loan.expiry_date}</div></div><div style="grid-column: span 2; border-top: 1px solid rgba(232, 142, 163, 0.1); padding-top: 8px;"><div class="loan-label">연결계좌</div><div class="loan-val" style="color: var(--bp-pink);">${linkedAccName}</div></div></div>`;
             }
-            return `<div class="custom-card mb-3" style="border-left-color: ${borderColor}" onclick="toggleAssetHistory('${acc.account_code}', this, event)">
-                <div class="small opacity-50 mb-1">${acc.bank} | ${acc.account_type}</div>
-                <div class="acc-header">
-                    <div class="acc-main">${acc.account_name}</div>
-                    <div class="acc-amount">${Math.round(acc.current_balance).toLocaleString()}원</div>
-                </div>
-                ${loanHtml}
-                <div class="expand-container"><div class="history-list"></div></div>
-            </div>`;
+            return `<div class="custom-card mb-3" style="border-left-color: ${borderColor}" onclick="toggleAssetHistory('${acc.account_code}', this, event)"><div class="small opacity-50 mb-1">${acc.bank} | ${acc.account_type}</div><div class="acc-header"><div class="acc-main">${acc.account_name}</div><div class="acc-amount">${Math.round(acc.current_balance).toLocaleString()}원</div></div>${loanHtml}<div class="expand-container"><div class="history-list"></div></div></div>`;
         }
 
-        function renderTxCardOriginal(i) {
-            return `<div class="swipe-container"><div class="swipe-delete-bg">DEL</div><div class="custom-card swipe-target" data-id="${i.id}" data-source="TX" onclick="handleMainEdit('${i.id}', 'TX', this, event)" ontouchstart="handleSwipeStart(event)" ontouchmove="handleSwipeMove(event)" ontouchend="handleSwipeEnd(event)"><div class="card-grid"><div><div class="label-mini">DATE</div><div class="val-text">${i.date}</div></div><div class="text-end"><div class="label-mini">CATEGORY</div><div class="val-text">${i.category_name || '기타'}</div></div><div class="card-full"><div class="label-mini">ACCOUNT</div><div class="val-text">${i.account_name}</div></div><div class="card-full text-end"><div class="val-amt">${Math.round(i.amount).toLocaleString()}원</div><div class="card-balance-badge">Balance: ${Math.round(i.running_balance).toLocaleString()}원</div></div><div class="card-full card-note-area">${i.note || '-'}</div></div></div></div>`;
+        async function toggleAssetHistory(accCode, element, event) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.closest('.ah-row')) return;
+            const expandBox = element.querySelector('.expand-container');
+            if (expandBox.classList.contains('expanded')) { expandBox.classList.remove('expanded'); return; }
+            const historyList = expandBox.querySelector('.history-list');
+            historyList.innerHTML = `<div class="loading-inline" style="padding:10px;">...</div>`;
+            expandBox.classList.add('expanded');
+            try {
+                const { data } = await _supabase.from('v_running_balance').select('*').eq('account_code', accCode).order('date', { ascending: false }).order('id', { ascending: false }).limit(30);
+                renderHistoryRows(data, historyList, 'asset');
+            } catch (e) { historyList.innerHTML = `<div class="text-danger py-2">Error: ${e.message}</div>`; }
         }
 
-        function renderTrCardOriginal(i) {
-            return `<div class="swipe-container"><div class="swipe-delete-bg">DEL</div><div class="custom-card swipe-target" style="border-left-color:#fff" data-id="${i.id}" data-source="MOVE" onclick="handleMainEdit('${i.id}', 'MOVE', this, event)" ontouchstart="handleSwipeStart(event)" ontouchmove="handleSwipeMove(event)" ontouchend="handleSwipeEnd(event)"><div class="card-grid"><div><div class="label-mini">DATE</div><div class="val-text">${i.date}</div></div><div class="text-end"><div class="label-mini">TYPE</div><div class="val-text">이체</div></div><div class="card-full tr-row-wrap"><div class="tr-col"><div class="label-mini">FROM</div><div class="val-text">${i.from?.name || i.from_account_code}</div></div><div class="tr-amt-col"><div class="val-amt">${Math.round(i.amount).toLocaleString()}</div></div><div class="tr-col text-end"><div class="label-mini">TO</div><div class="val-text">${i.to?.name || i.to_account_code}</div></div></div><div class="card-full card-note-area">${i.note || '-'}</div></div></div></div>`;
+        async function toggleStatsHistory(catName, groupType, element) {
+            const expandBox = element.querySelector('.expand-container');
+            if (expandBox.classList.contains('expanded')) { expandBox.classList.remove('expanded'); return; }
+            const historyList = expandBox.querySelector('.history-list');
+            historyList.innerHTML = `<div class="loading-inline">...</div>`;
+            expandBox.classList.add('expanded');
+            const targetMonth = document.getElementById('stats-month').value;
+            const catCode = dropdownCache.categories_raw.find(c => c.name === catName)?.code;
+            try {
+                let query = _supabase.from('v_running_balance').select('*');
+                if (groupType === 'asset') {
+                    let code = catName === '대출원금' ? 'TX_LOAN_REPAY' : (catName === '저축' ? 'TX_SAVINGS' : 'TX_SUBSCRIPTION');
+                    query = query.eq('type_code', code).gt('change_amount', 0);
+                } else query = query.eq('category_code', catCode);
+                const { data } = await query.gte('date', `${targetMonth}-01`).lt('date', getNextMonthDate(targetMonth)).order('date', { ascending: false }).order('id', { ascending: false });
+                renderHistoryRows(data, historyList, 'stats');
+            } catch (e) { historyList.innerHTML = `<div class="text-danger py-2">Error: ${e.message}</div>`; }
         }
 
-        function addNewCard(type) {
-            const area = document.getElementById(type.toLowerCase() + '-new-card-area');
-            if(area.innerHTML !== "") return;
-            const dummy = { id: 'NEW', date: new Date().toISOString().split('T')[0], amount: 0, note: '', type: (type === 'TR' ? dropdownCache.trTypes[0] : (type==='IN'?'수입':'지출')) };
-            if (type === 'TR') { dummy.fromAcc = dropdownCache.accounts[0]; dummy.toAcc = dropdownCache.accounts[1]; area.innerHTML = renderTrEditCard(dummy); }
-            else { dummy.cat = dropdownCache.categories[0]; dummy.acc = dropdownCache.accounts[0]; area.innerHTML = renderTxEditCard(dummy, type); }
+        function renderHistoryRows(data, container, mode) {
+            if (!data || data.length === 0) { container.innerHTML = `<div class="text-center opacity-50 py-3">No data</div>`; return; }
+            container.innerHTML = data.map(h => {
+                const isMove = (h.category_code === 'TRANSFER' || h.type_code.startsWith('TX_LOAN') || h.type_code === 'TX_SAVINGS' || h.type_code === 'TX_SUBSCRIPTION');
+                const source = isMove ? 'MOVE' : 'TX';
+                const amt = (mode === 'asset') ? h.change_amount : h.amount;
+                const color = (amt < 0) ? 'var(--asset-pink)' : 'var(--pink-light)';
+                return `<div class="ah-row" onclick="handleMainEdit('${h.id}', '${source}', this, event)">
+                    <div class="ah-main"><div class="ah-date">${h.date.slice(5)}</div><div class="ah-note">${h.note || h.category_name || '-'}</div><div class="ah-amt" style="color: ${color}">${Math.round(amt).toLocaleString()}</div></div>
+                    <div class="ah-balance">${mode === 'stats' ? h.account_name + ' | ' : ''}잔액: ${Math.round(h.running_balance).toLocaleString()}원</div>
+                </div>`;
+            }).join('');
         }
+
+        function getNextMonthDate(monthStr) { let [y, m] = monthStr.split('-').map(Number); m++; if(m > 12) { m = 1; y++; } return `${y}-${String(m).padStart(2, '0')}-01`; }
+        function formatAmountInput(input) { let val = input.value.replace(/[^0-9]/g, ""); if (val) input.value = Number(val).toLocaleString(); else input.value = ""; }
+        function addNewCard(type) { const area = document.getElementById(type.toLowerCase() + '-new-card-area'); if(area.innerHTML !== "") return; const dummy = { id: 'NEW', date: new Date().toISOString().split('T')[0], amount: 0, note: '', type: (type === 'TR' ? dropdownCache.trTypes[0] : (type==='IN'?'수입':'지출')) }; if (type === 'TR') { dummy.fromAcc = dropdownCache.accounts[0]; dummy.toAcc = dropdownCache.accounts[1]; area.innerHTML = renderTrEditCard(dummy); } else { dummy.cat = dropdownCache.categories[0]; dummy.acc = dropdownCache.accounts[0]; area.innerHTML = renderTxEditCard(dummy, type); } }
         function handleCancel(id, source, btn) { if (id === 'NEW') btn.closest('[id$="-new-card-area"]').innerHTML = ""; else if (window.tempOriginalRowHtml) { btn.closest('.custom-card').outerHTML = window.tempOriginalRowHtml; window.tempOriginalRowHtml = ""; } else refreshView(); }
-        async function deleteEntry(source, id) { if (confirm("삭제하시겠습니까?")) { await _supabase.from((source === 'MOVE') ? 'transfer' : 'transactions').delete().eq('id', id); refreshView(); } }
+        async function deleteEntry(source, id) { if (confirm("삭제할까요?")) { await _supabase.from((source === 'MOVE') ? 'transfer' : 'transactions').delete().eq('id', id); refreshView(); } }
         function handleSwipeStart(e) { touchStartX = e.touches[0].clientX; }
         function handleSwipeMove(e) { const diff = touchStartX - e.touches[0].clientX; if (diff > 5 && diff < 100) e.currentTarget.style.transform = `translateX(-${diff}px)`; }
         function handleSwipeEnd(e) { const diff = touchStartX - e.changedTouches[0].clientX; if (diff > 60) deleteEntry(e.currentTarget.dataset.source, e.currentTarget.dataset.id); e.currentTarget.style.transform = `translateX(0px)`; }
@@ -741,7 +574,26 @@
             if(!accCode) return;
             const { data } = await _supabase.from('v_account_balances').select('current_balance').eq('account_code', accCode).single();
             const balanceArea = selectEl.closest('.custom-card').querySelector(suffix ? `.live-balance-${suffix}` : '.live-balance-main');
-            if (balanceArea) balanceArea.innerText = `Balance: ${Math.round(data?.current_balance || 0).toLocaleString()}원`;
+            if (balanceArea) balanceArea.innerText = `Bal: ${Math.round(data?.current_balance || 0).toLocaleString()}원`;
+        }
+        function onFixedLinkChange(selectEl) {
+            const card = selectEl.closest('.custom-card');
+            const fixedId = selectEl.value;
+            if (!fixedId) return;
+            const item = dropdownCache.fixedList.find(f => f.id === fixedId);
+            if (!item) return;
+            card.querySelector('[data-field="amount"]').value = Number(item.amt).toLocaleString();
+            const now = new Date();
+            card.querySelector('[data-field="date"]').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`;
+            const accName = dropdownCache.accounts_raw.find(a => a.code === item.acc)?.name;
+            if (accName) {
+                const accSelect = card.querySelector('[data-field="acc"]') || card.querySelector('[data-field="fromAcc"]');
+                accSelect.value = accName;
+                updateLiveBalance(accSelect, accSelect.dataset.field === 'fromAcc' ? 'from' : '');
+            }
+            const catName = dropdownCache.categories_raw.find(c => c.code === item.cat)?.name;
+            if (catName) card.querySelector('[data-field="cat"]').value = catName;
+            card.querySelector('[data-field="note"]').value = item.name;
         }
     </script>
 </body>
