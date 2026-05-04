@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>BLACKPINK WORKOUT v3.4.6</title>
+    <title>BLACKPINK WORKOUT v3.4.10</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -27,13 +27,13 @@
         .set-row { padding: 12px 20px; border-bottom: 1px solid #222; position: relative; transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); background: var(--bp-dark-gray); touch-action: pan-y; }
         .set-row.saved-row { background: #0a0a0a; opacity: 0.7; }
         .swiping-left { transform: translateX(-80px); }
-        .history-badge { font-size: 0.62rem; color: var(--text-dim); background: #1a1a1a; padding: 3px 7px; border-radius: 5px; display: inline-block; margin-bottom: 6px; border-left: 3px solid var(--deep-purple); }
+        .history-badge { font-size: 0.62rem; color: var(--text-dim); background: #1a1a1a; padding: 3px 7px; border-radius: 5px; display: inline-block; margin-bottom: 6px; border-left: 3px solid var(--deep-purple); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .quick-add-area { margin: 30px 15px 15px 15px; padding: 20px; border: 1px dashed var(--bp-pink); border-radius: 24px; background: rgba(232, 142, 163, 0.02); }
         .form-control, .form-select { background-color: #080808 !important; border: 1.5px solid #252525 !important; color: #fff !important; border-radius: 12px; font-weight: 600; font-size: 0.85rem; }
         .btn-pink { background: var(--bp-pink); color: #000; border: none; border-radius: 14px; font-weight: 900; padding: 10px; }
-        .btn-save { background: #222; color: #fff; border: none; border-radius: 10px; font-size: 0.72rem; width: 100%; height: 38px; font-weight: 800; transition: 0.2s; }
-        .btn-save.st-saved { background: #1a1a1a; color: #555; border: 1px solid #333; }
-        .btn-save.st-update { background: var(--bp-pink); color: #000; }
+        .btn-save { background: var(--neon-pink); color: #fff; border: none; border-radius: 10px; font-size: 0.72rem; width: 100%; height: 38px; font-weight: 900; transition: 0.2s; box-shadow: 0 0 10px rgba(255, 63, 126, 0.3); }
+        .btn-save.st-saved { background: #1a1a1a; color: #555; border: 1px solid #333; box-shadow: none; }
+        .btn-save.st-update { background: #fff; color: var(--neon-pink); font-weight: 900; border: 1px solid var(--neon-pink); }
         .border-chest { border-left: 5px solid #FF5E9B; }
         .border-back { border-left: 5px solid #FFBBDC; }
         .border-shoulder { border-left: 5px solid var(--neon-pink); }
@@ -145,25 +145,27 @@
 
         async function loadExerciseStats(exId) {
             const ex = EX_MASTER.find(e => e.id === exId);
-            const { data: logs } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', { ascending: false }).limit(20);
-            let best = null;
+            const { last, lastNote, best, bestDate, bestNote } = await getFullExerciseStats(exId);
+            
             const bDateEl = document.getElementById('quick-best-date');
             const bNoteEl = document.getElementById('quick-best-note');
-            if(logs?.length > 0) {
-                best = logs.reduce((p, c) => {
-                    const pV = (Number(p.weight||0)||Number(p.workout_time||0)) * (Number(p.reps||0)||Number(p.level||0));
-                    const cV = (Number(c.weight||0)||Number(c.workout_time||0)) * (Number(c.reps||0)||Number(c.level||0));
-                    return cV > pV ? c : p;
-                });
-                document.getElementById('quick-best').innerHTML = `<span style="color:var(--bp-pink)">BEST:</span> ${best.weight || best.workout_time}${ex.unit} x ${best.reps || best.level}`;
-                if(best.workout_date) { const d = new Date(best.workout_date); bDateEl.innerText = `📅 ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`; }
-                bNoteEl.innerText = best.note ? `💬 ${best.note}` : "";
-            } else { document.getElementById('quick-best').innerText = "BEST: -"; bDateEl.innerText = ""; bNoteEl.innerText = ""; }
-            const inputArea = document.getElementById('input-fields');
-            if(ex.unit === 'kg') {
-                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="3"></div><div class="col-4"><label class="label-small">무게</label><input type="number" id="q-val1" class="form-control" value="${best?.weight || 20}"></div><div class="col-4"><label class="label-small">횟수</label><input type="number" id="q-val2" class="form-control" value="${best?.reps || 12}"></div>`;
+            
+            if(best !== "-") {
+                document.getElementById('quick-best').innerHTML = `<span style="color:var(--bp-pink)">BEST:</span> ${best}`;
+                bDateEl.innerText = bestDate;
+                bNoteEl.innerText = bestNote ? `💬 ${bestNote}` : "";
             } else {
-                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="1"></div><div class="col-4"><label class="label-small">시간(m)</label><input type="number" id="q-val1" class="form-control" value="${best?.workout_time || 20}"></div><div class="col-4"><label class="label-small">Level</label><input type="number" id="q-val2" class="form-control" value="${best?.level || 5}"></div>`;
+                document.getElementById('quick-best').innerText = "BEST: -"; bDateEl.innerText = ""; bNoteEl.innerText = "";
+            }
+            
+            const inputArea = document.getElementById('input-fields');
+            const weightVal = parseFloat(best?.split('x')[0]) || 20;
+            const repsVal = parseInt(best?.split('x')[1]) || 12;
+
+            if(ex.unit === 'kg') {
+                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="3"></div><div class="col-4"><label class="label-small">무게</label><input type="number" id="q-val1" class="form-control" value="${weightVal}"></div><div class="col-4"><label class="label-small">횟수</label><input type="number" id="q-val2" class="form-control" value="${repsVal}"></div>`;
+            } else {
+                inputArea.innerHTML = `<div class="col-4"><label class="label-small">세트</label><input type="number" id="q-sets" class="form-control" value="1"></div><div class="col-4"><label class="label-small">시간(m)</label><input type="number" id="q-val1" class="form-control" value="${weightVal}"></div><div class="col-4"><label class="label-small">Level</label><input type="number" id="q-val2" class="form-control" value="${repsVal}"></div>`;
             }
         }
 
@@ -188,8 +190,7 @@
 
         async function handleRoutineChange(progName) {
             if(ACTIVE_SETS.length > 0 && !confirm("현재 진행 중인 리스트를 초기화할까요?")) {
-                document.getElementById('routine-select').value = "자유운동";
-                return;
+                document.getElementById('routine-select').value = "자유운동"; return;
             }
             await _db.schema('workout').from('active_workout').delete().neq('id', -1);
             if(progName === "자유운동") { await refreshActiveList(); return; }
@@ -213,17 +214,25 @@
         async function renderUI() {
             const container = document.getElementById('workout-list-area');
             container.innerHTML = '';
-            let currentEx = '';
-            let currentDiv = null;
-
+            let currentEx = ''; let currentDiv = null;
             for(const set of ACTIVE_SETS) {
                 if(set.display_name !== currentEx) {
                     currentEx = set.display_name;
                     currentDiv = document.createElement('div');
+                    currentDiv.id = `card-${set.display_name.replace(/\s+/g, '')}`;
                     currentDiv.className = `workout-card border-${getPartKey(set.body_part)}`;
+                    
+                    // [Fix] 운동 카드 헤더에 역대 최고 기록 표시
+                    const { best } = await getFullExerciseStats(set.exercise_id);
                     const header = document.createElement('div');
                     header.className = 'card-header';
-                    header.innerHTML = `<span class="fw-bold">${set.display_name}</span><small class="text-dim">${set.body_part}</small>`;
+                    header.innerHTML = `
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold">${set.display_name}</span>
+                            <small style="font-size:0.6rem; color:var(--bp-pink); font-weight:800;">🏆 BEST: ${best}</small>
+                        </div>
+                        <small class="text-dim">${set.body_part}</small>`;
+                    
                     header.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
                     header.addEventListener('touchend', (e) => {
                         const diff = touchStartX - e.changedTouches[0].clientX;
@@ -235,118 +244,131 @@
                             }, 100);
                         }
                     }, {passive: true});
-                    currentDiv.appendChild(header);
-                    container.appendChild(currentDiv);
+                    currentDiv.appendChild(header); container.appendChild(currentDiv);
                 }
-                const isSaved = set.status === 'SAVED';
-                const hist = await getSetHistory(set.exercise_id, set.set_no);
-                const row = document.createElement('div');
-                row.className = `set-row ${isSaved ? 'saved-row' : ''}`;
-                row.id = `row-${set.id}`;
-                row.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
-                row.addEventListener('touchend', (e) => {
-                    const diff = touchStartX - e.changedTouches[0].clientX;
-                    if (diff > 80) {
-                        row.classList.add('swiping-left');
-                        setTimeout(async () => {
-                            if(confirm("이 세트를 삭제할까요?")) { await deleteOneSet(set.id, set.display_name); } 
-                            else { row.classList.remove('swiping-left'); }
-                        }, 100);
-                    }
-                }, {passive: true});
-
-                row.innerHTML = `
-                    <div class="row align-items-center g-2">
-                        <div class="col-2 text-center fw-bold" style="color:var(--bp-pink)">${set.set_no}S</div>
-                        <div class="col-7">
-                            <div class="history-badge">⏮ Last: ${hist}</div>
-                            <div class="d-flex gap-1 mb-1">
-                                <input type="number" id="v1-${set.id}" class="form-control form-control-sm text-center" value="${set.unit==='kg' ? (set.weight||'') : (set.workout_time||'')}">
-                                <input type="number" id="v2-${set.id}" class="form-control form-control-sm text-center" value="${set.unit==='kg' ? (set.reps||'') : (set.level||'')}">
-                            </div>
-                            <input type="text" id="note-${set.id}" class="form-control form-control-sm" style="font-size:0.65rem;" placeholder="Note..." value="${set.note || ''}">
-                        </div>
-                        <div class="col-3"><button id="btn-${set.id}" class="btn-save ${isSaved ? 'st-saved' : ''}" onclick="saveOneSet(${set.id})">${isSaved ? 'SAVED' : 'SAVE'}</button></div>
-                    </div>`;
-                currentDiv.appendChild(row);
+                const row = await createSetRow(set); currentDiv.appendChild(row);
             }
             updateProgressBar();
         }
 
-        async function getSetHistory(exId, setNo) { 
-            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', {ascending:false}).limit(20); 
-            if(!data?.length) return "-"; 
-            const m = data.find(d => d.set_no === setNo) || data[0]; 
-            return `${m.weight || m.workout_time} x ${m.reps || m.level}`; 
+        async function createSetRow(set) {
+            const isSaved = set.status === 'SAVED';
+            // [Fix] 최근 해당 운동 종목의 동일 세트(set_no)의 기록 및 메모만 가져오기
+            const { last, lastNote } = await getFullExerciseStats(set.exercise_id, set.set_no);
+            const row = document.createElement('div');
+            row.className = `set-row ${isSaved ? 'saved-row' : ''}`; row.id = `row-${set.id}`;
+            
+            row.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
+            row.addEventListener('touchend', (e) => {
+                const diff = touchStartX - e.changedTouches[0].clientX;
+                if (diff > 80) {
+                    row.classList.add('swiping-left');
+                    setTimeout(async () => {
+                        if(confirm("이 세트를 삭제할까요?")) { await deleteOneSet(set.id, set.display_name); } 
+                        else { row.classList.remove('swiping-left'); }
+                    }, 100);
+                }
+            }, {passive: true});
+
+            const historyText = `⏮ Last(${set.set_no}S): ${last}${lastNote ? ' - ' + lastNote : ''}`;
+            row.innerHTML = `<div class="row align-items-center g-2"><div class="col-2 text-center fw-bold" style="color:var(--bp-pink)">${set.set_no}S</div><div class="col-7"><div class="history-badge" title="${historyText}">${historyText}</div><div class="d-flex gap-1 mb-1"><input type="number" id="v1-${set.id}" class="form-control form-control-sm text-center" value="${set.unit==='kg' ? (set.weight||'') : (set.workout_time||'')}" oninput="handleSetInput(${set.id})"><input type="number" id="v2-${set.id}" class="form-control form-control-sm text-center" value="${set.unit==='kg' ? (set.reps||'') : (set.level||'')}" oninput="handleSetInput(${set.id})"></div><input type="text" id="note-${set.id}" class="form-control form-control-sm" style="font-size:0.65rem;" placeholder="Note..." value="${set.note || ''}" oninput="handleSetInput(${set.id})"></div><div class="col-3"><button id="btn-${set.id}" class="btn-save ${isSaved ? 'st-saved' : ''}" onclick="saveOneSet(${set.id})">${isSaved ? 'SAVED' : 'SAVE'}</button></div></div>`;
+            return row;
+        }
+
+        function handleSetInput(id) {
+            const btn = document.getElementById(`btn-${id}`);
+            const set = ACTIVE_SETS.find(s => s.id === id);
+            if(set && set.status === 'SAVED') { btn.innerText = "UPDATE"; btn.className = "btn-save st-update"; }
+        }
+
+        // [New] 통합 통계 데이터 엔진 (BEST와 Last 전용)
+        async function getFullExerciseStats(exId, specificSetNo = null) {
+            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', {ascending:false}).limit(50);
+            if(!data?.length) return { last: "-", lastNote: "", best: "-", bestDate: "", bestNote: "" };
+
+            // 1. 역대 최고 기록 산출
+            const bestLog = data.reduce((p, c) => {
+                const pV = (Number(p.weight||0)||Number(p.workout_time||0)) * (Number(p.reps||0)||Number(p.level||0));
+                const cV = (Number(c.weight||0)||Number(c.workout_time||0)) * (Number(c.reps||0)||Number(c.level||0));
+                return cV > pV ? c : p;
+            });
+            const bestDate = new Date(bestLog.workout_date);
+            const bestDateStr = `📅 ${bestDate.getFullYear()}.${String(bestDate.getMonth()+1).padStart(2,'0')}.${String(bestDate.getDate()).padStart(2,'0')}`;
+
+            // 2. 특정 세트(set_no)에 대한 최근 기록 산출
+            let lastStr = "-";
+            let lastNote = "";
+            if(specificSetNo) {
+                const lastTargetSet = data.find(d => d.set_no === specificSetNo);
+                if(lastTargetSet) {
+                    lastStr = `${lastTargetSet.weight || lastTargetSet.workout_time}x${lastTargetSet.reps || lastTargetSet.level}`;
+                    lastNote = lastTargetSet.note || "";
+                }
+            } else {
+                lastStr = `${data[0].weight || data[0].workout_time}x${data[0].reps || data[0].level}`;
+                lastNote = data[0].note || "";
+            }
+
+            return {
+                last: lastStr,
+                lastNote: lastNote,
+                best: `${bestLog.weight || bestLog.workout_time}x${bestLog.reps || bestLog.level}`,
+                bestDate: bestDateStr,
+                bestNote: bestLog.note || ""
+            };
         }
 
         async function saveOneSet(id) {
             const v1 = Number(document.getElementById(`v1-${id}`).value);
             const v2 = Number(document.getElementById(`v2-${id}`).value);
             const note = document.getElementById(`note-${id}`).value;
-            const set = ACTIVE_SETS.find(s => s.id === id);
+            const setIdx = ACTIVE_SETS.findIndex(s => s.id === id); const set = ACTIVE_SETS[setIdx];
             const upData = { status: 'SAVED', note: note };
             if(set.unit === 'kg') { upData.weight = v1; upData.reps = v2; } else { upData.workout_time = v1; upData.level = v2; }
-            await _db.schema('workout').from('active_workout').update(upData).eq('id', id);
-            await refreshActiveList();
+            const { data, error } = await _db.schema('workout').from('active_workout').update(upData).eq('id', id).select().single();
+            if(!error) { ACTIVE_SETS[setIdx] = data; const oldRow = document.getElementById(`row-${id}`); const newRow = await createSetRow(data); oldRow.parentNode.replaceChild(newRow, oldRow); updateProgressBar(); }
         }
 
         async function deleteOneSet(id, displayName) {
             const { error: delError } = await _db.schema('workout').from('active_workout').delete().eq('id', id);
             if(delError) return alert("삭제 실패: " + delError.message);
             const { data: remaining } = await _db.schema('workout').from('active_workout').select('id').eq('display_name', displayName).order('id', { ascending: true });
-            if(remaining && remaining.length > 0) {
-                for(let i=0; i<remaining.length; i++) {
-                    await _db.schema('workout').from('active_workout').update({ set_no: i + 1 }).eq('id', remaining[i].id);
-                }
-            }
-            await refreshActiveList();
+            if(remaining && remaining.length > 0) { for(let i=0; i<remaining.length; i++) { await _db.schema('workout').from('active_workout').update({ set_no: i + 1 }).eq('id', remaining[i].id); } }
+            const { data: allActive } = await _db.schema('workout').from('active_workout').select('*').order('id');
+            ACTIVE_SETS = allActive || [];
+            const scrollPos = window.scrollY; await renderUI(); window.scrollTo(0, scrollPos);
         }
 
         async function deleteExerciseGroup(displayName) {
             const { error } = await _db.schema('workout').from('active_workout').delete().eq('display_name', displayName);
             if(error) alert("삭제 실패: " + error.message);
-            else await refreshActiveList();
+            else {
+                const card = document.getElementById(`card-${displayName.replace(/\s+/g, '')}`); if(card) card.remove();
+                ACTIVE_SETS = ACTIVE_SETS.filter(s => s.display_name !== displayName); updateProgressBar();
+            }
         }
 
         function updateProgressBar() {
             const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length;
             const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0;
-            document.getElementById('progress-fill').style.width = pct + '%';
-            document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} SAVED (${pct}%)`;
+            const fill = document.getElementById('progress-fill'); if(fill) fill.style.width = pct + '%';
+            const txt = document.getElementById('progress-text'); if(txt) txt.innerText = `${saved} / ${ACTIVE_SETS.length} SAVED (${pct}%)`;
         }
 
         function toggleFinishArea() {
-            const area = document.getElementById('session-input-area');
-            const isVisible = area.style.display === 'block';
-            area.style.display = isVisible ? 'none' : 'block';
-            if(!isVisible) window.scrollTo({ top: 0, behavior: 'smooth' });
+            const area = document.getElementById('session-input-area'); const isVisible = area.style.display === 'block';
+            area.style.display = isVisible ? 'none' : 'block'; if(!isVisible) window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // [Fix] 날짜 및 타임스탬프 계산 함수 (새벽 6시 로직 포함)
         function getSmartWorkoutDate() {
-            const now = new Date();
-            const hours = now.getHours();
-            let targetDate = new Date(now);
-
-            // 자정(0시) 이후 ~ 새벽 6시 이전일 경우 확인 팝업
+            const now = new Date(); const hours = now.getHours(); let targetDate = new Date(now);
             if (hours >= 0 && hours < 6) {
-                const yesterday = new Date(now);
-                yesterday.setDate(now.getDate() - 1);
-                const yStr = yesterday.toISOString().split('T')[0];
-                const tStr = now.toISOString().split('T')[0];
-                
+                const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+                const yStr = yesterday.toISOString().split('T')[0]; const tStr = now.toISOString().split('T')[0];
                 const useYesterday = confirm(`현재 새벽 시간입니다.\n운동 날짜를 [어제(${yStr})]로 기록할까요?\n(취소 클릭 시 오늘(${tStr})로 기록됩니다.)`);
-                if (useYesterday) {
-                    targetDate = yesterday;
-                }
+                if (useYesterday) { targetDate = yesterday; }
             }
-            
-            return {
-                dbTimestamp: targetDate.toISOString(), // Timestamptz용 ISO 문자열
-                idDateStr: targetDate.getFullYear() + String(targetDate.getMonth() + 1).padStart(2, '0') + String(targetDate.getDate()).padStart(2, '0'),
-                justDate: targetDate.toISOString().split('T')[0]
-            };
+            return { dbTimestamp: targetDate.toISOString(), idDateStr: targetDate.getFullYear() + String(targetDate.getMonth() + 1).padStart(2, '0') + String(targetDate.getDate()).padStart(2, '0'), justDate: targetDate.toISOString().split('T')[0] };
         }
 
         async function processFinalSave() {
@@ -354,46 +376,25 @@
             const tempSets = ACTIVE_SETS.filter(s => s.status === 'TEMP');
             if(tempSets.length > 0) return alert(`저장되지 않은 세트가 ${tempSets.length}개 있습니다. 모두 SAVE 해주세요.`);
             if(savedSets.length === 0) return alert("저장된 운동이 없습니다.");
-
             const duration = document.getElementById('s-duration').value || "0";
-            
-            // [Fix] 스마트 날짜 결정
-            const smartDate = getSmartWorkoutDate();
-            const dateStr = smartDate.idDateStr;
-
+            const smartDate = getSmartWorkoutDate(); const dateStr = smartDate.idDateStr;
             try {
                 const { data: existingSessions } = await _db.schema('workout').from('session_logs').select('id').like('id', `${dateStr}_%`);
                 const sessionCount = (existingSessions?.length || 0) + 1;
-                const hasWeight = savedSets.some(s => s.unit === 'kg');
-                const hasCardio = savedSets.some(s => s.unit === 'min');
+                const hasWeight = savedSets.some(s => s.unit === 'kg'); const hasCardio = savedSets.some(s => s.unit === 'min');
                 let typeCode = (hasWeight && hasCardio) ? "M" : (hasWeight ? "W" : "C");
                 const customSessionId = `${dateStr}_${typeCode}_S${sessionCount}`;
-
                 const { error: sErr } = await _db.schema('workout').from('session_logs').insert([{
-                    id: customSessionId, duration_min: parseInt(duration),
-                    active_calories: parseFloat(document.getElementById('s-active-cal').value || 0),
-                    total_calories: parseFloat(document.getElementById('s-total-cal').value || 0),
-                    avg_heart_rate: parseInt(document.getElementById('s-avg-hr').value || 0),
-                    min_heart_rate: parseInt(document.getElementById('s-min-hr').value || 0),
-                    max_heart_rate: parseInt(document.getElementById('s-max-hr').value || 0),
-                    workout_date: smartDate.justDate
+                    id: customSessionId, duration_min: parseInt(duration), active_calories: parseFloat(document.getElementById('s-active-cal').value || 0), total_calories: parseFloat(document.getElementById('s-total-cal').value || 0), avg_heart_rate: parseInt(document.getElementById('s-avg-hr').value || 0), min_heart_rate: parseInt(document.getElementById('s-min-hr').value || 0), max_heart_rate: parseInt(document.getElementById('s-max-hr').value || 0), workout_date: smartDate.justDate
                 }]);
                 if(sErr) throw sErr;
-
                 const logs = savedSets.map(s => ({
-                    exercise_id: s.exercise_id, display_name: s.display_name, body_part: s.body_part,
-                    set_no: s.set_no, weight: s.weight, reps: s.reps, workout_time: s.workout_time,
-                    level: s.level, unit: s.unit, note: s.note, program_id: s.program_id,
-                    week: s.week, day: s.day, status: 'FINAL', session_id: customSessionId,
-                    workout_date: smartDate.dbTimestamp // 한국 시간 기준 반영된 ISO String
+                    exercise_id: s.exercise_id, display_name: s.display_name, body_part: s.body_part, set_no: s.set_no, weight: s.weight, reps: s.reps, workout_time: s.workout_time, level: s.level, unit: s.unit, note: s.note, program_id: s.program_id, status: 'FINAL', session_id: customSessionId, workout_date: smartDate.dbTimestamp
                 }));
-
                 const { error: lErr } = await _db.schema('workout').from('logs').insert(logs);
                 if(lErr) throw lErr;
-
                 await _db.schema('workout').from('active_workout').delete().neq('id', -1);
-                alert(`운동 세션 [${customSessionId}] 저장 성공! 🔥`);
-                location.reload();
+                alert(`운동 세션 [${customSessionId}] 저장 성공! 🔥`); location.reload();
             } catch(e) { alert("저장 실패: " + e.message); }
         }
 
