@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>TED DIET ADMIN v3.7.2</title>
+    <title>TED DIET ADMIN v3.7.3</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -107,10 +107,13 @@
                             </div>
                             <input type="date" id="view-date" class="form-control form-control-sm bg-dark text-white border-secondary" onchange="loadTableData()">
                         </div>
+                        <div class="col-12 mt-2" id="add-row-area" style="display:none;">
+                            <button class="btn-outline w-100" onclick="createNewRow()">+ NEW PLAN (행 추가)</button>
+                        </div>
                     </div>
                     
                     <div id="update-btn-bar" class="update-bar">
-                        <button class="btn-action flex-fill" style="background:var(--neon-pink); color:#fff;" onclick="commitUpdate()">UPDATE (DB 저장)</button>
+                        <button class="btn-action flex-fill" style="background:var(--neon-pink); color:#fff;" onclick="commitUpdate()">SAVE TO DB (저장)</button>
                         <button class="btn-outline flex-fill" onclick="loadTableData()">되돌리기</button>
                     </div>
 
@@ -148,11 +151,13 @@
             { schema: 'diet', id: 'condition_logs', name: '6. 생활/컨디션', dateCol: 'log_date' },
             { schema: 'diet', id: 'strategies', name: '7. 다이어트 전략', dateCol: false },
             { schema: 'diet', id: 'snacks', name: '8. 간식 라이브러리', dateCol: false },
+            { schema: 'diet', id: 'project_schedules', name: '9. 프로젝트 스케줄', dateCol: 'plan_date', allowAdd: true }, // 신규 추가
             { schema: 'workout', id: 'session_logs', name: 'W1. 운동 세션 로그', dateCol: 'workout_date' },
             { schema: 'workout', id: 'logs', name: 'W2. 운동 상세 로그', dateCol: 'workout_date' }
         ];
 
         let PENDING_UPDATES = {}; 
+        let NEW_ROWS = []; // 클라이언트에서 생성된 새 행 저장
 
         window.onload = () => { document.getElementById('pw-input').focus(); };
 
@@ -186,29 +191,20 @@
         async function processExport(mode) {
             const checkedItems = Array.from(document.querySelectorAll('.chk-item:checked'));
             if(!checkedItems.length) return alert("추출할 테이블을 선택하세요.");
-            
             const startDate = document.getElementById('export-start-date').value;
             let endDate = document.getElementById('export-end-date').value;
-            
-            // [Fix] 종료 날짜 보정: 날짜만 있을 경우 해당 날짜의 끝(23:59:59)까지 포함하도록 수정
-            let adjustedEnd = endDate;
-            if (endDate) {
-                adjustedEnd = endDate + 'T23:59:59.999Z'; 
-            }
-            
+            let adjustedEnd = endDate ? endDate + 'T23:59:59.999Z' : endDate;
             let finalCsv = "";
             for(const item of checkedItems) {
                 const tableId = item.value;
                 const schemaName = item.getAttribute('data-schema');
                 const tInfo = DIET_TABLES.find(t => t.id === tableId && t.schema === schemaName);
-                
                 let query = _db.schema(schemaName).from(tableId).select('*');
                 if (tInfo.dateCol) {
                     if (startDate) query = query.gte(tInfo.dateCol, startDate);
-                    if (endDate) query = query.lte(tInfo.dateCol, adjustedEnd); // 보정된 날짜 적용
+                    if (endDate) query = query.lte(tInfo.dateCol, adjustedEnd);
                 }
-                
-                const { data, error } = await query.order('id', { ascending: true });
+                const { data } = await query.order('id', { ascending: true });
                 finalCsv += `[${tInfo.name}]\n`;
                 if(data?.length) {
                     const cols = Object.keys(data[0]);
@@ -247,6 +243,7 @@
             const tid = sel.value;
             const t = DIET_TABLES.find(x => x.id === tid && x.schema === sel.options[sel.selectedIndex].getAttribute('data-schema'));
             document.getElementById('date-filter-area').style.display = t.dateCol ? 'block' : 'none';
+            document.getElementById('add-row-area').style.display = t.allowAdd ? 'block' : 'none';
             document.getElementById('view-date').value = ""; 
             loadTableData();
         }
@@ -259,6 +256,7 @@
             const dateVal = document.getElementById('view-date').value;
             
             PENDING_UPDATES = {};
+            NEW_ROWS = [];
             document.getElementById('update-btn-bar').style.display = 'none';
 
             let query = _db.schema(schemaName).from(tid).select('*');
@@ -266,18 +264,69 @@
             
             const { data } = await query.order('id', { ascending: true });
             const area = document.getElementById('table-data-area');
-            if(!data || data.length === 0) { area.innerHTML = `<p class='text-center mt-5 opacity-50'>데이터가 없습니다.</p>`; return; }
+            if((!data || data.length === 0) && NEW_ROWS.length === 0) { 
+                area.innerHTML = `<p class='text-center mt-5 opacity-50'>데이터가 없습니다.</p>`; return; 
+            }
             
+            renderTable(data, schemaName, tid);
+        }
+
+        function renderTable(data, schema, table) {
+            if(!data || data.length === 0) return;
             const cols = Object.keys(data[0]);
-            let html = `<table><thead><tr>${cols.map(k => `<th class="${k==='id'?'sticky-col':''}">${k}</th>`).join('')}</tr></thead><tbody>`;
+            let html = `<table><thead><tr>${cols.map(k => `<th class="${k==='id'?'sticky-col':''}">${k}</th>`).join('')}</tr></thead><tbody id="main-tbody">`;
             data.forEach(row => {
-                html += `<tr>${cols.map(k => {
+                html += `<tr id="tr-${row.id}">${cols.map(k => {
                     const val = row[k] === null ? '' : row[k];
-                    const isEditable = (k !== 'id' && k !== 'created_at');
-                    return `<td class="${k==='id'?'sticky-col':''}" onclick="${isEditable ? `makeEditable(this, '${schemaName}', '${tid}', '${row.id}', '${k}')` : ''}">${val}</td>`;
+                    const isEditable = (k !== 'id' && k !== 'created_at' && k !== 'updated_at');
+                    return `<td class="${k==='id'?'sticky-col':''}" onclick="${isEditable ? `makeEditable(this, '${schema}', '${table}', '${row.id}', '${k}')` : ''}">${val}</td>`;
                 }).join('')}</tr>`;
             });
-            area.innerHTML = html + "</tbody></table>";
+            document.getElementById('table-data-area').innerHTML = html + "</tbody></table>";
+        }
+
+        // [New] 신규 행 생성 함수
+        function createNewRow() {
+            const tbody = document.getElementById('main-tbody');
+            if(!tbody) return;
+            
+            const tempId = 'NEW_' + Date.now();
+            const firstRow = tbody.querySelector('tr');
+            const cols = Array.from(document.querySelectorAll('th')).map(th => th.innerText);
+            
+            const newTr = document.createElement('tr');
+            newTr.id = `tr-${tempId}`;
+            newTr.style.background = "rgba(232, 142, 163, 0.05)";
+            
+            const schema = DIET_TABLES.find(t => t.id === document.getElementById('view-table-select').value).schema;
+            const table = document.getElementById('view-table-select').value;
+
+            cols.forEach(k => {
+                const td = document.createElement('td');
+                let defaultVal = '';
+                if(k === 'id') { td.innerText = 'NEW'; td.className = 'sticky-col'; }
+                else if(k.includes('confirm') || k.includes('possible')) defaultVal = 'false';
+                else if(k.includes('min') || k.includes('available')) defaultVal = '0';
+                else if(k === 'plan_date') defaultVal = new Date().toISOString().split('T')[0];
+                
+                if(k !== 'id' && k !== 'created_at' && k !== 'updated_at') {
+                    td.onclick = function() { makeEditable(this, schema, table, tempId, k); };
+                    td.innerText = defaultVal;
+                    td.style.color = 'var(--bp-pink)';
+                }
+                newTr.appendChild(td);
+            });
+
+            tbody.prepend(newTr);
+            PENDING_UPDATES[tempId] = { _schema: schema, _table: table, _isNew: true };
+            // 기본값 자동 등록
+            cols.forEach(k => {
+                if(k !== 'id' && k !== 'created_at' && k !== 'updated_at') {
+                    const cellVal = newTr.cells[cols.indexOf(k)].innerText;
+                    PENDING_UPDATES[tempId][k] = cellVal;
+                }
+            });
+            document.getElementById('update-btn-bar').style.display = 'flex';
         }
 
         function makeEditable(cell, schema, table, id, col) {
@@ -286,14 +335,14 @@
             cell.classList.add('editing-cell');
             let inputType = "text";
             if(col.includes('date') || col.includes('_at')) inputType = "date";
-            if(col.includes('weight') || col.includes('score') || col.includes('mass') || col.includes('calories') || col.includes('volume')) inputType = "number";
+            if(col.includes('min') || col.includes('available') || col.includes('weight') || col.includes('calories')) inputType = "number";
 
             cell.innerHTML = `<input type="${inputType}" value="${oldVal}" class="edit-input" onblur="finishEdit(this, '${schema}', '${table}', '${id}', '${col}', '${oldVal}')" onkeydown="if(event.key==='Enter') this.blur()">`;
             cell.querySelector('input').focus();
         }
 
         function finishEdit(input, schema, table, id, col, oldVal) {
-            const newVal = input.value;
+            let newVal = input.value;
             const cell = input.parentElement;
             cell.classList.remove('editing-cell');
             cell.innerText = newVal;
@@ -309,12 +358,17 @@
         async function commitUpdate() {
             try {
                 for(const id in PENDING_UPDATES) {
-                    const { _schema, _table, ...updateData } = PENDING_UPDATES[id];
-                    const { error } = await _db.schema(_schema).from(_table).update(updateData).eq('id', id);
-                    if(error) throw error;
+                    const { _schema, _table, _isNew, ...updateData } = PENDING_UPDATES[id];
+                    if(_isNew) {
+                        const { error } = await _db.schema(_schema).from(_table).insert([updateData]);
+                        if(error) throw error;
+                    } else {
+                        const { error } = await _db.schema(_schema).from(_table).update(updateData).eq('id', id);
+                        if(error) throw error;
+                    }
                 }
-                alert("업데이트 성공! 🥗"); loadTableData();
-            } catch(e) { alert("업데이트 중 오류 발생: " + e.message); }
+                alert("DB 연동 성공! 🔥"); loadTableData();
+            } catch(e) { alert("저장 실패: " + e.message); }
         }
 
         function detectImportInfo() {
@@ -339,7 +393,7 @@
                     const data = lines.slice(1).map(l => {
                         const cells = l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                         let obj = {};
-                        cols.forEach((c, idx) => { if(c !== 'id' && c !== 'created_at') {
+                        cols.forEach((c, idx) => { if(c !== 'id' && c !== 'created_at' && c !== 'updated_at') {
                             let v = cells[idx]?.trim() || null;
                             if(v && v.startsWith('"') && v.endsWith('"')) v = v.substring(1, v.length-1).replace(/""/g, '"');
                             obj[c] = v;
