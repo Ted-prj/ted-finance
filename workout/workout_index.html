@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>BLACKPINK WORKOUT v4.5.0</title>
+    <title>BLACKPINK WORKOUT v4.6.0</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -258,7 +258,7 @@
             location.reload();
         }
 
-        /* QUICK ADD & WORKOUT LOGIC (Static 4 Optimized) */
+        /* QUICK ADD & WORKOUT LOGIC (Optimized) */
         async function handleBuwiChange(buwi) {
             const { data } = await _db.schema('workout').from('logs').select('workout_date').eq('body_part', buwi).order('workout_date', {ascending:false}).limit(1);
             document.getElementById('buwi-last-date').innerText = data?.[0] ? `최근 운동: ${data[0].workout_date.split('T')[0]}` : '이력 없음';
@@ -266,6 +266,8 @@
             document.getElementById('q-ex').innerHTML = filtered.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
             if(filtered.length > 0) loadQuickExStats(filtered[0].id);
         }
+
+        /* Static 3.c 반영: 가장 최근 최고 기록 조회 */
         async function loadQuickExStats(exId) {
             const ex = EX_MASTER.find(e => e.id === exId);
             const { best, bestLog, recentConfigs } = await getDetailedStats(exId);
@@ -274,15 +276,21 @@
             document.getElementById('q-recent-configs').innerHTML = recentConfigs.map(c => `<span class="recent-config-item">${c}</span>`).join('');
             renderQuickInputFields(ex, bestLog);
         }
+
+        /* Static 3.d 반영: 최고 기록 기반 Default 세팅 */
         function renderQuickInputFields(ex, best) {
             let html = `<div class="col-3"><label class="label-small">세트수</label><input type="number" id="q-val-sets" class="form-control" value="3"></div>`;
             if(ex.use_equipment) html += makeQField('col-4', '기구', makeQSelect('q-val-equip', SETTINGS_CODE['EQUIPMENT'], best.equip));
             if(ex.use_grip) html += makeQField('col-4', '그립', makeQSelect('q-val-grip', SETTINGS_CODE['GRIP'], best.grip));
             if(ex.use_lying) html += makeQField('col-4', '라잉', makeQSelect('q-val-lying', SETTINGS_CODE['LYING'], best.lying));
-            if(ex.set_no) { html += makeQField('col-4', '무게(kg)', `<input type="number" id="q-val-weight" class="form-control" value="${best.weight||''}">`); html += makeQField('col-4', '횟수', `<input type="number" id="q-val-reps" class="form-control" value="${best.reps||''}">`); }
+            if(ex.set_no) { 
+                html += makeQField('col-4', '무게(kg)', `<input type="number" id="q-val-weight" class="form-control" value="${best.weight||''}">`); 
+                html += makeQField('col-4', '횟수', `<input type="number" id="q-val-reps" class="form-control" value="${best.reps||''}">`); 
+            }
             if(ex.exercise_time) html += makeQField('col-4', '시간(m)', `<input type="number" id="q-val-time" class="form-control" value="${best.time||''}">`);
             document.getElementById('q-inputs').innerHTML = html;
         }
+
         async function addWorkoutFromQuick() {
             const exId = document.getElementById('q-ex').value;
             const ex = EX_MASTER.find(e => e.id === exId);
@@ -299,27 +307,44 @@
             const { data } = await _db.schema('workout').from('active_workout').select('*').order('id');
             ACTIVE_SETS = data || [];
             const area = document.getElementById('workout-list-area');
-            area.innerHTML = ''; let lastExName = ''; let card = null;
+            area.innerHTML = ''; let lastExName = '';
             for(const s of ACTIVE_SETS) {
                 if(s.display_name !== lastExName) {
                     lastExName = s.display_name;
-                    card = document.createElement('div');
+                    const card = document.createElement('div');
                     card.id = `ex-card-${s.display_name.replace(/\s+/g, '-')}`;
                     card.className = `workout-card border-${getPartKey(s.body_part)}`;
-                    const { best } = await getDetailedStats(s.exercise_id);
-                    card.innerHTML = `<div class="card-header" onclick="swipeDeleteEx('${s.display_name}')"><div><b>${s.display_name}</b><br><small class="text-pink" style="font-size:0.6rem;">🏆 BEST: ${best}</small></div><small class="text-dim">${s.body_part}</small></div><div class="sets-container"></div>`;
                     area.appendChild(card);
+                    await renderSingleExerciseCard(s.display_name);
                 }
-                const setHtml = await renderSetRowHtml(s);
-                card.querySelector('.sets-container').insertAdjacentHTML('beforeend', setHtml);
-                addSetEventListeners(s.id);
             }
             updateProgress(); updateSupersetDropdown();
         }
 
+        /* Static 4.b 반영: 종목 단위 부분 리로드 */
+        async function renderSingleExerciseCard(exName) {
+            const exSets = ACTIVE_SETS.filter(s => s.display_name === exName).sort((a,b) => a.set_no - b.set_no);
+            if(exSets.length === 0) return;
+            
+            const card = document.getElementById(`ex-card-${exName.replace(/\s+/g, '-')}`);
+            const exId = exSets[0].exercise_id;
+            const { best } = await getDetailedStats(exId); // Static 4.a: 가장 최근 최고 기록 표시
+
+            let html = `<div class="card-header" onclick="swipeDeleteEx('${exName}')">
+                <div><b>${exName}</b><br><small class="text-pink" style="font-size:0.6rem;">🏆 BEST: ${best}</small></div>
+                <small class="text-dim">${exSets[0].body_part}</small>
+            </div><div class="sets-container">`;
+            
+            for(const s of exSets) { html += await renderSetRowHtml(s); }
+            html += `</div>`;
+            card.innerHTML = html;
+            
+            exSets.forEach(s => addSetEventListeners(s.id));
+        }
+
         async function renderSetRowHtml(s) {
             const ex = EX_MASTER.find(e => e.id === s.exercise_id);
-            const { lastStr, lastNote } = await getDetailedStats(s.exercise_id, s.set_no); // Static 4.b: 동일 세트 로그 표시
+            const { lastStr, lastNote } = await getDetailedStats(s.exercise_id, s.set_no);
             const isSaved = s.status === 'SAVED';
             let selects = '';
             if(ex.use_equipment) selects += makeRowSelect(s.id, 'equip', SETTINGS_CODE['EQUIPMENT'], s.equipment_type);
@@ -344,6 +369,7 @@
 
         function addSetEventListeners(id) {
             const row = document.getElementById(`set-row-${id}`);
+            if(!row) return;
             row.querySelectorAll(`.row-input-${id}, select`).forEach(el => {
                 el.addEventListener('input', () => {
                     const btn = document.getElementById(`save-btn-${id}`);
@@ -352,7 +378,6 @@
             });
         }
 
-        /* Static 4.b: 부분 리로드 및 세트 번호 재정렬 로직 */
         async function saveSetRow(id) {
             const btn = document.getElementById(`save-btn-${id}`);
             const s = ACTIVE_SETS.find(x => x.id === id);
@@ -370,36 +395,70 @@
         }
 
         function handleTouchStart(e) { touchStartX = e.touches[0].clientX; }
+        
         async function handleTouchEnd(e, id, exName) {
             if(touchStartX - e.changedTouches[0].clientX > 100) {
                 if(confirm("이 세트를 삭제하고 번호를 다시 매길까요?")) {
                     await _db.schema('workout').from('active_workout').delete().eq('id', id);
-                    
-                    // Static 4.b: 세트 삭제 후 번호 재지정
                     const remainingSets = ACTIVE_SETS.filter(s => s.display_name === exName && s.id !== id).sort((a,b) => a.id - b.id);
                     for(let i=0; i<remainingSets.length; i++) {
-                        const newNo = i + 1;
-                        await _db.schema('workout').from('active_workout').update({ set_no: newNo }).eq('id', remainingSets[i].id);
+                        await _db.schema('workout').from('active_workout').update({ set_no: i + 1 }).eq('id', remainingSets[i].id);
                     }
-                    await refreshActiveList();
+                    // Static 4.b 반영: 삭제 후 전체가 아닌 해당 종목 카드만 리로드
+                    const { data: updatedSets } = await _db.schema('workout').from('active_workout').select('*').order('id');
+                    ACTIVE_SETS = updatedSets || [];
+                    await renderSingleExerciseCard(exName);
+                    updateProgress();
                 }
             }
         }
 
-        async function swipeDeleteEx(name) { // Static 4.c: 종목 전체 삭제
-            if(confirm(`[${name}] 운동 전체를 삭제할까요?`)) { await _db.schema('workout').from('active_workout').delete().eq('display_name', name); await refreshActiveList(); } 
+        async function swipeDeleteEx(name) { 
+            if(confirm(`[${name}] 운동 전체를 삭제할까요?`)) { 
+                await _db.schema('workout').from('active_workout').delete().eq('display_name', name); 
+                const { data: updatedSets } = await _db.schema('workout').from('active_workout').select('*').order('id');
+                ACTIVE_SETS = updatedSets || [];
+                const card = document.getElementById(`ex-card-${name.replace(/\s+/g, '-')}`);
+                if(card) card.remove();
+                updateProgress(); 
+            } 
         }
 
-        /* HELPERS */
+        /* Static 3.c & 4.a 반영: 
+           가장 최근 날짜의 최고 기록(Volume 또는 시간 기준)을 우선 조회하도록 로직 고도화 
+        */
         async function getDetailedStats(exId, setNo = null) {
-            const query = _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL');
-            const { data } = await query.order('workout_date', {ascending:false});
+            const { data } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).eq('status', 'FINAL').order('workout_date', {ascending:false});
             if(!data || data.length === 0) return { best: '-', bestLog: {date:'-', note:''}, recentConfigs: [], lastStr: '-', lastNote: '' };
-            const bestLog = data.reduce((a, b) => ((a.weight*a.reps)||a.workout_time) > ((b.weight*b.reps)||b.workout_time) ? a : b);
-            const lastLog = setNo ? data.find(d => d.set_no === setNo) : data[0]; // Static 4.b: 동일 세트 기준 Last 기록
+            
+            // 볼륨(무게*횟수) 또는 시간 기준으로 가장 최근 최고 기록 추출
+            const bestLog = data.reduce((a, b) => {
+                const volA = (a.weight * a.reps) || a.workout_time;
+                const volB = (b.weight * b.reps) || b.workout_time;
+                // 볼륨이 크면 유지, 같으면 날짜가 더 최근인 것(data가 날짜 역순이므로 a가 더 최근임) 유지
+                return volA >= volB ? a : b;
+            });
+            
+            const lastLog = setNo ? data.find(d => d.set_no === setNo) : data[0];
             const format = (l) => l ? (l.weight ? `${l.weight}x${l.reps}` : `${l.workout_time}m`) : '-';
             const configs = [...new Set(data.slice(0,10).map(l => `${l.equipment_type||''}/${l.grip_type||''}`.replace(/\/$/,'')))].slice(0,3);
-            return { best: format(bestLog), bestLog: { date: bestLog.workout_date.split('T')[0], note: bestLog.note, weight: bestLog.weight, reps: bestLog.reps, time: bestLog.workout_time, equip: bestLog.equipment_type, grip: bestLog.grip_type, lying: bestLog.lying_type }, recentConfigs: configs, lastStr: format(lastLog), lastNote: lastLog?.note || '' };
+            
+            return { 
+                best: format(bestLog), 
+                bestLog: { 
+                    date: bestLog.workout_date.split('T')[0], 
+                    note: bestLog.note, 
+                    weight: bestLog.weight, 
+                    reps: bestLog.reps, 
+                    time: bestLog.workout_time, 
+                    equip: bestLog.equipment_type, 
+                    grip: bestLog.grip_type, 
+                    lying: bestLog.lying_type 
+                }, 
+                recentConfigs: configs, 
+                lastStr: format(lastLog), 
+                lastNote: lastLog?.note || '' 
+            };
         }
 
         function makeQField(col, label, input) { return `<div class="${col} mb-2"><label class="label-small">${label}</label>${input}</div>`; }
@@ -411,7 +470,7 @@
         function toggleFinishArea() { const a = document.getElementById('session-input-area'); a.style.display = a.style.display==='none'?'block':'none'; }
         
         async function processFinalSave() {
-            if(ACTIVE_SETS.some(s => s.status === 'TEMP')) return alert("저장되지 않은 세트가 있습니다!");
+            if(ACTIVE_SETS.some(s => s.status === 'TEMP')) return alert("저장되지 않은 세트가 있다는 메세지를 보여줌");
             const now = new Date(); const idStr = now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
             const { data: ex } = await _db.schema('workout').from('session_logs').select('id').like('id', `${idStr}_%`);
             const sId = `${idStr}_S${(ex?.length||0)+1}`;
