@@ -58,7 +58,8 @@
 
                 <hr style="border-color: #444;">
                 <div class="row g-2">
-                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="chk-time-on"><label class="label-small">운동 시간</label></div></div>
+                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="chk-time-on"><label class="label-small">전체 운동 시간</label></div></div>
+                    <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="chk-set-time-on"><label class="label-small">세트별 시간(sec)</label></div></div>
                     <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="chk-weight-on"><label class="label-small">무게</label></div></div>
                     <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="chk-sets-on"><label class="label-small">세트 수</label></div></div>
                     <div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="chk-reps-on"><label class="label-small">수행 횟수</label></div></div>
@@ -70,8 +71,8 @@
         </div>
 
         <div class="nav-tabs-custom">
-            <a href="workout.html" class="nav-item-custom active">WORKOUT</a>
-            <a href="manage.html" class="nav-item-custom">MANAGE</a>
+            <a href="workout.html" class="nav-item-custom">WORKOUT</a>
+            <a href="manage.html" class="nav-item-custom active">MANAGE</a>
             <a href="settings.html" class="nav-item-custom">SETTINGS</a>
             <a href="logs.html" class="nav-item-custom">LOGS</a>
         </div>
@@ -131,6 +132,7 @@
             setMgmtField('lying', e.lying_type, 'LYING', e.use_lying);
             
             document.getElementById('chk-time-on').checked = e.exercise_time;
+            document.getElementById('chk-set-time-on').checked = e.use_set_time || false; // v5.0.0 추가
             document.getElementById('chk-weight-on').checked = e.set_no;
             document.getElementById('chk-sets-on').checked = e.set_no;
             document.getElementById('chk-reps-on').checked = e.set_no;
@@ -157,13 +159,12 @@
             const grip = document.getElementById('chk-grip').checked ? await getFinalMgmtValue('mgmt-grip', 'grip-add-text', 'GRIP') : null;
             const lying = document.getElementById('chk-lying').checked ? await getFinalMgmtValue('mgmt-lying', 'lying-add-text', 'LYING') : null;
 
-            // v4.9.1 핵심 수정: 필수 정합성 컬럼 추가
             const payload = {
                 name: name,
                 exercise_type: type,
                 body_part: buwi,
-                body_part_category: 'BODY_PART', // FK 정합성을 위해 명시적 추가
-                unit: (type === '유산소' || name.includes('세션')) ? 'min' : 'kg', // 기본 단위 설정
+                body_part_category: 'BODY_PART',
+                unit: (type === '유산소' || name.includes('세션')) ? 'min' : 'kg',
                 weight_unit: 'kg',
                 use_equipment: document.getElementById('chk-equip').checked,
                 equipment_type: equip,
@@ -173,6 +174,7 @@
                 use_lying: document.getElementById('chk-lying').checked,
                 lying_type: lying,
                 exercise_time: document.getElementById('chk-time-on').checked,
+                use_set_time: document.getElementById('chk-set-time-on').checked, // v5.0.0 추가
                 set_no: (document.getElementById('chk-weight-on').checked || document.getElementById('chk-sets-on').checked || document.getElementById('chk-reps-on').checked),
                 machine_lv: document.getElementById('chk-machine-on').checked,
                 use_machine_speed: document.getElementById('chk-speed-on').checked,
@@ -189,7 +191,7 @@
             
             if(res.error) {
                 console.error(res.error);
-                alert("저장 실패: " + res.error.message); // 400 에러의 구체적 내용 출력
+                alert("저장 실패: " + res.error.message);
             } else {
                 alert("성공적으로 저장되었습니다.");
                 await init();
