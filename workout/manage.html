@@ -70,10 +70,10 @@
         </div>
 
         <div class="nav-tabs-custom">
-            <a href="workout.html" class="nav-item-custom [active_여부]">WORKOUT</a>
-            <a href="manage.html" class="nav-item-custom [active_여부]">MANAGE</a>
-            <a href="settings.html" class="nav-item-custom [active_여부]">SETTINGS</a>
-            <a href="#" class="nav-item-custom" style="opacity:0.3;">LOGS</a>
+            <a href="workout.html" class="nav-item-custom active">WORKOUT</a>
+            <a href="manage.html" class="nav-item-custom">MANAGE</a>
+            <a href="settings.html" class="nav-item-custom">SETTINGS</a>
+            <a href="logs.html" class="nav-item-custom">LOGS</a>
         </div>
     </div>
 
@@ -129,6 +129,7 @@
             setMgmtField('wtype', (e.weight_type !== '기타' ? e.weight_type : ''), 'WEIGHT_SUB_TYPE', (e.weight_type !== '기타'));
             setMgmtField('grip', e.grip_type, 'GRIP', e.use_grip);
             setMgmtField('lying', e.lying_type, 'LYING', e.use_lying);
+            
             document.getElementById('chk-time-on').checked = e.exercise_time;
             document.getElementById('chk-weight-on').checked = e.set_no;
             document.getElementById('chk-sets-on').checked = e.set_no;
@@ -147,7 +148,7 @@
         async function saveMasterData() {
             const id = document.getElementById('mgmt-ex-select').value;
             const name = document.getElementById('mgmt-name').value;
-            if(!name) return alert("종목명 필수");
+            if(!name) return alert("종목명을 입력하세요.");
 
             const type = await getFinalMgmtValue('mgmt-type', 'type-add-text', 'EXERCISE_TYPE');
             const buwi = document.getElementById('chk-buwi').checked ? await getFinalMgmtValue('mgmt-buwi', 'buwi-add-text', 'BODY_PART') : null;
@@ -156,34 +157,66 @@
             const grip = document.getElementById('chk-grip').checked ? await getFinalMgmtValue('mgmt-grip', 'grip-add-text', 'GRIP') : null;
             const lying = document.getElementById('chk-lying').checked ? await getFinalMgmtValue('mgmt-lying', 'lying-add-text', 'LYING') : null;
 
+            // v4.9.1 핵심 수정: 필수 정합성 컬럼 추가
             const payload = {
-                name: name, exercise_type: type, body_part: buwi,
-                use_equipment: document.getElementById('chk-equip').checked, equipment_type: equip, weight_type: wtype,
-                use_grip: document.getElementById('chk-grip').checked, grip_type: grip,
-                use_lying: document.getElementById('chk-lying').checked, lying_type: lying,
+                name: name,
+                exercise_type: type,
+                body_part: buwi,
+                body_part_category: 'BODY_PART', // FK 정합성을 위해 명시적 추가
+                unit: (type === '유산소' || name.includes('세션')) ? 'min' : 'kg', // 기본 단위 설정
+                weight_unit: 'kg',
+                use_equipment: document.getElementById('chk-equip').checked,
+                equipment_type: equip,
+                weight_type: wtype,
+                use_grip: document.getElementById('chk-grip').checked,
+                grip_type: grip,
+                use_lying: document.getElementById('chk-lying').checked,
+                lying_type: lying,
                 exercise_time: document.getElementById('chk-time-on').checked,
                 set_no: (document.getElementById('chk-weight-on').checked || document.getElementById('chk-sets-on').checked || document.getElementById('chk-reps-on').checked),
-                machine_lv: document.getElementById('chk-machine-on').checked, use_machine_speed: document.getElementById('chk-speed-on').checked
+                machine_lv: document.getElementById('chk-machine-on').checked,
+                use_machine_speed: document.getElementById('chk-speed-on').checked,
+                use_heart_rate: (type === '유산소')
             };
 
-            if(id) await _db.schema('workout').from('exercises').update(payload).eq('id', id);
-            else { payload.id = 'ex_' + Date.now(); await _db.schema('workout').from('exercises').insert([payload]); }
+            let res;
+            if(id) {
+                res = await _db.schema('workout').from('exercises').update(payload).eq('id', id);
+            } else {
+                payload.id = 'ex_' + Date.now();
+                res = await _db.schema('workout').from('exercises').insert([payload]);
+            }
             
-            alert("저장완료");
-            await init();
+            if(res.error) {
+                console.error(res.error);
+                alert("저장 실패: " + res.error.message); // 400 에러의 구체적 내용 출력
+            } else {
+                alert("성공적으로 저장되었습니다.");
+                await init();
+                resetMgmtTab();
+            }
         }
 
         async function getFinalMgmtValue(selId, textId, category) {
             const sel = document.getElementById(selId);
             if(sel.value === 'ADD') {
                 const newVal = document.getElementById(textId).value.trim();
-                await _db.schema('workout').from('settings').insert([{category, name: newVal}]);
+                if(!newVal) return null;
+                const { error } = await _db.schema('workout').from('settings').insert([{category, name: newVal}]);
+                if(error) console.error("Setting 추가 실패:", error);
                 return newVal;
             }
             return sel.value;
         }
 
-        function resetMgmtTab() { location.reload(); }
+        function resetMgmtTab() {
+            document.getElementById('mgmt-ex-select').value = "";
+            document.getElementById('mgmt-name').value = "";
+            document.querySelectorAll('.sub-config-area').forEach(a => a.style.display = 'none');
+            document.querySelectorAll('.input-add-text').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.form-check-input').forEach(c => c.checked = false);
+            initMgmtUI();
+        }
 
         init();
     </script>
