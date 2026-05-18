@@ -37,14 +37,13 @@
                         <i class="fa-solid fa-key me-1" style="color: var(--neon-pink);"></i> 시크릿 시그널 (숫자 4자리) 🤫
                     </label>
                     <input type="password" 
-                           class="form-control form-control-custom text-center fs-4 fw-bold" 
+                           class="form-control form-control-custom text-center fs-4 fw-bold password-box-princess" 
                            id="passwordInput" 
                            placeholder="••••" 
                            maxlength="4" 
                            inputmode="numeric" 
                            pattern="[0-9]*"
                            oninput="checkPasswordAutoLogin(this)"
-                           style="letter-spacing: 0.5rem; rgba(255,0,127,0.2);"
                            disabled>
                 </div>
 
@@ -62,6 +61,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // 중복 API 요청 방지용 잠금장치(Lock) 변수
+        let isProcessing = false;
+
         document.addEventListener("DOMContentLoaded", () => {
             loadMembers();
         });
@@ -99,25 +101,31 @@
             passInput.value = "";
             passInput.focus();
             document.getElementById("errorMessage").style.display = "none";
+            isProcessing = false; // 공주님 새로 고르면 락 해제
         }
 
-        // 패스워드 실시간 감시 (4자리 완료 시 즉시 실행)
+        // 패스워드 실시간 감시 (4자리 완료 시 벼락같이 실행)
         async function checkPasswordAutoLogin(input) {
             const memberName = document.getElementById("memberSelect").value;
-            const password = input.value;
+            const password = input.value.trim();
             const errorDiv = document.getElementById("errorMessage");
             
-            // 공주님을 먼저 안 고르고 치는 경우 가차없이 차단
             if (!memberName) {
                 showError("어머나! 어느 공주님이신지 먼저 선택하셔야죠?");
                 input.value = "";
                 return;
             }
 
+            // 이미 처리 중이면 상큼하게 무시한다
+            if (isProcessing) return;
+
             errorDiv.style.display = "none";
 
-            // 딱 4자리가 되는 순간 벼락같이 DB 검증 들어간다
+            // 딱 4자리가 되는 순간 문지기를 베어버린다
             if (password.length === 4) {
+                isProcessing = true; // 문 걸어 잠그기
+                input.blur(); // 모바일 키보드 레이아웃을 자동으로 닫아주는 핵심 이펙트!
+
                 try {
                     const { data, error } = await _db
                         .from('members')
@@ -128,18 +136,19 @@
                     if (error) throw error;
 
                     if (data && data.length > 0) {
-                        // 세션 굽고 냅다 다음 페이지로 튕겨버리기
                         localStorage.setItem("login_member", memberName);
                         window.location.href = "dashboard.html";
                     } else {
                         showError("시크릿 시그널이 올바르지 않사옵니다, 공주님! 🥀");
-                        input.value = ""; // 틀리면 싹 지우고 다시 치게 함
+                        input.value = ""; 
+                        isProcessing = false; // 인증 실패 시 다시 입력받을 수 있게 열기
                         input.focus();
                     }
                 } catch (err) {
                     console.error("로그인 에러:", err);
                     showError("서버 라운지에 일시적 문제가 발생했사옵니다.");
                     input.value = "";
+                    isProcessing = false;
                 }
             }
         }

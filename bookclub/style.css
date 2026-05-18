@@ -14,7 +14,7 @@
     --text-muted: #FFC0CB !important; /* 공주님들이 좋아할 러블리 핑크 화이트 */
 }
 
-/* 모바일 퍼스트 바디 스타일 */
+/* 기본 바디 스타일 */
 body {
     background-color: var(--bp-black);
     color: #FFFFFF !important;
@@ -58,7 +58,7 @@ body {
     border: 2px solid rgba(255, 0, 127, 0.25);
     border-radius: 16px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-    margin-bottom: 1.25rem; /* 카드 간 간격 격리 */
+    margin-bottom: 1.25rem;
     overflow: hidden;
 }
 
@@ -80,7 +80,7 @@ body {
 }
 
 .card-body-custom {
-    padding: 0.75rem; /* 모바일 공간 확보 */
+    padding: 0.75rem;
 }
 
 /* 모바일 전용 고대비 테이블 스타일 */
@@ -90,7 +90,6 @@ body {
     vertical-align: middle;
 }
 
-/* 헤더 가독성 절대 사수 */
 .table-custom thead th {
     background-color: rgba(255, 0, 127, 0.3) !important;
     color: #FFFFFF !important; 
@@ -101,27 +100,23 @@ body {
     text-shadow: 0 1px 3px #000000;
 }
 
-/* 바디 글자색 절대 흰색으로 박아버리기 */
 .table-custom tbody td {
     padding: 0.75rem 0.4rem !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     background-color: transparent !important;
-    color: #FFFFFF !important; /* 부트스트랩이 절대 못 건드리게 고정 */
+    color: #FFFFFF !important;
     font-size: 0.9rem;
 }
 
-/* 멤버 이름 핑크 포인트 */
 .table-custom tbody td.fw-bold {
     color: var(--bp-pink) !important;
     text-shadow: 0 0 2px rgba(255, 105, 180, 0.3);
 }
 
-/* 별점 아이콘용 */
 .text-warning {
     color: #FFD700 !important;
 }
 
-/* 공주님용 럭셔리 리치 뱃지 */
 .rating-badge {
     background: linear-gradient(135deg, var(--neon-pink), #FF1493);
     color: #FFFFFF !important;
@@ -143,14 +138,12 @@ body {
     font-size: 0.8rem;
 }
 
-/* 모바일 화면 안 터지게 막는 스크롤 패널 */
 .scrollable-panel {
     max-height: 350px;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* 스크롤바마저 핑크로 조진다 */
 .scrollable-panel::-webkit-scrollbar {
     width: 4px;
 }
@@ -159,7 +152,6 @@ body {
     border-radius: 2px;
 }
 
-/* 버튼 모바일 터치 최적화 */
 .btn-princess {
     background: linear-gradient(135deg, #2A081C, #121212);
     border: 1px solid var(--bp-pink);
@@ -168,10 +160,6 @@ body {
     padding: 0.4rem 0.75rem;
     border-radius: 8px;
     font-size: 0.85rem;
-}
-.btn-princess:active {
-    background: var(--neon-pink);
-    color: #FFFFFF !important;
 }
 
 /* =========================================================================
@@ -221,13 +209,12 @@ body {
     box-shadow: 0 0 8px rgba(255, 0, 127, 0.5) !important;
 }
 
-.btn-login {
-    background: linear-gradient(135deg, var(--neon-pink), var(--bp-pink));
-    color: #FFFFFF !important;
-    font-weight: 700;
-    padding: 0.7rem;
-    border: none;
-    border-radius: 10px;
-    width: 100%;
-    box-shadow: 0 4px 12px rgba(255, 0, 127, 0.4);
+/* 패스워드 입력창 커스텀 (VS Code 문법 에러 완벽 척살) */
+.password-box-princess {
+    letter-spacing: 0.5rem;
+    background-color: rgba(255, 0, 127, 0.05) !important;
+    border: 2px dashed rgba(255, 0, 127, 0.4) !important;
+}
+.password-box-princess:focus {
+    border: 2px solid var(--neon-pink) !important;
 }
