@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>독한녀들 Book Club - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>독한녀들 Book Club - Princess Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,29 +15,45 @@
     <div class="container login-container">
         <div class="login-box">
             <div class="brand-logo">
-                독한녀들 <span>♥</span>
+                독한녀들 <span style="color: var(--neon-pink);">👑</span>
             </div>
-            <p class="text-muted mb-4">비밀 아지트에 오신 것을 환영합니다</p>
+            <p class="text-muted mb-4">
+                <i class="fa-solid fa-sparkles" style="color: var(--bp-pink);"></i> 
+                러블리 공주님들의 시크릿 티타임 관문
+            </p>
 
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="mb-3 text-start">
-                    <label for="memberSelect" class="form-label" style="color: var(--bp-pink); font-weight: 500;">누구신가요?</label>
-                    <select class="form-select form-select-custom" id="memberSelect" required>
-                        <option value="" disabled selected>멤버를 선택하세요</option>
+            <form id="loginForm" onsubmit="event.preventDefault();">
+                <div class="mb-4 text-start">
+                    <label for="memberSelect" class="form-label" style="color: var(--bp-pink); font-weight: 700; font-size: 0.95rem;">
+                        <i class="fa-solid fa-heart-user me-1" style="color: var(--neon-pink);"></i> 오늘 수다 떨 공주님은 누구? 💕
+                    </label>
+                    <select class="form-select form-select-custom" id="memberSelect" onchange="focusPassword()" required>
+                        <option value="" disabled selected>공주님을 선택하셔요 🎀</option>
                     </select>
                 </div>
 
-                <div class="mb-4 text-start">
-                    <label for="passwordInput" class="form-label" style="color: var(--bp-pink); font-weight: 500;">비밀번호</label>
-                    <input type="password" class="form-control form-control-custom" id="passwordInput" placeholder="••••" required>
+                <div class="mb-3 text-start">
+                    <label for="passwordInput" class="form-label" style="color: var(--bp-pink); font-weight: 700; font-size: 0.95rem;">
+                        <i class="fa-solid fa-key me-1" style="color: var(--neon-pink);"></i> 시크릿 시그널 (숫자 4자리) 🤫
+                    </label>
+                    <input type="password" 
+                           class="form-control form-control-custom text-center fs-4 fw-bold" 
+                           id="passwordInput" 
+                           placeholder="••••" 
+                           maxlength="4" 
+                           inputmode="numeric" 
+                           pattern="[0-9]*"
+                           oninput="checkPasswordAutoLogin(this)"
+                           style="letter-spacing: 0.5rem; rgba(255,0,127,0.2);"
+                           disabled>
                 </div>
 
-                <button type="submit" class="btn btn-login">
-                    <i class="fa-solid fa-key me-2"></i>아지트 입장하기
-                </button>
-            </form>
+                <p id="infoMessage" class="small text-muted mt-2">
+                    ※ 공주님 선택 후 패스워드 4자리를 치면 자동 입장되옵니다.
+                </p>
 
-            <div id="errorMessage" class="text-danger mt-3 fw-medium" style="display: none;"></div>
+                <div id="errorMessage" class="text-danger mt-3 fw-bold small" style="display: none; text-shadow: 0 0 5px rgba(255,0,0,0.3);"></div>
+            </form>
         </div>
     </div>
 
@@ -46,12 +62,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // 페이지 로드 시 실시간 멤버 리스트 로드
         document.addEventListener("DOMContentLoaded", () => {
             loadMembers();
         });
 
-        // _db를 통해 멤버 이름 가져와서 드롭다운 채우기
+        // DB에서 공주님 리스트 로드
         async function loadMembers() {
             try {
                 const { data, error } = await _db
@@ -67,51 +82,71 @@
                     data.forEach(member => {
                         const option = document.createElement("option");
                         option.value = member.member_name;
-                        option.textContent = member.member_name;
+                        option.textContent = `👸 ${member.member_name} 공주님`;
                         selectEl.appendChild(option);
                     });
                 }
             } catch (err) {
-                console.error("멤버 로드 실패:", err);
-                showError("멤버 목록을 불러오지 못했습니다. DB 연결을 확인해줘.");
+                console.error("공주님 로드 실패:", err);
+                showError("공주님 명단을 불러오지 못했사옵니다. 연결을 확인하셔요.");
             }
         }
 
-        // 로그인 처리 함수
-        async function handleLogin(event) {
-            event.preventDefault();
-            
+        // 공주님 선택 시 패스워드 칸 활성화 및 포커스 이동
+        function focusPassword() {
+            const passInput = document.getElementById("passwordInput");
+            passInput.disabled = false;
+            passInput.value = "";
+            passInput.focus();
+            document.getElementById("errorMessage").style.display = "none";
+        }
+
+        // 패스워드 실시간 감시 (4자리 완료 시 즉시 실행)
+        async function checkPasswordAutoLogin(input) {
             const memberName = document.getElementById("memberSelect").value;
-            const password = document.getElementById("passwordInput").value;
+            const password = input.value;
             const errorDiv = document.getElementById("errorMessage");
             
+            // 공주님을 먼저 안 고르고 치는 경우 가차없이 차단
+            if (!memberName) {
+                showError("어머나! 어느 공주님이신지 먼저 선택하셔야죠?");
+                input.value = "";
+                return;
+            }
+
             errorDiv.style.display = "none";
 
-            try {
-                const { data, error } = await _db
-                    .from('members')
-                    .select('member_name, password')
-                    .eq('member_name', memberName)
-                    .eq('password', password);
+            // 딱 4자리가 되는 순간 벼락같이 DB 검증 들어간다
+            if (password.length === 4) {
+                try {
+                    const { data, error } = await _db
+                        .from('members')
+                        .select('member_name, password')
+                        .eq('member_name', memberName)
+                        .eq('password', password);
 
-                if (error) throw error;
+                    if (error) throw error;
 
-                if (data && data.length > 0) {
-                    // 로그인 성공 시 브라우저 로컬 스토리지에 세션 박기
-                    localStorage.setItem("login_member", memberName);
-                    window.location.href = "dashboard.html";
-                } else {
-                    showError("비밀번호가 일치하지 않는다, 선장.");
+                    if (data && data.length > 0) {
+                        // 세션 굽고 냅다 다음 페이지로 튕겨버리기
+                        localStorage.setItem("login_member", memberName);
+                        window.location.href = "dashboard.html";
+                    } else {
+                        showError("시크릿 시그널이 올바르지 않사옵니다, 공주님! 🥀");
+                        input.value = ""; // 틀리면 싹 지우고 다시 치게 함
+                        input.focus();
+                    }
+                } catch (err) {
+                    console.error("로그인 에러:", err);
+                    showError("서버 라운지에 일시적 문제가 발생했사옵니다.");
+                    input.value = "";
                 }
-            } catch (err) {
-                console.error("로그인 에러:", err);
-                showError("로그인 처리 중 오류가 발생했어.");
             }
         }
 
         function showError(message) {
             const errorDiv = document.getElementById("errorMessage");
-            errorDiv.textContent = message;
+            errorDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> ${message}`;
             errorDiv.style.display = "block";
         }
     </script>
