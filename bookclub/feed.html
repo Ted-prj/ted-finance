@@ -73,12 +73,10 @@
             document.getElementById("userBadge").textContent = `👸 ${getLoggedInMember()} 공주`;
             document.getElementById("myAvatarHeader").src = `images/${localStorage.getItem("login_member_image") || 'default_princess.png'}`;
             
-            // 공주님들 이미지 맵 동기화 후 정밀 필터링 피드 가동
             await syncMemberAvatars();
             loadTargetFeeds();
         });
 
-        // 공주님 초상화 이미지 동적 매핑용
         async function syncMemberAvatars() {
             try {
                 const { data } = await _db.from('members').select('member_name, image_name');
@@ -90,18 +88,14 @@
             } catch(e) { console.error("아바타 맵 동기화 실패:", e); }
         }
 
-        // 핵심 필터링 패치 마스터 함수
         async function loadTargetFeeds() {
             try {
-                // [1] 다음 달(M+1) 연월 문자열 연산
                 const now = new Date();
                 const future = new Date(now.getFullYear(), now.getMonth() + 1, 1);
                 const nextMonthStr = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, '0')}`;
                 
-                // 헤더 타이틀에 친절하게 타겟 월 박아주기
                 document.getElementById("recHeaderTitle").innerHTML = `<i class="fa-solid fa-paper-plane"></i> 💌 다음 달(${future.getMonth() + 1}월) 추천 릴레이 현황`;
 
-                // [2] 이번 달 진행 중인 최신 차수(M) 정보 추출
                 const { data: bookData } = await _db
                     .from('books')
                     .select('round_no, title')
@@ -111,10 +105,8 @@
                 const latestRound = bookData && bookData.length > 0 ? bookData[0].round_no : 0;
                 const latestTitle = bookData && bookData.length > 0 ? bookData[0].title : '지정 도서 없음';
 
-                // 헤더 타이틀에 이번 달 도서 정보 커스텀 바인딩
                 document.getElementById("reviewHeaderTitle").innerHTML = `<i class="fa-solid fa-comments"></i> ☕ 이번 달(${latestRound}회차) 공주님들의 생생 별점 & 총평`;
 
-                // 비동기로 두 개의 필터링 피드 리스트 동시 격리 호출
                 await Promise.all([
                     fetchFilteredRecommendations(nextMonthStr, future.getMonth() + 1),
                     fetchFilteredReviews(latestRound, latestTitle)
@@ -125,7 +117,7 @@
             }
         }
 
-        // 1. 오직 다음 달(M+1) 책 목록만 수집하여 그리기
+        // 1. 다음 달(M+1) 책 목록 패치 (별칭을 도려내고 작가 데이터로 전면 교체!)
         async function fetchFilteredRecommendations(targetMonth, nextMonthNum) {
             const container = document.getElementById("recommendationFeedList");
             try {
@@ -154,11 +146,11 @@
                             <img src="images/${avatarFile}" class="princess-avatar-mid" onerror="this.src='images/default_princess.png'">
                             <div class="w-100">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold text-pink" style="color: var(--bp-pink) !important;">👸 ${item.member_name} 공주님 픽</span>
+                                    <span class="fw-bold text-pink" style="color: var(--bp-pink) !important;">${item.member_name} 공주 픽</span>
                                     <span class="badge bg-secondary" style="font-size:0.7rem; background-color: rgba(255,0,127,0.15) !important; color: var(--bp-pink) !important;">${nextMonthNum}월 모임용</span>
                                 </div>
                                 <h6 class="text-white fw-bold mb-1"><i class="fa-solid fa-book-sparkles me-1 text-warning"></i> ${item.title}</h6>
-                                <p class="text-muted small m-0" style="font-size:0.8rem;">💕 별칭/키워드: ${item.nickname || '없음'}</p>
+                                <p class="text-muted small m-0" style="font-size:0.8rem; color: var(--text-muted) !important;">✍️ 작가: ${item.author || '미상'}</p>
                             </div>
                         </div>
                     `;
@@ -169,11 +161,10 @@
             }
         }
 
-        // 2. 오직 이번 달(최신 차수) 책에 달린 총평 및 별점만 수집하여 그리기
+        // 2. 이번 달(최신 차수) 책에 달린 총평 및 별점 패치
         async function fetchFilteredReviews(roundNo, bookTitle) {
             const container = document.getElementById("reviewFeedList");
             try {
-                // 특정 차수 데이터만 타겟 검색 수행
                 const { data, error } = await _db
                     .from('reviews_ratings')
                     .select('*')
@@ -192,7 +183,6 @@
                     return;
                 }
 
-                // 지정 도서 안내 바 상단에 슥 노출
                 container.innerHTML = `
                     <div class="small mb-3 px-2 py-1 rounded bg-black text-center border border-secondary text-truncate" style="color: var(--bp-pink) !important; border-color: rgba(255,105,180,0.2) !important;">
                         📖 이번 달 선정 도서 : <b>${bookTitle}</b>
