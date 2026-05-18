@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,12 +21,12 @@
                     <span class="badge bg-dark border border-pink text-pink p-2" id="userBadge" style="color: var(--bp-pink) !important;">공주님</span>
                 </div>
             </div>
-            <p class="text-muted mt-2 m-0">실시간 추천 릴레이와 공주님들의 생생한 한줄평 피드룸</p>
+            <p class="text-muted mt-2 m-0">오직 이번 달 티타임과 다음 달 픽만 실시간 큐레이션하옵니다 💖</p>
         </div>
 
         <div class="stat-card">
-            <div class="card-header-custom">
-                <i class="fa-solid fa-paper-plane"></i> 다음 달(M+1) 추천 릴레이 현황
+            <div class="card-header-custom" id="recHeaderTitle">
+                <i class="fa-solid fa-paper-plane"></i> 다음 달 추천 릴레이 현황
             </div>
             <div class="card-body-custom">
                 <div id="recommendationFeedList">
@@ -35,8 +36,8 @@
         </div>
 
         <div class="stat-card mt-3">
-            <div class="card-header-custom">
-                <i class="fa-solid fa-comments"></i> 공주님들의 생생 별점 & 총평 피드
+            <div class="card-header-custom" id="reviewHeaderTitle">
+                <i class="fa-solid fa-comments"></i> 이번 달 공주님들의 생생 별점 & 총평
             </div>
             <div class="card-body-custom">
                 <div id="reviewFeedList">
@@ -63,20 +64,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase_config.js"></script>
+    
     <script>
         checkAuth();
-        const memberImages = {}; // 전역 아바타 매핑 캐시
+        const memberImages = {}; 
 
         document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById("userBadge").textContent = `👸 ${getLoggedInMember()} 공주`;
             document.getElementById("myAvatarHeader").src = `images/${localStorage.getItem("login_member_image") || 'default_princess.png'}`;
             
-            // 피드 그리기 전 공주님들 이미지 정보 전량 선패칭
+            // 공주님들 이미지 맵 동기화 후 정밀 필터링 피드 가동
             await syncMemberAvatars();
-            loadRecommendationFeed();
-            loadReviewFeed();
+            loadTargetFeeds();
         });
 
+        // 공주님 초상화 이미지 동적 매핑용
         async function syncMemberAvatars() {
             try {
                 const { data } = await _db.from('members').select('member_name, image_name');
@@ -85,18 +87,63 @@
                         memberImages[m.member_name] = m.image_name;
                     });
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("아바타 맵 동기화 실패:", e); }
         }
 
-        async function loadRecommendationFeed() {
+        // 핵심 필터링 패치 마스터 함수
+        async function loadTargetFeeds() {
             try {
-                const { data, error } = await _db.from('recommendations').select('*').order('created_at', { ascending: false });
+                // [1] 다음 달(M+1) 연월 문자열 연산
+                const now = new Date();
+                const future = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                const nextMonthStr = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, '0')}`;
+                
+                // 헤더 타이틀에 친절하게 타겟 월 박아주기
+                document.getElementById("recHeaderTitle").innerHTML = `<i class="fa-solid fa-paper-plane"></i> 💌 다음 달(${future.getMonth() + 1}월) 추천 릴레이 현황`;
+
+                // [2] 이번 달 진행 중인 최신 차수(M) 정보 추출
+                const { data: bookData } = await _db
+                    .from('books')
+                    .select('round_no, title')
+                    .order('round_no', { ascending: false })
+                    .limit(1);
+                
+                const latestRound = bookData && bookData.length > 0 ? bookData[0].round_no : 0;
+                const latestTitle = bookData && bookData.length > 0 ? bookData[0].title : '지정 도서 없음';
+
+                // 헤더 타이틀에 이번 달 도서 정보 커스텀 바인딩
+                document.getElementById("reviewHeaderTitle").innerHTML = `<i class="fa-solid fa-comments"></i> ☕ 이번 달(${latestRound}회차) 공주님들의 생생 별점 & 총평`;
+
+                // 비동기로 두 개의 필터링 피드 리스트 동시 격리 호출
+                await Promise.all([
+                    fetchFilteredRecommendations(nextMonthStr, future.getMonth() + 1),
+                    fetchFilteredReviews(latestRound, latestTitle)
+                ]);
+
+            } catch (err) {
+                console.error("피드 가동 타겟팅 실패:", err);
+            }
+        }
+
+        // 1. 오직 다음 달(M+1) 책 목록만 수집하여 그리기
+        async function fetchFilteredRecommendations(targetMonth, nextMonthNum) {
+            const container = document.getElementById("recommendationFeedList");
+            try {
+                const { data, error } = await _db
+                    .from('recommendations')
+                    .select('*')
+                    .eq('target_month', targetMonth)
+                    .order('created_at', { ascending: false });
+
                 if (error) throw error;
-                const container = document.getElementById("recommendationFeedList");
                 container.innerHTML = "";
 
                 if (!data || data.length === 0) {
-                    container.innerHTML = `<p class="text-center text-muted m-0 py-3">등록된 추천 도서가 없사옵니다.</p>`;
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted small">
+                            <i class="fa-solid fa-envelope-open-text d-block fs-3 mb-2" style="color: rgba(255,105,180,0.3);"></i>
+                            아직 어떤 공주님도 ${nextMonthNum}월 추천작을 내지 않으셨사옵니다. <br>어서 첫 발자취를 남겨보셔요!
+                        </div>`;
                     return;
                 }
 
@@ -107,46 +154,65 @@
                             <img src="images/${avatarFile}" class="princess-avatar-mid" onerror="this.src='images/default_princess.png'">
                             <div class="w-100">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold text-pink" style="color: var(--bp-pink) !important;">${item.member_name} 공주 픽</span>
-                                    <span class="badge bg-secondary" style="font-size:0.7rem;">타겟: ${item.target_month}</span>
+                                    <span class="fw-bold text-pink" style="color: var(--bp-pink) !important;">👸 ${item.member_name} 공주님 픽</span>
+                                    <span class="badge bg-secondary" style="font-size:0.7rem; background-color: rgba(255,0,127,0.15) !important; color: var(--bp-pink) !important;">${nextMonthNum}월 모임용</span>
                                 </div>
                                 <h6 class="text-white fw-bold mb-1"><i class="fa-solid fa-book-sparkles me-1 text-warning"></i> ${item.title}</h6>
-                                <p class="text-muted small m-0">별칭: ${item.nickname || '없음'}</p>
+                                <p class="text-muted small m-0" style="font-size:0.8rem;">💕 별칭/키워드: ${item.nickname || '없음'}</p>
                             </div>
                         </div>
                     `;
                 });
             } catch (err) {
                 console.error(err);
-                container.innerHTML = `<p class="text-danger">피드 로드 실패</p>`;
+                container.innerHTML = `<p class="text-danger small">추천 릴레이 패치 실패</p>`;
             }
         }
 
-        async function loadReviewFeed() {
+        // 2. 오직 이번 달(최신 차수) 책에 달린 총평 및 별점만 수집하여 그리기
+        async function fetchFilteredReviews(roundNo, bookTitle) {
+            const container = document.getElementById("reviewFeedList");
             try {
-                const { data, error } = await _db.from('reviews_ratings').select('*').order('round_no', { ascending: false }).order('created_at', { ascending: false });
+                // 특정 차수 데이터만 타겟 검색 수행
+                const { data, error } = await _db
+                    .from('reviews_ratings')
+                    .select('*')
+                    .eq('round_no', roundNo)
+                    .order('created_at', { ascending: false });
+
                 if (error) throw error;
-                const container = document.getElementById("reviewFeedList");
                 container.innerHTML = "";
 
                 if (!data || data.length === 0) {
-                    container.innerHTML = `<p class="text-center text-muted m-0 py-3">남겨진 총평이 없사옵니다.</p>`;
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted small">
+                            <i class="fa-solid fa-mug-tea d-block fs-3 mb-2" style="color: rgba(255,105,180,0.3);"></i>
+                            이번 ${roundNo}회차 도서 <b>[${bookTitle}]</b>에 <br>달린 별점 총평이 아직 없사옵니다. 🎉
+                        </div>`;
                     return;
                 }
 
+                // 지정 도서 안내 바 상단에 슥 노출
+                container.innerHTML = `
+                    <div class="small mb-3 px-2 py-1 rounded bg-black text-center border border-secondary text-truncate" style="color: var(--bp-pink) !important; border-color: rgba(255,105,180,0.2) !important;">
+                        📖 이번 달 선정 도서 : <b>${bookTitle}</b>
+                    </div>
+                `;
+
                 data.forEach(item => {
                     const avatarFile = memberImages[item.member_name] || 'default_princess.png';
-                    const stars = item.rating ? '★'.repeat(Math.floor(item.rating)) + (item.rating % 1 !== 0 ? '½' : '') : '평가없음';
+                    const stars = item.rating ? '★'.repeat(Math.floor(item.rating)) + (item.rating % 1 !== 0 ? '½' : '') : '평가전';
+                    
                     container.innerHTML += `
                         <div class="p-3 mb-2 rounded-3 d-flex align-items-start" style="background-color: #22101A; border: 1px dashed rgba(255,105,180,0.2);">
                             <img src="images/${avatarFile}" class="princess-avatar-mid mt-1" onerror="this.src='images/default_princess.png'">
                             <div class="w-100">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold text-white"><span class="badge bg-danger me-1" style="background-color: var(--neon-pink) !important; font-size:0.75rem;">${item.round_no}회</span> ${item.member_name}</span>
-                                    <span class="text-warning fw-bold" style="color: var(--royal-gold) !important; font-size:0.85rem;">${stars}</span>
+                                    <span class="fw-bold text-white" style="font-size:0.9rem;">${item.member_name} 공주</span>
+                                    <span class="text-warning fw-bold" style="color: var(--royal-gold) !important; font-size:0.85rem;">${stars} <small style="color:#aaa;">(${item.rating || '0'})</small></span>
                                 </div>
-                                <p class="text-white m-0 small" style="line-height:1.4; word-break: break-all;">
-                                    "${item.review_text || '별점만 남겼사옵니다.'}"
+                                <p class="text-white m-0 small mt-1" style="line-height:1.4; word-break: break-all; font-weight:400;">
+                                    "${item.review_text || '아직 별점만 남겨두고 수다 장전 중이셔요.'}"
                                 </p>
                             </div>
                         </div>
@@ -154,7 +220,7 @@
                 });
             } catch (err) {
                 console.error(err);
-                container.innerHTML = `<p class="text-danger">리뷰 피드 로드 실패</p>`;
+                container.innerHTML = `<p class="text-danger small">총평 피드 패치 실패</p>`;
             }
         }
     </script>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>독한녀들 Book Club - Princess Gate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .gate-container {
+            min-height: 95vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .gate-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem 1.5rem;
+            background-color: var(--bp-card-bg);
+            border: 2px solid var(--neon-pink);
+            border-radius: 24px;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.25);
+            text-align: center;
+        }
+
+        .homework-item {
+            background-color: rgba(255, 0, 127, 0.08);
+            border: 1px dashed var(--bp-pink);
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: #FFFFFF !important;
+            font-size: 0.9rem;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .homework-item i {
+            color: var(--neon-pink) !important;
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+        }
+
+        .welcome-sparkle {
+            color: #FFD700;
+            font-size: 1.5rem;
+            animation: spinSparkle 2s infinite linear;
+            display: inline-block;
+        }
+
+        @keyframes spinSparkle {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container gate-container">
+        <div class="gate-box">
+            
+            <div class="mb-3">
+                <img id="gatePrincessAvatar" src="images/default_princess.png" class="princess-avatar-lg" style="width: 100px; height: 100px;" onerror="this.src='images/default_princess.png'">
+                <h4 class="mt-2 fw-bold text-white"><span id="gatePrincessName" style="color: var(--bp-pink);">공주</span>님 환영하옵니다 👑</h4>
+            </div>
+
+            <div id="gateLoading" class="py-4">
+                <div class="spinner-border spinner-pink" role="status"></div>
+                <p class="text-muted small mt-2">비밀 기록장 검문 중이옵니다...</p>
+            </div>
+
+            <div id="stageHomework" class="d-none">
+                <div class="alert alert-danger bg-dark text-danger border-0 small fw-bold mb-3" style="color: var(--neon-pink) !important;">
+                    <i class="fa-solid fa-rose-sharp fa-flower"></i> 아직 기록장에 남기지 않은 발자취가 있사옵니다! 🥀
+                </div>
+                
+                <div id="homeworkContainer" class="mb-4">
+                    </div>
+
+                <a href="write.html" class="btn btn-login mb-2">
+                    <i class="fa-solid fa-pen-line"></i> 비밀 기록장 작성하러 가기 💕
+                </a>
+                <a href="feed.html" class="btn btn- राजकुमारी text-muted small w-100 d-block mt-2" style="color: var(--text-muted) !important; text-decoration: underline !important;">
+                    나중에 쓸래요 (피드 입장하기)
+                </a>
+            </div>
+
+            <div id="stagePerfect" class="d-none py-2">
+                <div class="mb-3">
+                    <span class="welcome-sparkle">✨</span>
+                    <span class="welcome-sparkle">💖</span>
+                    <span class="welcome-sparkle">✨</span>
+                </div>
+                <h5 class="fw-bold" style="color: #39FF14; text-shadow: 0 0 8px rgba(57,255,20,0.4);">어머나! 완벽해라! 😍</h5>
+                <p class="text-white small px-2 mt-2 mb-4" style="line-height:1.6;">
+                    우리 고결한 <b><span id="perfectPrincessName" class="text-pink" style="color: var(--bp-pink);">공주</span>님</b>께선 모든 숙제를 우아하게 끝마치셨사옵니다! <br>밀린 발자취가 단 하나도 없사옵니다 최고요-★
+                </p>
+                <a href="feed.html" class="btn btn-login" style="background: linear-gradient(135deg, #00FF7F, #39FF14); box-shadow: 0 4px 15px rgba(57,255,20,0.3);">
+                    <i class="fa-solid fa-door-open me-1"></i> 시크릿 피드 라운지 입장하기
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 무인증 축출
+        checkAuth();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const memberName = getLoggedInMember();
+            const imageFile = localStorage.getItem("login_member_image") || 'default_princess.png';
+            
+            document.getElementById("gatePrincessName").textContent = memberName;
+            document.getElementById("gatePrincessAvatar").src = `images/${imageFile}`;
+
+            // 벼락검문 개시
+            scanPrincessHomework(memberName);
+        });
+
+        async function scanPrincessHomework(memberName) {
+            const loadingDiv = document.getElementById("gateLoading");
+            const hwStage = document.getElementById("stageHomework");
+            const perfectStage = document.getElementById("stagePerfect");
+            const hwContainer = document.getElementById("homeworkContainer");
+
+            try {
+                // 1. 타겟 다음 달(M+1) 매핑 계산
+                const now = new Date();
+                const future = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                const nextMonthStr = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, '0')}`;
+                
+                // 2. 현재 입력된 최신 토론 차수(M) 추출
+                const { data: bookData } = await _db
+                    .from('books')
+                    .select('round_no')
+                    .order('round_no', { ascending: false })
+                    .limit(1);
+                const latestRound = bookData && bookData.length > 0 ? bookData[0].round_no : 0;
+
+                // 3. (M+1)월 추천 도서 데이터 있나 스캔
+                const { data: recData } = await _db
+                    .from('recommendations')
+                    .select('id')
+                    .eq('member_name', memberName)
+                    .eq('target_month', nextMonthStr);
+                const hasRec = recData && recData.length > 0;
+
+                // 4. 이번 달(M) 최신 차수 리뷰 달았나 스캔
+                let hasReview = true;
+                if (latestRound > 0) {
+                    const { data: revData } = await _db
+                        .from('reviews_ratings')
+                        .select('id')
+                        .eq('member_name', memberName)
+                        .eq('round_no', latestRound)
+                        .not('review_text', 'is', null);
+                    hasReview = revData && revData.length > 0;
+                }
+
+                // 검사 완료 후 로딩 바 숨기기
+                loadingDiv.classList.add("d-none");
+
+                // 분기점 돌파
+                if (!hasRec || !hasReview) {
+                    // 미이행 숙제가 발견되었을 때
+                    hwContainer.innerHTML = "";
+                    if (!hasRec) {
+                        hwContainer.innerHTML += `
+                            <div class="homework-item">
+                                <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                                <div><b>다음 달(${future.getMonth() + 1}월) 추천 도서</b>를 아직 안 고르셨사옵니다!</div>
+                            </div>
+                        `;
+                    }
+                    if (!hasReview) {
+                        hwContainer.innerHTML += `
+                            <div class="homework-item">
+                                <i class="fa-solid fa-circle-exclamation text-danger"></i>
+                                <div><b>이번 달(${latestRound}회차) 토론 총평</b>을 작성하지 않으셨사옵니다!</div>
+                            </div>
+                        `;
+                    }
+                    hwStage.classList.remove("d-none");
+                } else {
+                    // 미인계마냥 완벽하게 다 제출했을 때 깨발랄 소환!
+                    document.getElementById("perfectPrincessName").textContent = memberName;
+                    perfectStage.classList.remove("d-none");
+                }
+
+            } catch (err) {
+                console.error("검문소 모듈 치명적 에러:", err);
+                loadingDiv.innerHTML = `<p class="text-danger small">안전 검문 실패. 관리자 선장에게 문의하셔요.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
