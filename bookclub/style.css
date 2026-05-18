@@ -1,171 +1,184 @@
 /* =========================================================================
-   [독한녀들 Book Club - 공통 블랙핑크 테마 CSS]
-   설명: 모든 탭 및 로그인 화면의 UI/UX 일관성과 시인성 개선을 위한 통합 스타일시트
+   [독한녀들 Book Club - 모바일 최적화 공주풍 스타일시트]
+   설명: 100% 모바일 퍼스트 대응, 글자 시인성 절대 강제 오버라이딩, 공주풍 네온 이펙트
    ========================================================================= */
 
 :root {
-    --bp-black: #0A0A0A;
-    --bp-dark-gray: #141414;
+    --bp-black: #070707;
+    --bp-dark-gray: #121212;
     --bp-card-bg: #1A1A1A;
     --bp-pink: #FF69B4;
     --neon-pink: #FF007F;
-    --text-white: #FFFFFF;
-    --text-muted: #FFD1E6; /* 어두운 배경에서도 확 튀는 부드러운 핑크빛 화이트로 변경 */
+    --royal-gold: #FFD700;
+    --text-white: #FFFFFF !important;
+    --text-muted: #FFC0CB !important; /* 공주님들이 좋아할 러블리 핑크 화이트 */
 }
 
-/* 기본 바디 스타일 */
+/* 모바일 퍼스트 바디 스타일 */
 body {
     background-color: var(--bp-black);
-    color: var(--text-white);
+    color: #FFFFFF !important;
     font-family: 'Noto Sans KR', sans-serif;
-    padding: 2rem 1rem;
+    padding: 1rem 0.5rem; /* 모바일 전용 좁은 패딩 */
+    font-size: 0.95rem;
 }
 
-/* 헤더 네온 이펙트 스타일 */
+/* 공주 라운지 상단 헤더 */
 .dashboard-header {
-    border-bottom: 2px solid var(--neon-pink);
-    padding-bottom: 1rem;
-    margin-bottom: 2.5rem;
-    text-shadow: 0 0 10px var(--neon-pink);
+    border-bottom: 2px dashed var(--neon-pink);
+    padding: 1rem 0.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(to bottom, #1E0A14, var(--bp-black));
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 0, 127, 0.15);
 }
 
 .dashboard-header h1 {
     font-weight: 900;
-    color: var(--text-white);
+    font-size: 1.6rem; /* 모바일 가독 사이즈 */
+    color: #FFFFFF !important;
+    text-shadow: 0 0 8px var(--neon-pink);
+    margin-bottom: 0.5rem;
 }
 
 .dashboard-header h1 span {
-    color: var(--bp-pink);
+    color: var(--bp-pink) !important;
 }
 
-/* 부트스트랩 기본 text-muted 강제 오버라이딩 (가독성 확보) */
+/* 부트스트랩 회색 글자 강제 처단 */
 .text-muted {
     color: var(--text-muted) !important;
-    font-weight: 400;
+    font-size: 0.85rem;
+    line-height: 1.4;
 }
 
-/* 공통 카드 컴포넌트 스타일 */
+/* 모바일 전용 원컬럼 카드 스타일 */
 .stat-card {
     background-color: var(--bp-card-bg);
-    border: 1px solid rgba(255, 0, 127, 0.2);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    height: 100%;
-}
-
-.stat-card:hover {
-    border-color: var(--neon-pink);
-    box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
-    transform: translateY(-3px);
+    border: 2px solid rgba(255, 0, 127, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    margin-bottom: 1.25rem; /* 카드 간 간격 격리 */
+    overflow: hidden;
 }
 
 .card-header-custom {
-    background: linear-gradient(45deg, var(--bp-dark-gray), #222);
-    border-bottom: 1px solid rgba(255, 69, 180, 0.3);
-    padding: 1rem;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--bp-pink);
+    background: linear-gradient(45deg, #250A18, #141414);
+    border-bottom: 2px solid rgba(255, 69, 180, 0.4);
+    padding: 0.85rem 1rem;
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--bp-pink) !important;
     display: flex;
     align-items: center;
-    border-top-left-radius: 11px;
-    border-top-right-radius: 11px;
+    text-shadow: 0 0 5px rgba(255, 105, 180, 0.5);
 }
 
 .card-header-custom i {
     margin-right: 0.5rem;
-    color: var(--neon-pink);
+    color: var(--neon-pink) !important;
 }
 
 .card-body-custom {
-    padding: 1.25rem;
+    padding: 0.75rem; /* 모바일 공간 확보 */
 }
 
-/* 공통 테이블 커스텀 스타일 (글자 시인성 전면 개조) */
+/* 모바일 전용 고대비 테이블 스타일 */
 .table-custom {
     width: 100%;
     margin-bottom: 0;
-    color: var(--text-white);
     vertical-align: middle;
 }
 
+/* 헤더 가독성 절대 사수 */
 .table-custom thead th {
-    background-color: rgba(255, 0, 127, 0.2) !important;
-    color: #FFFFFF !important; /* 헤더 글자를 순수 흰색으로 고정해서 눈에 박히게 함 */
-    font-weight: 700 !important;
+    background-color: rgba(255, 0, 127, 0.3) !important;
+    color: #FFFFFF !important; 
+    font-weight: 800 !important;
+    font-size: 0.85rem;
     border-bottom: 2px solid var(--neon-pink) !important;
-    padding: 0.75rem;
-    text-align: center;
-    text-shadow: 0 0 5px rgba(255, 0, 127, 0.5);
+    padding: 0.6rem 0.4rem !important;
+    text-shadow: 0 1px 3px #000000;
 }
 
+/* 바디 글자색 절대 흰색으로 박아버리기 */
 .table-custom tbody td {
-    padding: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background-color: transparent;
-    color: #FFFFFF;
+    padding: 0.75rem 0.4rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: transparent !important;
+    color: #FFFFFF !important; /* 부트스트랩이 절대 못 건드리게 고정 */
+    font-size: 0.9rem;
 }
 
-/* 테이블 내부 강조용 텍스트 */
+/* 멤버 이름 핑크 포인트 */
 .table-custom tbody td.fw-bold {
-    color: var(--bp-pink) !important; /* 멤버 이름 등은 핑크로 포인트 */
+    color: var(--bp-pink) !important;
+    text-shadow: 0 0 2px rgba(255, 105, 180, 0.3);
 }
 
-.table-custom tbody tr:hover {
-    background-color: rgba(255, 69, 180, 0.08);
+/* 별점 아이콘용 */
+.text-warning {
+    color: #FFD700 !important;
 }
 
-/* 뱃지 및 포인트 컴포넌트 */
+/* 공주님용 럭셔리 리치 뱃지 */
 .rating-badge {
-    background: linear-gradient(135deg, var(--neon-pink), var(--bp-pink));
-    color: var(--text-white);
-    font-weight: bold;
-    padding: 0.35rem 0.6rem;
-    border-radius: 6px;
-    box-shadow: 0 0 8px rgba(255, 0, 127, 0.5);
+    background: linear-gradient(135deg, var(--neon-pink), #FF1493);
+    color: #FFFFFF !important;
+    font-weight: 800;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    box-shadow: 0 0 6px var(--neon-pink);
+    font-size: 0.8rem;
     display: inline-block;
 }
 
 .count-badge {
-    background-color: var(--bp-dark-gray);
+    background-color: #000000;
     border: 1px solid var(--bp-pink);
-    color: var(--bp-pink);
-    font-weight: 600;
-    padding: 0.25rem 0.5rem;
-    border-radius: 20px;
+    color: var(--bp-pink) !important;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
 }
 
-/* 내부 스크롤바 커스텀 */
+/* 모바일 화면 안 터지게 막는 스크롤 패널 */
 .scrollable-panel {
-    max-height: 400px;
+    max-height: 350px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
 }
 
+/* 스크롤바마저 핑크로 조진다 */
 .scrollable-panel::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
-
-.scrollable-panel::-webkit-scrollbar-track {
-    background: var(--bp-black);
-}
-
 .scrollable-panel::-webkit-scrollbar-thumb {
-    background: var(--bp-dark-gray);
-    border-radius: 3px;
-    border: 1px solid var(--neon-pink);
+    background: var(--neon-pink);
+    border-radius: 2px;
 }
 
-/* 로딩 스피너 컬러 */
-.spinner-pink {
-    color: var(--neon-pink) !important;
+/* 버튼 모바일 터치 최적화 */
+.btn-princess {
+    background: linear-gradient(135deg, #2A081C, #121212);
+    border: 1px solid var(--bp-pink);
+    color: var(--bp-pink) !important;
+    font-weight: 700;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+.btn-princess:active {
+    background: var(--neon-pink);
+    color: #FFFFFF !important;
 }
 
 /* =========================================================================
-   [index.html - 로그인 화면 전용 스타일]
+   [index.html - 로그인 화면 전용 모바일 스타일]
    ========================================================================= */
 .login-container {
-    min-height: 100vh;
+    min-height: 90vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -173,37 +186,34 @@ body {
 
 .login-box {
     width: 100%;
-    max-width: 420px;
-    padding: 2.5rem;
+    max-width: 360px;
+    padding: 1.75rem;
     background-color: var(--bp-card-bg);
-    border: 2px solid rgba(255, 0, 127, 0.3);
-    border-radius: 16px;
-    box-shadow: 0 0 25px rgba(255, 0, 127, 0.2);
+    border: 2px solid var(--neon-pink);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.3);
     text-align: center;
 }
 
-.login-box:hover {
-    border-color: var(--neon-pink);
-    box-shadow: 0 0 35px rgba(255, 0, 127, 0.4);
-}
-
 .brand-logo {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     font-weight: 900;
-    margin-bottom: 0.5rem;
+    color: #FFFFFF !important;
     text-shadow: 0 0 10px var(--neon-pink);
+    margin-bottom: 0.25rem;
 }
 
 .brand-logo span {
-    color: var(--bp-pink);
+    color: var(--bp-pink) !important;
 }
 
 .form-select-custom, .form-control-custom {
     background-color: var(--bp-black) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: var(--text-white) !important;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 180, 0.3) !important;
+    color: #FFFFFF !important;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
 }
 
 .form-select-custom:focus, .form-control-custom:focus {
@@ -213,18 +223,11 @@ body {
 
 .btn-login {
     background: linear-gradient(135deg, var(--neon-pink), var(--bp-pink));
-    color: var(--text-white);
+    color: #FFFFFF !important;
     font-weight: 700;
-    padding: 0.75rem;
+    padding: 0.7rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     width: 100%;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 0, 127, 0.3);
-}
-
-.btn-login:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(255, 0, 127, 0.6);
-    color: var(--text-white);
+    box-shadow: 0 4px 12px rgba(255, 0, 127, 0.4);
 }
