@@ -14,6 +14,7 @@ const DIET_TABLES = [
     { schema: 'diet', id: 'strategies', name: '7. 다이어트 전략', dateCol: false },
     { schema: 'diet', id: 'snacks', name: '8. 간식 라이브러리', dateCol: false },
     { schema: 'diet', id: 'project_schedules', name: '9. 프로젝트 스케줄', dateCol: 'plan_date', allowAdd: true },
+    { schema: 'diet', id: 'sleep_logs', name: '10. 수면 로그', dateCol: 'log_date' },
     { schema: 'workout', id: 'session_logs', name: 'W1. 운동 세션 로그', dateCol: 'workout_date' },
     { schema: 'workout', id: 'logs', name: 'W2. 운동 상세 로그', dateCol: 'workout_date' },
     { schema: 'workout', id: 'active_workout', name: 'W3. 오늘의 운동', dateCol: 'created_at' }
@@ -21,3 +22,36 @@ const DIET_TABLES = [
 
 // 전역 업데이트 대기 데이터 객체
 let PENDING_UPDATES = {};
+
+/* ==========================================================================
+   🌐 전역 내비게이션 메뉴 마크업 동적 주입 자동화 엔진
+   ========================================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+    const navContainer = document.getElementById('global-nav');
+    if (!navContainer) return;
+
+    // 앞으로 메뉴가 추가/삭제되면 여기 배열만 편집하면 끝납니다!
+    const NAVIGATION_MENUS = [
+        { id: 'export', name: 'EXPORT', url: 'export.html' },
+        { id: 'view', name: 'VIEW & EDIT', url: 'view.html' },
+        { id: 'schedule', name: 'SCHEDULE', url: 'schedule.html' },
+        { id: 'import', name: 'IMPORT', url: 'import.html' }
+    ];
+
+    const activeId = navContainer.getAttribute('data-active');
+
+    const navHtml = `
+        <ul class="nav nav-pills nav-fill mb-3">
+            ${NAVIGATION_MENUS.map(menu => `
+                <li class="nav-item">
+                    <button class="nav-link ${menu.id === activeId ? 'active' : ''}" 
+                            onclick="window.location.href='${menu.url}'">
+                        ${menu.name}
+                    </button>
+                </li>
+            `).join('')}
+        </ul>
+    `;
+
+    navContainer.innerHTML = navHtml;
+});

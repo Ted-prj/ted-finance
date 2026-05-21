@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>TED DIET HUB - SCHEDULE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
+</head>
+<body>
+    <div class="container" id="main-app" style="display:block;">
+        <div class="text-center mb-3">
+            <h4 style="color:var(--bp-pink); font-weight:900; cursor:pointer;" onclick="location.reload()">TED DIET HUB</h4>
+        </div>
+        
+        <div id="global-nav" data-active="schedule"></div>
+
+        <div class="hub-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button class="btn-outline" onclick="changeMonth(-1)">◀ 이전 달</button>
+                <h5 id="calendar-month-title" class="fw-bold mb-0 text-white" style="letter-spacing: 1px;">2026년 05월</h5>
+                <button class="btn-outline" onclick="changeMonth(1)">다음 달 ▶</button>
+            </div>
+            
+            <div class="table-wrap">
+                <table class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th style="color: #ff4d4d;">일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th style="color: #4da6ff;">토</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendar-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold" id="modal-date-title" style="color: var(--bp-pink);">2026-05-00 스케줄 관리</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="form-plan-date">
+                    
+                    <div class="mb-3">
+                        <label class="form-label-custom">🏋️‍♂️ 운동 가능 시간 (분)</label>
+                        <input type="number" id="form-workout-min" class="form-control form-control-sm bg-dark text-white border-secondary" min="0" value="0">
+                    </div>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label-custom">🍷 음주 가능성</label>
+                            <select id="form-alcohol-possible" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                <option value="false">가능성 없음 (false)</option>
+                                <option value="true">음주 가능성 있음 (true)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-custom">🍾 음주 확정 여부</label>
+                            <select id="form-alcohol-confirmed" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                <option value="false">미확정 (false)</option>
+                                <option value="true">음주 확정 (true)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label class="form-label-custom">📝 일정 및 상세 전략 설명</label>
+                        <textarea id="form-description" class="form-control form-control-sm bg-dark text-white border-secondary" rows="3" placeholder="상세 일정을 입력하세요."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline px-3" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn-action px-4" onclick="saveSchedule()">스케줄 저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentDate = new Date();
+        if (currentDate.getFullYear() !== 2026) {
+            currentDate = new Date(2026, 4, 1);
+        }
+        
+        let scheduleMap = {};
+        const bModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+
+        window.onload = () => {
+            loadMonthData();
+        };
+
+        async function loadMonthData() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('calendar-month-title').innerText = `${year}년 ${String(month + 1).padStart(2, '0')}월`;
+            
+            const startIso = new Date(year, month, 1).toISOString().split('T')[0];
+            const endIso = new Date(year, month + 1, 0).toISOString().split('T')[0];
+            
+            try {
+                const { data, error } = await _db
+                    .schema('diet')
+                    .from('project_schedules')
+                    .select('*')
+                    .gte('plan_date', startIso)
+                    .lte('plan_date', endIso);
+                    
+                if (error) throw error;
+                
+                scheduleMap = {};
+                if (data) {
+                    data.forEach(row => {
+                        scheduleMap[row.plan_date] = row;
+                    });
+                }
+                
+                renderCalendar(year, month);
+            } catch (err) {
+                console.error("스케줄 데이터 로드 실패:", err);
+                alert("스케줄 로드 실패: " + err.message);
+            }
+        }
+
+        function renderCalendar(year, month) {
+            const tbody = document.getElementById('calendar-body');
+            tbody.innerHTML = "";
+            
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const prevLastDate = new Date(year, month, 0).getDate();
+            
+            let dateCounter = 1;
+            let nextMonthCounter = 1;
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            for (let i = 0; i < 6; i++) {
+                let tr = document.createElement('tr');
+                let hasCells = false;
+                
+                for (let j = 0; j < 7; j++) {
+                    let td = document.createElement('td');
+                    let targetYear = year;
+                    let targetMonth = month;
+                    let targetDateNum = 0;
+                    
+                    if (i === 0 && j < firstDayIndex) {
+                        td.classList.add('other-month');
+                        targetDateNum = prevLastDate - (firstDayIndex - j - 1);
+                        targetMonth--;
+                        if (targetMonth < 0) { targetMonth = 11; targetYear--; }
+                    } else if (dateCounter > lastDate) {
+                        td.classList.add('other-month');
+                        targetDateNum = nextMonthCounter++;
+                        targetMonth++;
+                        if (targetMonth > 11) { targetMonth = 0; targetYear++; }
+                    } else {
+                        targetDateNum = dateCounter++;
+                        hasCells = true;
+                    }
+                    
+                    const formattedDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(targetDateNum).padStart(2, '0')}`;
+                    td.setAttribute('data-date', formattedDate);
+                    
+                    if (formattedDate === todayStr) td.classList.add('today');
+                    
+                    let cellHtml = `<div class="cal-num">${targetDateNum}</div><div class="cal-badges">`;
+                    
+                    if (scheduleMap[formattedDate]) {
+                        const sch = scheduleMap[formattedDate];
+                        if (sch.workout_available_min > 0) {
+                            cellHtml += `<span class="cal-badge badge-workout">💪 ${sch.workout_available_min}분</span>`;
+                        }
+                        if (sch.is_alcohol_confirmed) {
+                            cellHtml += `<span class="cal-badge badge-alcohol-confirmed">🍾 음주확정</span>`;
+                        } else if (sch.is_alcohol_possible) {
+                            cellHtml += `<span class="cal-badge badge-alcohol-possible">🍷 음주가능</span>`;
+                        }
+                        if (sch.description) {
+                            cellHtml += `<span class="cal-desc text-truncate">${sch.description}</span>`;
+                        }
+                    }
+                    cellHtml += `</div>`;
+                    td.innerHTML = cellHtml;
+                    
+                    td.onclick = () => openScheduleForm(formattedDate);
+                    tr.appendChild(td);
+                }
+                
+                if (i > 0 && !hasCells) break;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function changeMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            loadMonthData();
+        }
+
+        function openScheduleForm(dateStr) {
+            document.getElementById('modal-date-title').innerText = `${dateStr} 스케줄 관리 🖤💖`;
+            document.getElementById('form-plan-date').value = dateStr;
+            
+            if (scheduleMap[dateStr]) {
+                const sch = scheduleMap[dateStr];
+                document.getElementById('form-workout-min').value = sch.workout_available_min || 0;
+                document.getElementById('form-alcohol-possible').value = String(sch.is_alcohol_possible);
+                document.getElementById('form-alcohol-confirmed').value = String(sch.is_alcohol_confirmed);
+                document.getElementById('form-description').value = sch.description || "";
+            } else {
+                document.getElementById('form-workout-min').value = 0;
+                document.getElementById('form-alcohol-possible').value = "false";
+                document.getElementById('form-alcohol-confirmed').value = "false";
+                document.getElementById('form-description').value = "";
+            }
+            bModal.show();
+        }
+
+        async function saveSchedule() {
+            const plan_date = document.getElementById('form-plan-date').value;
+            const workout_available_min = parseInt(document.getElementById('form-workout-min').value) || 0;
+            const is_alcohol_possible = document.getElementById('form-alcohol-possible').value === "true";
+            const is_alcohol_confirmed = document.getElementById('form-alcohol-confirmed').value === "true";
+            const description = document.getElementById('form-description').value.trim();
+            
+            const payload = {
+                plan_date,
+                workout_available_min,
+                is_alcohol_possible,
+                is_alcohol_confirmed,
+                description,
+                updated_at: new Date().toISOString()
+            };
+            
+            try {
+                if (scheduleMap[plan_date]) {
+                    const { error } = await _db
+                        .schema('diet')
+                        .from('project_schedules')
+                        .update(payload)
+                        .eq('plan_date', plan_date);
+                        
+                    if (error) throw error;
+                } else {
+                    const { error } = await _db
+                        .schema('diet')
+                        .from('project_schedules')
+                        .insert([payload]);
+                        
+                    if (error) throw error;
+                }
+                
+                bModal.hide();
+                alert("스케줄이 성공적으로 반영되었습니다! 🥗🔥");
+                loadMonthData();
+            } catch (err) {
+                console.error("스케줄 커밋 에러:", err);
+                alert("저장 실패: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

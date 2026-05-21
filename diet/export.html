@@ -15,17 +15,7 @@
             <h4 style="color:var(--bp-pink); font-weight:900; cursor:pointer;" onclick="location.reload()">TED DIET HUB</h4>
         </div>
         
-        <ul class="nav nav-pills nav-fill mb-3">
-            <li class="nav-item">
-                <button class="nav-link active">EXPORT</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" onclick="window.location.href='view.html'">VIEW & EDIT</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" onclick="window.location.href='import.html'">IMPORT</button>
-            </li>
-        </ul>
+        <div id="global-nav" data-active="export"></div>
 
         <div class="hub-card">
             <div class="d-flex justify-content-between mb-2">
@@ -141,7 +131,7 @@
             temp.setSelectionRange(0, 99999);
             document.execCommand('copy');
             document.body.removeChild(temp);
-            alert("쵸파용 요청 가이드가 복사되었습니다! 🦌💖");
+            alert("쵸파용 요청 가이드가 복사되었습니다! 🤖");
         }
     </script>
 </body>

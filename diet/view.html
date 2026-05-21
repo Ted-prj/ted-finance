@@ -15,17 +15,7 @@
             <h4 style="color:var(--bp-pink); font-weight:900; cursor:pointer;" onclick="location.reload()">TED DIET HUB</h4>
         </div>
         
-        <ul class="nav nav-pills nav-fill mb-3">
-            <li class="nav-item">
-                <button class="nav-link" onclick="window.location.href='export.html'">EXPORT</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link active">VIEW & EDIT</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" onclick="window.location.href='import.html'">IMPORT</button>
-            </li>
-        </ul>
+        <div id="global-nav" data-active="view"></div>
 
         <div class="hub-card">
             <div class="row g-2 mb-3 align-items-end">
@@ -53,8 +43,6 @@
     </div>
 
     <script>
-        // 중요: let PENDING_UPDATES 선언문을 제거하여 config.js와 충돌을 방지했습니다.
-
         window.onload = () => {
             document.getElementById('view-table-select').innerHTML = DIET_TABLES.map(t => 
                 `<option value="${t.id}" data-schema="${t.schema}">${t.name}</option>`
@@ -85,7 +73,7 @@
             const tInfo = DIET_TABLES.find(x => x.id === tid && x.schema === schemaName);
             const dateVal = document.getElementById('view-date').value;
             
-            window.PENDING_UPDATES = {}; // 공통 전역 객체 초기화
+            window.PENDING_UPDATES = {}; 
             document.getElementById('update-btn-bar').style.display = 'none';
             
             let query = _db.schema(schemaName).from(tid).select('*');

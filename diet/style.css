@@ -181,3 +181,102 @@ td {
     padding: 10px; 
     margin-top: 15px; 
 }
+
+/* ==========================================================================
+   📅 SCHEDULE 캘린더 및 모달 확장 CSS 섹션 (통합본)
+   ========================================================================== */
+.calendar-table {
+    table-layout: fixed;
+    width: 100%;
+    margin-bottom: 0;
+}
+.calendar-table th {
+    text-align: center;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    background: #111;
+}
+.calendar-table td {
+    height: 90px;
+    vertical-align: top;
+    padding: 6px;
+    background: #161616;
+    border: 1px solid #252525;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.calendar-table td:hover {
+    background: #222;
+    border-color: var(--bp-pink);
+}
+.calendar-table td.today {
+    border: 2px solid var(--neon-pink) !important;
+    background: #1c1416;
+}
+.calendar-table td.other-month {
+    opacity: 0.25;
+}
+.cal-num {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 4px;
+}
+.calendar-table td.other-month .cal-num {
+    color: #666;
+}
+.cal-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+.cal-badge {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+    display: inline-block;
+    width: 100%;
+}
+.badge-workout { 
+    background: rgba(255, 63, 126, 0.15); 
+    color: var(--neon-pink); 
+    border: 1px solid rgba(255, 63, 126, 0.3); 
+}
+.badge-alcohol-possible { 
+    background: rgba(232, 142, 163, 0.15); 
+    color: var(--bp-pink); 
+    border: 1px solid rgba(232, 142, 163, 0.3); 
+}
+.badge-alcohol-confirmed { 
+    background: #FF3F7E; 
+    color: #000; 
+}
+.cal-desc {
+    font-size: 0.6rem;
+    color: #888;
+    margin-top: 2px;
+    display: block;
+}
+.modal-content {
+    background: var(--bp-dark-gray);
+    border: 1px solid #333;
+    border-radius: 20px;
+    color: #fff;
+}
+.modal-header { 
+    border-bottom: 1px solid #222; 
+}
+.modal-footer { 
+    border-top: 1px solid #222; 
+}
+.form-label-custom { 
+    font-size: 0.75rem; 
+    color: var(--bp-pink); 
+    font-weight: 800; 
+    margin-bottom: 4px; 
+}
