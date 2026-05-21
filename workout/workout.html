@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>BLACKPINK WORKOUT v5.4.5</title>
+    <title>BLACKPINK WORKOUT v5.4.6</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,7 +19,6 @@
         .swipe-content { position: relative; z-index: 2; background: var(--bp-dark-gray); transition: 0.2s; }
         .ex-header-wrapper { border-radius: 18px 18px 0 0; }
         
-        /* 깜빡임 방지 및 앱 스타일 카드 추가/분리 애니메이션 레이어 */
         @keyframes fadeInCard {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
@@ -31,16 +30,24 @@
             animation: fadeInCard 0.35s cubic-bezier(0.4, 0, 0.2, 1) both; 
             will-change: transform, opacity;
         }
+
+        /* 고도화 명세 1: 운동 종목 순서 조정을 위한 블랙핑크 오버레이 팝업 스타일 */
+        .reorder-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 4000; align-items: center; justify-content: center; padding: 20px; }
+        .reorder-modal-card { background: #111; border: 2px solid #222; border-radius: 24px; padding: 20px; width: 100%; max-width: 450px; max-height: 80vh; display: flex; flex-direction: column; }
+        .reorder-list-scroll { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; }
     </style>
 </head>
 <body>
     <div class="container-app">
         <div class="sticky-top-group">
             <div class="d-flex justify-content-between align-items-center">
-                <select id="routine-select" class="form-select form-select-sm" style="width:145px;" onchange="handleRoutineChange(this.value)">
+                <select id="routine-select" class="form-select form-select-sm" style="width:115px;" onchange="handleRoutineChange(this.value)">
                     <option value="자유운동">자유운동</option>
                 </select>
-                <button type="button" class="btn-pink" style="padding:6px 18px; font-size:0.8rem;" onclick="toggleFinishArea()">운동 완료</button>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn-cancel" style="padding:6px 12px; font-size:0.75rem; border-radius:10px;" onclick="openReorderModal()">순서 변경</button>
+                    <button type="button" class="btn-pink" style="padding:6px 14px; font-size:0.75rem;" onclick="toggleFinishArea()">운동 완료</button>
+                </div>
             </div>
             <div id="progress-text" class="mt-3" style="font-size:0.7rem; font-weight:800; color:var(--bp-pink);">0 / 0 SAVED (0%)</div>
             <div class="progress-mini-bar"><div id="progress-fill" class="progress-fill"></div></div>
@@ -82,6 +89,18 @@
                 <select id="q-superset" class="form-select form-select-sm" onchange="handleSupersetSelectChange(this.value)"><option value="">N/A</option></select>
             </div>
             <button class="btn-pink w-100" onclick="addWorkoutFromQuick()">리스트 추가하기</button>
+        </div>
+
+        <div id="reorder-overlay" class="reorder-overlay">
+            <div class="reorder-modal-card">
+                <h5 class="fw-bold mb-1" style="color:var(--bp-pink);">🔄 운동 순서 변경</h5>
+                <p class="text-secondary mb-3" style="font-size:0.7rem;">🔼/🔽 버튼을 눌러 종목 순서를 변경하세요.</p>
+                <div id="reorder-list-container" class="reorder-list-scroll"></div>
+                <div class="d-flex gap-2">
+                    <button class="btn-pink w-100 py-2 fw-bold" onclick="saveNewOrder()">순서 저장</button>
+                    <button class="btn btn-outline-light w-100 py-2" onclick="closeReorderModal()">취소</button>
+                </div>
+            </div>
         </div>
 
         <div class="nav-tabs-custom">
@@ -372,7 +391,6 @@
 
         async function renderSetRowHtml(s, isSuperset) {
             const ex = EX_MASTER.find(e => e.id === s.exercise_id);
-            // 고도화: 지난 세트의 포즈 수 기록 룩업을 위한 디스트럭처링 바인딩 추가
             const { lastStr, lastNote, lastPauseCount } = await getDetailedStats(s.exercise_id, s.set_no);
             const isSaved = s.status === 'SAVED';
             
@@ -408,10 +426,7 @@
                 if (lId && SETTINGS_LOOKUP[lId]) configTags.push(SETTINGS_LOOKUP[lId]);
             }
             let metaDetails = configTags.length > 0 ? ` <span style="color:#888; font-weight:normal;">[${configTags.join('/')}]</span>` : '';
-            
-            // 고도화 명세: 지난 기록 배지에 포즈 수(pause_count) 연동 노출 처리
             let pauseDetails = ex.use_pause_count ? ` (포즈: ${lastPauseCount}회)` : '';
-            
             let lastNoteHtml = lastNote ? `<div class="text-secondary mb-1" style="font-size:0.65rem; font-style:italic; color:#aaa; padding-left:2px;">⏮ 지난 노트: "${lastNote}"</div>` : '';
 
             return `
@@ -442,6 +457,7 @@
             </div>`;
         }
 
+        // 고도화 명세 2: 저장 및 업데이트 단계에서 '수지컬 업데이트' 기법 적용 (리로딩 현상 완전 박멸)
         async function saveSetRow(id) {
             const btn = document.getElementById(`save-btn-${id}`);
             const s = ACTIVE_SETS.find(x => x.id === id);
@@ -466,6 +482,7 @@
             
             const { error } = await _db.schema('workout').from('active_workout').update(up).eq('id', id);
             if(!error) {
+                // 핀포인트 DOM 조작: 화면 전체 리렌더링 함수를 전면 제거하고 엘리먼트 상태만 직접 갱신
                 btn.innerText = 'SAVED'; btn.classList.remove('st-update'); btn.classList.add('st-saved');
                 document.getElementById(`set-row-content-${id}`).classList.add('saved-row');
                 
@@ -473,8 +490,102 @@
                 if (ta) ta.style.height = '28px';
 
                 Object.assign(s, up); 
-                await refreshActiveList(); 
+                updateProgress(); // 상단 프로그레스 바 텍스트만 영리하게 갱신
+            } else {
+                alert("저장 실패: " + error.message);
             }
+        }
+
+        // 고도화 명세 1: 실전 헬스장 환경 대응 전용 순서 변경 모달 비즈니스 로직 인젝션
+        function openReorderModal() {
+            const blocks = [];
+            const blockMap = {};
+            
+            ACTIVE_SETS.forEach(s => {
+                const isSS = s.program_id && s.program_id.startsWith('ss_');
+                const key = isSS ? s.program_id : `single_${s.display_name}`;
+                if(!blockMap[key]) {
+                    blockMap[key] = { id: key, isSuperset: isSS, names: [], sets: [] };
+                    blocks.push(blockMap[key]);
+                }
+                blockMap[key].sets.push(s);
+                if(!blockMap[key].names.includes(s.display_name)) blockMap[key].names.push(s.display_name);
+            });
+            
+            window.CURRENT_REORDER_BLOCKS = blocks; 
+            renderReorderList();
+            document.getElementById('reorder-overlay').style.display = 'flex';
+        }
+
+        function renderReorderList() {
+            const container = document.getElementById('reorder-list-container');
+            if (window.CURRENT_REORDER_BLOCKS.length === 0) {
+                container.innerHTML = '<div class="text-center text-secondary py-4">현재 추가된 운동 종목이 없습니다.</div>';
+                return;
+            }
+            container.innerHTML = window.CURRENT_REORDER_BLOCKS.map((b, idx) => {
+                const title = b.isSuperset ? `🔗 수퍼세트 (${b.names.join(' + ')})` : b.names[0];
+                return `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-3" style="background:rgba(255,255,255,0.03); border-radius:14px; border:1px solid #222;">
+                        <span style="font-size:0.85rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%; color:#eee;">${title}</span>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-light px-2 py-1" style="font-size:0.75rem;" onclick="moveReorderBlock(${idx}, -1)">🔼</button>
+                            <button class="btn btn-sm btn-outline-light px-2 py-1" style="font-size:0.75rem;" onclick="moveReorderBlock(${idx}, 1)">🔽</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function moveReorderBlock(idx, dir) {
+            const targetIdx = idx + dir;
+            if (targetIdx < 0 || targetIdx >= window.CURRENT_REORDER_BLOCKS.length) return;
+            const temp = window.CURRENT_REORDER_BLOCKS[idx];
+            window.CURRENT_REORDER_BLOCKS[idx] = window.CURRENT_REORDER_BLOCKS[targetIdx];
+            window.CURRENT_REORDER_BLOCKS[targetIdx] = temp;
+            renderReorderList();
+        }
+
+        function closeReorderModal() { document.getElementById('reorder-overlay').style.display = 'none'; }
+
+        // 고도화 명세 1: 바뀐 리스트 순서를 무결성 보장 기반으로 DB(active_workout)에 실시간 트랜잭션 주입
+        async function saveNewOrder() {
+            if (!window.CURRENT_REORDER_BLOCKS || window.CURRENT_REORDER_BLOCKS.length === 0) return;
+            
+            const allSetsNewOrder = [];
+            window.CURRENT_REORDER_BLOCKS.forEach(b => {
+                if(b.isSuperset) {
+                    b.sets.sort((a, b) => a.set_no - b.set_no || a.id - b.id);
+                } else {
+                    b.sets.sort((a, b) => a.set_no - b.set_no);
+                }
+                allSetsNewOrder.push(...b.sets);
+            });
+            
+            if (allSetsNewOrder.length === 0) return closeReorderModal();
+            
+            const originalIds = ACTIVE_SETS.map(s => s.id).sort((a, b) => a - b);
+            const minId = originalIds[0];
+            
+            // 알고리즘 단계 1: 유니크 제약조건 충돌 우회를 위해 일괄 임시 음수 ID값으로 격리 업데이트 실행
+            for(let i = 0; i < allSetsNewOrder.length; i++) {
+                const s = allSetsNewOrder[i];
+                const tempNegId = -(i + 1);
+                const { error } = await _db.schema('workout').from('active_workout').update({ id: tempNegId }).eq('id', s.id);
+                if(error) return alert("순서 배치 마이그레이션 오류(1단계): " + error.message);
+                s.id = tempNegId; 
+            }
+            
+            // 알고리즘 단계 2: 정렬 기준 컬럼(id)에 맞춰 순차적 양수 정수 시퀀스로 최종 치환 복원 실행
+            for(let i = 0; i < allSetsNewOrder.length; i++) {
+                const s = allSetsNewOrder[i];
+                const finalId = minId + i;
+                const { error } = await _db.schema('workout').from('active_workout').update({ id: finalId }).eq('id', s.id);
+                if(error) return alert("순서 배치 마이그레이션 오류(2단계): " + error.message);
+            }
+            
+            closeReorderModal();
+            await refreshActiveList(); // 순서가 구조적으로 바뀌었을 때만 한정하여 단 1회 돔 리렌더링 수행
         }
 
         function handleTouchStart(e) { touchStartX = e.touches[0].clientX; }
@@ -566,12 +677,11 @@
                 if (lastLogs && lastLogs.length > 0) {
                     lastStr = `${lastLogs[0].weight}kg x ${lastLogs[0].reps}회`;
                     lastNote = lastLogs[0].note || "";
-                    // 고도화: 이전 세트 로그 오브젝트에서 실제 pause_count 값을 파싱 추출하여 바인딩
                     lastPauseCount = lastLogs[0].pause_count || 0;
                 }
                 return { best, bestLog, recentConfigs: [], lastStr, lastNote, lastPauseCount };
             } catch (e) {
-                return { best: "0kg x 0회", bestLog: {}, recentConfigs: [], lastStr: "이력 없음", lastNote: "", lastPauseCount: 0 };
+                return { best: "0kg x 0회", bestLog: {}, recentConfigs: [], lastStr: "이력 없음", lastNote: "" , lastPauseCount: 0 };
             }
         }
 
