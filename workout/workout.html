@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>BLACKPINK WORKOUT v5.4.4</title>
+    <title>BLACKPINK WORKOUT v5.4.5</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -372,7 +372,8 @@
 
         async function renderSetRowHtml(s, isSuperset) {
             const ex = EX_MASTER.find(e => e.id === s.exercise_id);
-            const { lastStr, lastNote } = await getDetailedStats(s.exercise_id, s.set_no);
+            // 고도화: 지난 세트의 포즈 수 기록 룩업을 위한 디스트럭처링 바인딩 추가
+            const { lastStr, lastNote, lastPauseCount } = await getDetailedStats(s.exercise_id, s.set_no);
             const isSaved = s.status === 'SAVED';
             
             const exLabelText = isSuperset ? `<div class="mb-1 fw-bold" style="font-size:0.65rem; color:var(--bp-pink); opacity:0.9;">[ ${s.display_name} ]</div>` : '';
@@ -407,6 +408,10 @@
                 if (lId && SETTINGS_LOOKUP[lId]) configTags.push(SETTINGS_LOOKUP[lId]);
             }
             let metaDetails = configTags.length > 0 ? ` <span style="color:#888; font-weight:normal;">[${configTags.join('/')}]</span>` : '';
+            
+            // 고도화 명세: 지난 기록 배지에 포즈 수(pause_count) 연동 노출 처리
+            let pauseDetails = ex.use_pause_count ? ` (포즈: ${lastPauseCount}회)` : '';
+            
             let lastNoteHtml = lastNote ? `<div class="text-secondary mb-1" style="font-size:0.65rem; font-style:italic; color:#aaa; padding-left:2px;">⏮ 지난 노트: "${lastNote}"</div>` : '';
 
             return `
@@ -420,7 +425,7 @@
                         <div class="col-2 fw-bold text-pink text-center set-no-label">${s.set_no}S</div>
                         <div class="col-7">
                             ${exLabelText}
-                            <div class="history-badge mb-2">⏮ Last: ${lastStr}${metaDetails}</div>
+                            <div class="history-badge mb-2">⏮ Last: ${lastStr}${pauseDetails}${metaDetails}</div>
                             <div class="d-flex gap-1 mb-1 flex-wrap">${selects}</div>
                             <div class="d-flex gap-1 mb-1">${inputsHtml}</div>
                             
@@ -457,8 +462,6 @@
             if(ex.use_machine_lv) up.level = Number(document.getElementById(`ml-${id}`).value);
             if(ex.use_machine_speed) up.machine_speed = Number(document.getElementById(`ms-${id}`).value);
             if(ex.use_heart_rate) up.heart_rate = Number(document.getElementById(`hr-${id}`).value);
-            
-            // 버그 해결: 꼬였던 SQL 형태의 주역 주석을 완벽한 자바스크립트 표준 주석(//)으로 변경 완치!
             if(ex.use_pause_count) up.pause_count = Number(document.getElementById(`pc-${id}`).value);
             
             const { error } = await _db.schema('workout').from('active_workout').update(up).eq('id', id);
@@ -556,17 +559,19 @@
                         weight_type: logs[0].weight_type, equipment_type: logs[0].equipment_type
                     };
                 }
-                let lastStr = "이력 없음"; let lastNote = "";
+                let lastStr = "이력 없음"; let lastNote = ""; let lastPauseCount = 0;
                 const query = _db.schema('workout').from('logs').select('*').eq('exercise_id', exId);
                 if (setNo) query.eq('set_no', setNo);
                 const { data: lastLogs } = await query.order('workout_date', { ascending: false }).limit(1);
                 if (lastLogs && lastLogs.length > 0) {
                     lastStr = `${lastLogs[0].weight}kg x ${lastLogs[0].reps}회`;
                     lastNote = lastLogs[0].note || "";
+                    // 고도화: 이전 세트 로그 오브젝트에서 실제 pause_count 값을 파싱 추출하여 바인딩
+                    lastPauseCount = lastLogs[0].pause_count || 0;
                 }
-                return { best, bestLog, recentConfigs: [], lastStr, lastNote };
+                return { best, bestLog, recentConfigs: [], lastStr, lastNote, lastPauseCount };
             } catch (e) {
-                return { best: "0kg x 0회", bestLog: {}, recentConfigs: [], lastStr: "이력 없음", lastNote: "" };
+                return { best: "0kg x 0회", bestLog: {}, recentConfigs: [], lastStr: "이력 없음", lastNote: "", lastPauseCount: 0 };
             }
         }
 
