@@ -9,41 +9,101 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 👑 입장 버튼 전용 럭셔리 펄스 애니메이션 */
+        .entrance-profile-btn {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline-block;
+        }
+        .entrance-profile-btn:active {
+            transform: scale(0.92);
+        }
+        .entrance-profile-btn img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border: 4px solid var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.4);
+            border-radius: 50%;
+        }
+        .entrance-label {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #FF007F, #FF69B4);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 900;
+            padding: 2px 10px;
+            border-radius: 10px;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+    </style>
 </head>
-<body style="background-color: var(--bp-black); overflow: hidden;"> <div class="login-container container-fluid px-3">
-        <div class="login-box p-3" style="max-width: 350px; border-radius: 24px;">
+<body style="background-color: var(--bp-black); overflow: hidden;"> 
+    <div class="login-container container-fluid px-3">
+        <div class="login-box p-4" style="max-width: 355px; border-radius: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
             
-            <h2 class="brand-logo mb-1" style="font-size: 1.9rem;">독한녀들 <span>👑</span></h2>
+            <h2 class="brand-logo mb-1" style="font-size: 1.9rem; letter-spacing: -0.5px;">독한녀들 <span>👑</span></h2>
             <p class="text-muted mb-3" style="font-size: 0.78rem;">러블리 공주님들의 시크릿 티타임 관문</p>
 
-            <div class="p-2 mb-3 rounded text-start" id="upcomingNoticeBox"
-                 style="background: rgba(255, 0, 127, 0.04); border: 1px dashed var(--neon-pink); font-size: 0.78rem;">
-                <div class="fw-bold text-pink mb-1" style="font-size: 0.8rem;">
-                    <i class="fa-solid fa-mug-hot me-1 text-warning"></i> 다음 티타임 예정 스펙 예고
+            <div class="mb-3 rounded text-start" id="upcomingNoticeBox"
+                 style="background: rgba(255, 0, 127, 0.03); border: 1px dashed rgba(255, 0, 127, 0.3); padding: 14px 16px;">
+                <div class="fw-bold text-pink mb-2" style="font-size: 0.82rem; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-mug-hot me-1 text-warning"></i> 다음 티타임 개최 예고장
                 </div>
-                <div id="upcomingContent" class="text-white" style="line-height: 1.4;">
-                    <span class="text-muted">실시간 예고장을 수색 중이옵니다...</span>
+                <div id="upcomingContent" class="text-white">
+                    <span class="text-muted small">예고 스펙 스캔 중...</span>
                 </div>
             </div>
 
-            <div class="mb-3 text-start">
-                <label class="form-label text-pink small fw-bold mb-1"><i class="fa-solid fa-wand-magic-sparkles"></i> 오늘 수다 떨 공주님은 누구? 💕</label>
-                <select class="form-select form-select-custom py-2" id="memberSelect" style="font-size:0.9rem;">
-                    <option value="">정예 공주님을 선택하셔요 🎀</option>
-                </select>
+            <div class="mb-3 rounded text-start" id="gateNaggingBox"
+                 style="background: rgba(255, 215, 0, 0.02); border: 1px dashed rgba(218, 165, 32, 0.3); padding: 14px 16px;">
+                <div class="fw-bold text-warning mb-1.5" style="font-size: 0.82rem; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-bullhorn me-1"></i> 🚨 이번 차수 숙제 미완료 공주
+                </div>
+                <div id="gateNaggingContent" style="line-height: 1.5; color: var(--text-muted); font-size: 0.78rem;">
+                    <span class="text-muted">탈영병 추적 레이더 가동 중...</span>
+                </div>
             </div>
 
-            <div class="mb-3 text-start">
-                <label class="form-label text-pink small fw-bold mb-1"><i class="fa-solid fa-key"></i> 시크릿 시그널 (숫자 4자리) 🤫</label>
-                <input type="password" class="form-control form-control-custom password-box-princess text-center py-2 text-white fw-bold" 
-                       id="passwordInput" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" onkeyup="handlePasswordAutoSubmit()">
+            <div id="loginFormArea">
+                <div class="mb-2.5 text-start">
+                    <label class="form-label text-pink small fw-bold mb-1.5" style="font-size:0.75rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> 오늘 수다 떨 공주님은 누구? 💕</label>
+                    <select class="form-select form-select-custom py-2 px-3" id="memberSelect" style="font-size:0.85rem; border-radius: 10px;">
+                        <option value="">정예 공주님을 선택하셔요 🎀</option>
+                    </select>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <label class="form-label text-pink small fw-bold mb-1.5" style="font-size:0.75rem;"><i class="fa-solid fa-key"></i> 시크릿 시그널 (숫자 4자리) 🤫</label>
+                    <input type="password" class="form-control form-control-custom password-box-princess text-center py-2 text-white fw-bold" 
+                           id="passwordInput" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" onkeyup="handlePasswordAutoSubmit()" style="font-size:1rem; letter-spacing: 2px; border-radius: 10px;">
+                </div>
+
+                <p class="text-muted m-0 px-1 mb-1" style="font-size: 0.7rem; line-height: 1.4;">
+                    ※ 공주님 선택 후 패스워드 4자리를 입력하시면 <br>시크릿 아지트로 자동 입장되옵니다.
+                </p>
             </div>
 
-            <p class="text-muted m-0 px-1" style="font-size: 0.72rem; line-height: 1.3;">
-                ※ 공주님 선택 후 패스워드 4자리를 입력하시면 <br>시크릿 아지트로 자동 입장되옵니다.
-            </p>
+            <div id="authenticatedArea" class="d-none text-center py-2">
+                <div class="entrance-profile-btn" onclick="forceEnterToFeed()">
+                    <img id="gateProfileImg" src="images/default_princess.png" onerror="this.src='images/default_princess.png'">
+                    <div class="entrance-label">입장하기 <i class="fa-solid fa-heart"></i></div>
+                </div>
+                <div class="mt-3">
+                    <span class="fw-bold text-white" style="font-size: 0.95rem;">
+                        <span id="authPrincessName" class="text-pink">공주</span>님 납시오!
+                    </span>
+                </div>
+            </div>
             
-            <div id="errorMessageArea" class="text-danger fw-bold mt-2 d-none" style="font-size: 0.75rem;"></div>
+            <div id="errorMessageArea" class="text-danger fw-bold mt-2 d-none" style="font-size: 0.72rem;"></div>
         </div>
     </div>
 
@@ -51,17 +111,36 @@
     <script src="supabase_config.js"></script>
 
     <script>
-        // 로그인 상태라면 문지기 패스하고 바로 피드로 대피
-        if (localStorage.getItem("login_member")) {
+        let allMembersList = [];
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await fetchGateActiveMembers();
+            await fetchUpcomingTeatimeAndNaggingSpecs();
+            evaluateGateSessionUI();
+        });
+
+        // 👑 [이미지 버튼 기믹]: 인사말 대신 프로필 이미지를 입장 스위치로 변환
+        function evaluateGateSessionUI() {
+            const loggedInUser = localStorage.getItem("login_member");
+            const loggedInImg = localStorage.getItem("login_member_image");
+            const loginForm = document.getElementById("loginFormArea");
+            const authArea = document.getElementById("authenticatedArea");
+
+            if (loggedInUser) {
+                loginForm.classList.add("d-none");
+                document.getElementById("authPrincessName").textContent = loggedInUser;
+                document.getElementById("gateProfileImg").src = `images/${loggedInImg || 'default_princess.png'}`;
+                authArea.classList.remove("d-none");
+            } else {
+                loginForm.classList.remove("d-none");
+                authArea.classList.add("d-none");
+            }
+        }
+
+        function forceEnterToFeed() {
             window.location.href = "feed.html";
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchGateActiveMembers();
-            fetchUpcomingTeatimeSpec();
-        });
-
-        // 1. 드롭다운 바인딩을 위한 활성 공주 명단 로드
         async function fetchGateActiveMembers() {
             const select = document.getElementById("memberSelect");
             try {
@@ -72,59 +151,90 @@
                     .order('member_name', { ascending: true });
 
                 if (error) throw error;
+                allMembersList = data.map(m => m.member_name);
                 
                 data.forEach(m => {
                     select.innerHTML += `<option value="${m.member_name}">${m.member_name} 공주님</option>`;
                 });
-            } catch (err) {
-                console.error(err);
-                document.getElementById("errorMessageArea").textContent = "⚠️ 공주님 명단을 불러오지 못했사옵니다.";
-                document.getElementById("errorMessageArea").classList.remove("d-none");
-            }
+            } catch (err) { console.error(err); }
         }
 
-        // 👑 [Zoro's Gate Spec Scanner] is_closed가 false인 차기 지정도서 완벽 스캔 및 제로스크롤 배치 빌더
-        async function fetchUpcomingTeatimeSpec() {
+        async function fetchUpcomingTeatimeAndNaggingSpecs() {
             const contentZone = document.getElementById("upcomingContent");
+            const naggingZone = document.getElementById("gateNaggingContent");
+            
             try {
-                const { data, error } = await _db
+                const { data: books, error: bkErr } = await _db
                     .from('books')
                     .select('round_no, title, discussion_date, location')
-                    .eq('is_closed', false) // 👑 선장의 핵심 필터링 명세 조건
+                    .eq('is_closed', false)
                     .order('round_no', { ascending: true });
 
-                if (error) throw error;
+                if (bkErr) throw bkErr;
 
-                if (!data || data.length === 0) {
-                    contentZone.innerHTML = `<div class="text-muted" style="font-size:0.72rem;">현재 예정된 다음 티타임 일정이 없사옵니다. ☕</div>`;
+                if (!books || books.length === 0) {
+                    contentZone.innerHTML = `<div class="text-muted small text-center py-2">현재 대기중인 다음 티타임 일정이 없사옵니다. ☕</div>`;
+                    naggingZone.innerHTML = `<span class="text-success fw-bold"><i class="fa-solid fa-square-check"></i> 추적할 라이브 차수가 없사옵니다.</span>`;
                     return;
                 }
 
-                // 여러 개의 책이 한 차수에 동시 선정될 수 있으므로 유연하게 압축 결합!
-                const targetRound = data[0].round_no;
-                const formattedDate = data[0].discussion_date ? data[0].discussion_date : '미정';
-                const formattedLocation = data[0].location ? data[0].location : '장소 미정 📍';
-                
-                // 도서 제목들만 쏙 발라내기
-                const bookTitles = data.map(b => `<b>[${b.title}]</b>`).join(', ');
+                const targetRound = books[0].round_no;
+                const formattedDate = books[0].discussion_date ? books[0].discussion_date : '개최 날짜 미정 📅';
+                const formattedLocation = books[0].location ? books[0].location : '개최 장소 조율 중 📍';
+                const bookTitles = books.map(b => `<b>[${b.title}]</b>`).join(', ');
 
-                // 모바일 해상도 터짐을 방지하기 위한 슬림 한줄 스펙 압축 레이아웃 렌더링!
                 contentZone.innerHTML = `
-                    <div class="text-white" style="font-size:0.8rem; font-weight:500;">
-                        <span class="text-warning fw-bold">[제 ${targetRound}회차]</span> ${bookTitles}
+                    <div class="text-white text-truncate mb-2" style="font-size:0.82rem; font-weight:500; line-height: 1.4;">
+                        <span class="badge bg-secondary me-1" style="background-color: rgba(255,105,180,0.18) !important; color:var(--bp-pink) !important; font-size:0.68rem; vertical-align: middle;">제 ${targetRound}회</span> ${bookTitles}
                     </div>
-                    <div class="d-flex justify-content-between mt-1 text-muted" style="font-size:0.72rem; color: var(--text-muted) !important;">
-                        <span>📅 날짜 : ${formattedDate}</span>
-                        <span class="text-truncate" style="max-width:50%;">📍 장소 : ${formattedLocation}</span>
+                    <div class="rounded" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 105, 180, 0.12); padding: 12px 14px; line-height: 1.5;">
+                        <div class="text-warning fw-black" style="font-size: 0.95rem; letter-spacing: 0.3px; color: var(--royal-gold) !important; margin-bottom: 4px;">
+                            <i class="fa-solid fa-calendar-days me-1.5" style="font-size:0.85rem;"></i>${formattedDate}
+                        </div>
+                        <div class="text-white fw-bold text-truncate" style="font-size: 0.85rem; color: rgba(255,255,255,0.9) !important;">
+                            <i class="fa-solid fa-location-dot me-1.5 text-pink" style="color: var(--neon-pink); font-size:0.85rem;"></i>${formattedLocation}
+                        </div>
                     </div>
                 `;
+
+                const { data: reviews, error: revErr } = await _db
+                    .from('reviews_ratings')
+                    .select('member_name, review_text, rating_before')
+                    .eq('round_no', targetRound);
+
+                if (revErr) throw revErr;
+
+                let submittedSlackers = [];
+                if (reviews) {
+                    reviews.forEach(r => {
+                        if (r.review_text && r.rating_before !== null) {
+                            submittedSlackers.push(r.member_name);
+                        }
+                    });
+                }
+
+                const slackers = allMembersList.filter(m => !submittedSlackers.includes(m));
+
+                if (slackers.length === 0) {
+                    naggingZone.innerHTML = `<span style="color: #39FF14; font-weight:700; display: inline-block; padding: 2px 0;"><i class="fa-solid fa-circle-check"></i> 전원 숙제 컴플리트! 완벽하셔요 💖</span>`;
+                } else {
+                    naggingZone.innerHTML = `
+                        <div class="fw-bold mb-1" style="color: var(--neon-pink) !important; font-size:0.82rem; letter-spacing: 0.3px;">
+                            ${slackers.map(s => `❌ ${s}`).join(', ')}
+                        </div>
+                        <div class="text-muted" style="font-size:0.72rem; color:#b0b0b0 !important; line-height: 1.4;">
+                            얼른 기록장으로 행차하셔서 우아하게 평점을 구워주셔요! 💅
+                        </div>
+                    `;
+                }
+
             } catch (err) {
-                console.error("예고장 스캔 실패:", err);
-                contentZone.innerHTML = `<span class="text-danger" style="font-size:0.72rem;">예고편 로드 실패</span>`;
+                console.error(err);
+                contentZone.innerHTML = `<span class="text-danger small">초대장 스펙 수색 실패</span>`;
+                naggingZone.innerHTML = `<span>추적 레이더 마비</span>`;
             }
         }
 
-        // 4자리 입력 시 번개처럼 패스워드 자동 일치 검증 처리 기믹
         async function handlePasswordAutoSubmit() {
             const name = document.getElementById("memberSelect").value;
             const pwd = document.getElementById("passwordInput").value;
@@ -138,7 +248,6 @@
                 return;
             }
 
-            // 4자리가 꽉 차는 순간 다이렉트 직격 검증 단행
             if (pwd.length === 4) {
                 errZone.classList.add("d-none");
                 try {
@@ -152,11 +261,9 @@
                     if (error) throw error;
 
                     if (data && data.length > 0) {
-                        // 일치 확인 시 세션 키 발급 후 입장권 끊기
                         localStorage.setItem("login_member", data[0].member_name);
                         localStorage.setItem("login_member_image", data[0].image_name || 'default_princess.png');
-                        
-                        window.location.href = "feed.html";
+                        evaluateGateSessionUI();
                     } else {
                         errZone.textContent = "❌ 시크릿 시그널 암호가 올바르지 않사옵니다.";
                         errZone.classList.remove("d-none");
@@ -165,7 +272,7 @@
                     }
                 } catch (err) {
                     console.error(err);
-                    errZone.textContent = "⚠️ 서버 통신 검격 도중 장해 발생.";
+                    errZone.textContent = "⚠️ 서버 통신 장애 발생.";
                     errZone.classList.remove("d-none");
                 }
             }
