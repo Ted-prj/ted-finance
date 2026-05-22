@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>LOGS MANAGEMENT v5.4.0</title>
+    <title>LOGS MANAGEMENT v5.4.5</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,19 +19,48 @@
         .add-card-placeholder { background: rgba(232, 142, 163, 0.05); border: 1px dashed var(--bp-pink); border-radius: 12px; padding: 10px; margin: 10px; text-align: center; cursor: pointer; }
         .swipe-del-bg { position: absolute; right: -100%; top: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #ff2d55); display: flex; align-items: center; justify-content: flex-end; padding-right: 20px; color: white; font-weight: 900; z-index: 1; transition: 0.3s; }
         .swipe-content { position: relative; z-index: 2; background: #151515; transition: 0.3s; }
+
+        /* 고도화: 블랙핑크 다크 테마 커스텀 달력 UI 전용 스타일 */
+        .calendar-trigger-box { background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 14px; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; transition: 0.2s; }
+        .calendar-trigger-box:hover { border-color: var(--bp-pink); }
+        .calendar-tray-panel { display: none; background: #111; border: 1px solid #252525; border-radius: 20px; padding: 16px; animation: fadeInCard 0.25s ease-out; }
+        .cal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .cal-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .cal-table th { color: #666; font-size: 0.65rem; font-weight: 800; padding-bottom: 8px; text-transform: uppercase; }
+        .cal-table td { padding: 8px 0; font-size: 0.8rem; cursor: pointer; position: relative; width: 14.28%; border-radius: 10px; font-weight: 600; }
+        .cal-table td:not(.other-month):hover { background: rgba(255, 63, 126, 0.1); color: var(--bp-pink); }
+        .cal-table td.other-month { opacity: 0.15; pointer-events: none; }
+        .cal-table td.selected-day { background: var(--bp-pink) !important; color: #000 !important; font-weight: 900; }
+        .cal-table td.today-cell { border: 1px solid var(--neon-pink); }
+        .log-dot { width: 4px; height: 4px; background-color: var(--neon-pink); border-radius: 50%; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); }
+        .cal-table td.selected-day .log-dot { background-color: #000; }
     </style>
 </head>
 <body style="background-color: var(--bp-black); color: white;">
     <div class="container-app">
         <div class="mgmt-card" style="background: transparent; border: none; padding: 10px;">
-            <h4 style="color:var(--bp-pink); font-weight:900;" class="mb-4">📅 LOG MANAGEMENT v5.4.0</h4>
-            <div class="mb-4">
+            <h4 style="color:var(--bp-pink); font-weight:900;" class="mb-4">📅 LOG MANAGEMENT v5.4.5</h4>
+            
+            <div class="mb-4 position-relative">
                 <label class="label-small" style="color:#aaa;">날짜 선택</label>
-                <input type="date" id="log-date-picker" class="form-control" style="background:#1e1e1e; border:1px solid #333; color:white; border-radius:12px;" onchange="loadLogsByDate(this.value)">
+                <div id="calendar-trigger" class="calendar-trigger-box" onclick="toggleCalendarTray()">
+                    <span id="display-date-text">로딩 중...</span>
+                    <span style="color:var(--bp-pink); font-size:0.75rem;">▼</span>
+                </div>
+                
+                <div id="calendar-tray" class="calendar-tray-panel mt-2">
+                    <div class="cal-header-row">
+                        <button class="btn btn-sm btn-outline-light px-2" onclick="changeCalMonth(-1)">◀</button>
+                        <b id="cal-month-title" style="font-size:0.9rem; color:white;">2026년 05월</b>
+                        <button class="btn btn-sm btn-outline-light px-2" onclick="changeCalMonth(1)">▶</button>
+                    </div>
+                    <div id="cal-grid-area"></div>
+                </div>
             </div>
+
             <div id="session-container"></div>
         </div>
-        <div id="global-nav" data-active="workout"></div>
+        <div id="global-nav" data-active="logs"></div>
     </div>
 
     <script src="supabase_config.js"></script>
@@ -41,15 +70,19 @@
         let CURRENT_LOGS = [];
         let EXERCISE_MASTER = []; 
         let SETTINGS_MAP = {};
-        // 고도화: 외래키 정수형 ID를 문자열 이름으로 실시간 룩업하기 위한 글로벌 사전 변수 배치
         let SETTINGS_LOOKUP = {}; 
         let touchStartX = 0;
+
+        // 캘린더 다이어리 상태 관리 스코프 객체
+        let CAL_SELECTED_DATE = ""; 
+        let CAL_DISPLAY_YEAR = 2026;
+        let CAL_DISPLAY_MONTH = 4; // 0-indexed (4 = 5월)
+        let ALL_LOGGED_DATES = []; // 역대 세션 기록이 누적 저장된 날짜 캐시 배열
 
         async function init() {
             const { data: sData } = await _db.schema('workout').from('settings').select('*');
             if (sData) {
                 sData.forEach(s => { 
-                    // 고도화: 정수형 ID 기반의 텍스트 룩업 캐시 빌드
                     SETTINGS_LOOKUP[s.id] = s.name; 
                     if(!SETTINGS_MAP[s.category]) SETTINGS_MAP[s.category] = []; 
                     SETTINGS_MAP[s.category].push(s.name); 
@@ -59,11 +92,101 @@
             const { data: eData } = await _db.schema('workout').from('exercises').select('*').order('name');
             EXERCISE_MASTER = eData || [];
 
+            // 1. 역대 도트 마킹을 위해 세션 로그에 존재하는 전체 중복 없는 날짜 타임라인 일괄 룩업
+            const { data: allSessions } = await _db.schema('workout').from('session_logs').select('workout_date');
+            ALL_LOGGED_DATES = allSessions ? allSessions.map(s => s.workout_date) : [];
+
+            // 2. 디폴트로 가장 최근 세션로그 데이터 날짜 지정 기본 기능 수호
             const { data: lastSession } = await _db.schema('workout').from('session_logs').select('workout_date').order('workout_date', { ascending: false }).limit(1);
-            
             const defaultDate = lastSession?.[0] ? lastSession[0].workout_date : new Date().toISOString().split('T')[0];
-            document.getElementById('log-date-picker').value = defaultDate;
+            
+            CAL_SELECTED_DATE = defaultDate;
+            const splitParts = defaultDate.split('-');
+            CAL_DISPLAY_YEAR = parseInt(splitParts[0]);
+            CAL_DISPLAY_MONTH = parseInt(splitParts[1]) - 1;
+
+            updateCalendarUI();
             loadLogsByDate(defaultDate);
+        }
+
+        // 고도화 명세: 네온 핑크 도트 결합형 달력 테이블 렌더러
+        function renderCustomCalendar() {
+            const gridArea = document.getElementById('cal-grid-area');
+            const titleArea = document.getElementById('cal-month-title');
+            titleArea.innerText = `${CAL_DISPLAY_YEAR}년 ${String(CAL_DISPLAY_MONTH + 1).padStart(2, '0')}월`;
+
+            const firstDayIndex = new Date(CAL_DISPLAY_YEAR, CAL_DISPLAY_MONTH, 1).getDay();
+            const totalDays = new Date(CAL_DISPLAY_YEAR, CAL_DISPLAY_MONTH + 1, 0).getDate();
+            const prevTotalDays = new Date(CAL_DISPLAY_YEAR, CAL_DISPLAY_MONTH, 0).getDate();
+
+            let html = `
+                <table class="cal-table">
+                    <thead>
+                        <tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr>
+                    </thead>
+                    <tbody><tr>`;
+
+            let dayCounter = 1;
+            let nextMonthCounter = 1;
+
+            // 이전 달 여백 채우기
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                html += `<td class="other-month">${prevTotalDays - i}</td>`;
+            }
+
+            // 이번 달 날짜 그리기
+            for (let i = firstDayIndex; i < 42; i++) {
+                if (dayCounter <= totalDays) {
+                    const currentLoopDate = `${CAL_DISPLAY_YEAR}-${String(CAL_DISPLAY_MONTH + 1).padStart(2, '0')}-${String(dayCounter).padStart(2, '0')}`;
+                    const isSelected = currentLoopDate === CAL_SELECTED_DATE ? 'selected-day' : '';
+                    
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const isToday = currentLoopDate === todayStr ? 'today-cell' : '';
+                    
+                    // 핵심 체크포인트: 역대 운동 일지 배열에 포함되어 있다면 미니 점 노드 결합
+                    const hasLogDot = ALL_LOGGED_DATES.includes(currentLoopDate) ? '<div class="log-dot"></div>' : '';
+
+                    html += `<td class="${isSelected} ${isToday}" onclick="selectCalendarDay('${currentLoopDate}')">${dayCounter}${hasLogDot}</td>`;
+                    dayCounter++;
+                } else {
+                    // 다음 달 여백 채우기
+                    html += `<td class="other-month">${nextMonthCounter}</td>`;
+                    nextMonthCounter++;
+                }
+
+                if (i % 7 === 6 && dayCounter <= totalDays) {
+                    html += '</tr><tr>';
+                } else if (i % 7 === 6 && dayCounter > totalDays) {
+                    break;
+                }
+            }
+
+            html += '</tr></tbody></table>';
+            gridArea.innerHTML = html;
+        }
+
+        function toggleCalendarTray() {
+            const tray = document.getElementById('calendar-tray');
+            tray.style.display = tray.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function changeCalMonth(dir) {
+            CAL_DISPLAY_MONTH += dir;
+            if (CAL_DISPLAY_MONTH < 0) { CAL_DISPLAY_MONTH = 11; CAL_DISPLAY_YEAR--; }
+            else if (CAL_DISPLAY_MONTH > 11) { CAL_DISPLAY_MONTH = 0; CAL_DISPLAY_YEAR++; }
+            renderCustomCalendar();
+        }
+
+        function selectCalendarDay(dateStr) {
+            CAL_SELECTED_DATE = dateStr;
+            updateCalendarUI();
+            toggleCalendarTray();
+            loadLogsByDate(dateStr);
+        }
+
+        function updateCalendarUI() {
+            document.getElementById('display-date-text').innerText = `📅  ${CAL_SELECTED_DATE}`;
+            renderCustomCalendar();
         }
 
         async function loadLogsByDate(date) {
@@ -131,7 +254,6 @@
             return Object.keys(groups).map(exName => {
                 const logs = groups[exName].sort((a,b) => a.set_no - b.set_no);
                 const first = logs[0];
-                // 고도화: 정수형 ID로 박혀 있는 부위 데이터를 룩업 딕셔너리 거쳐 한글 텍스트 명칭으로 실시간 환원 노출
                 const displayBodyPart = SETTINGS_LOOKUP[first.body_part] || '전신';
                 
                 return `
@@ -259,14 +381,13 @@
             const ex = EXERCISE_MASTER.find(e => e.id === exId); 
             if (!ex) return; 
             
-            // 고도화: 문자열 대신 ex 마스터에 등록된 부위 고유 ID 숫자를 복사 연동하도록 데이터 파이프 정비
             const { data } = await _db.schema('workout').from('logs').insert([{ 
                 session_id: sessId, 
                 exercise_id: exId, 
                 display_name: ex.name, 
                 body_part: ex.body_part, 
                 set_no: 1, 
-                workout_date: document.getElementById('log-date-picker').value + ' 12:00:00', 
+                workout_date: CAL_SELECTED_DATE + ' 12:00:00', 
                 status: 'FINAL' 
             }]).select(); 
             
@@ -279,11 +400,10 @@
         async function changeExerciseGroup(sessId, oldName, newExId) { 
             const logsToUpdate = CURRENT_LOGS.filter(l => l.session_id === sessId && l.display_name === oldName); 
             const newEx = EXERCISE_MASTER.find(e => e.id === newExId); 
-            if(!confirm(`종목을 변경하시겠습니까?`)) return loadLogsByDate(document.getElementById('log-date-picker').value); 
+            if(!confirm(`종목을 변경하시겠습니까?`)) return loadLogsByDate(CAL_SELECTED_DATE); 
             
             for (let log of logsToUpdate) { 
                 const oldValue = log.weight || log.reps || log.set_time || log.workout_time; 
-                // 고도화: 바뀔 종목 마스터의 외래키 ID 데이터를 정확하게 주입하도록 동기화
                 const updates = { 
                     exercise_id: newExId, 
                     display_name: newEx.name, 
