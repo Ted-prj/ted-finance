@@ -1,6 +1,6 @@
 // =========================================================================
 // [독한녀들 Book Club - Supabase 핵심 설정 및 전역 인증 인프라]
-// 설명: 아이콘 렌더링 누락 에러를 해결하기 위해 100% 호환되는 fa-toolbox로 무기를 교체합니다.
+// 설명: 독한 연대기(History) 탭을 전격 추가하여 완전체 5대 전선 체제로 대진화합니다.
 // =========================================================================
 
 const SUPABASE_URL = 'https://vaamifqzjsrflmprihgv.supabase.co';
@@ -30,10 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const navContainer = document.getElementById('global-nav');
     if (!navContainer) return;
 
-    // 💡 시크릿 운영 아이콘을 인식이 가장 확실한 'fa-solid fa-toolbox'(시크릿 공구함)로 전격 교체!
+    // 👑 [Zoro Action Engine]: '독한 연대기'의 비밀 진입 뱃지를 정중앙에 전격 배치 완료!
     const NAVIGATION_MENUS = [
         { id: 'feed', name: '소통 피드', url: 'feed.html', icon: 'fa-solid fa-rss' },
         { id: 'write', name: '비밀 기록', url: 'write.html', icon: 'fa-solid fa-pen-to-square' },
+        { id: 'history', name: '독한 연대기', url: 'history.html', icon: 'fa-solid fa-monument' }, // 👈 역사 기념비 전용 무기 탑재!
         { id: 'manage', name: '시크릿 운영', url: 'manage.html', icon: 'fa-solid fa-toolbox' },
         { id: 'dashboard', name: '핑크 라운지', url: 'dashboard.html', icon: 'fa-solid fa-crown' }
     ];
