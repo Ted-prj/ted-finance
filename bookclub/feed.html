@@ -63,8 +63,7 @@
     
     <script>
         checkAuth();
-        const memberImages = {}; 
-        let allMembersList = []; 
+        let allMembersList = []; // 잔소리 엔진용 전역 마스터 명단
 
         let submittedRecs = [];
         let submittedReviews = [];
@@ -73,35 +72,32 @@
             document.getElementById("userBadge").textContent = `👸 ${getLoggedInMember()} 공주`;
             document.getElementById("myAvatarHeader").src = `images/${localStorage.getItem("login_member_image") || 'default_princess.png'}`;
             
-            await syncMemberAvatars();
+            await syncActiveMembersList();
             loadTargetFeeds();
         });
 
-        async function syncMemberAvatars() {
+        // 기준점이 되는 활성 멤버 이름 목록만 깔끔하게 싱크
+        async function syncActiveMembersList() {
             try {
                 const { data } = await _db
                     .from('members')
-                    .select('member_name, image_name')
+                    .select('member_name')
                     .eq('is_active', true)
                     .order('member_name', { ascending: true });
                     
                 if (data) {
                     allMembersList = data.map(m => m.member_name);
-                    data.forEach(m => {
-                        memberImages[m.member_name] = m.image_name;
-                    });
                 }
-            } catch(e) { console.error("멤버 아바타 동기화 실패:", e); }
+            } catch(e) { console.error("멤버 리스트 동기화 실패:", e); }
         }
 
-        // 👑 [Zoro's Pure Flag Targeting Engine] is_closed 기반 자동 추적 라우터
+        // is_closed 기반 차수 피드 제어 라우터
         async function loadTargetFeeds() {
             try {
-                // 1. 토론 완료 여부가 아직 진행 중(is_closed = false)인 이번 회차 방 추적
                 const { data: bookData } = await _db
                     .from('books')
                     .select('round_no, title')
-                    .eq('is_closed', false) // 👑 선장의 오더 조건 직격 매핑
+                    .eq('is_closed', false) 
                     .order('round_no', { ascending: false })
                     .limit(1);
                 
@@ -112,7 +108,6 @@
                     currentRound = bookData[0].round_no;
                     currentTitle = bookData[0].title;
                 } else {
-                    // 혹시라도 전부 클로즈 된 예외 상황인 경우 최고 차수 폴백 방어막
                     const { data: maxBook } = await _db.from('books').select('round_no, title').order('round_no', { ascending: false }).limit(1);
                     if (maxBook && maxBook.length > 0) {
                         currentRound = maxBook[0].round_no;
@@ -120,20 +115,17 @@
                     }
                 }
 
-                // 2. 다음 티타임 추천 타겟 차수 연산 (명세 2번: false 차수 + 1)
                 const nextRound = currentRound + 1;
 
-                // 타이틀 텍스트 동적 프리필 조율
                 document.getElementById("recHeaderTitle").innerHTML = `<i class="fa-solid fa-paper-plane"></i> 💌 다음 (제 ${nextRound}회차) 티타임 추천 릴레이 현황`;
                 document.getElementById("reviewHeaderTitle").innerHTML = `<i class="fa-solid fa-comments"></i> ☕ 이번 (제 ${currentRound}회차) 티타임 공주님들의 생생 별점 & 총평`;
 
-                // 비동기 병렬 데이터 사냥 개시
+                // 관계형 조인 쿼리 사냥 병렬 가동
                 await Promise.all([
                     fetchFilteredRecommendations(nextRound),
                     fetchFilteredReviews(currentRound, currentTitle)
                 ]);
 
-                // 탈영병 색출 잔소리 기믹 구동 (명세 1번 전달)
                 renderPrincessNagging(nextRound, currentRound);
 
             } catch (err) {
@@ -141,13 +133,13 @@
             }
         }
 
-        // 명세 2번: is_closed가 false인 차수 + 1차수 추천 항목 수색
+        // 👑 [Golden Schema 변환]: member_id 외래키를 타고 members 테이블의 이름과 이미지를 일제히 JOIN 인출!
         async function fetchFilteredRecommendations(nextRoundNum) {
             const container = document.getElementById("recommendationFeedList");
             try {
                 const { data, error } = await _db
                     .from('recommendations')
-                    .select('*')
+                    .select('*, members(member_name, image_name)') // 👑 관계형 임베딩 조인 발사!
                     .eq('target_round', nextRoundNum)
                     .order('created_at', { ascending: false });
 
@@ -165,16 +157,19 @@
                 }
 
                 data.forEach(item => {
-                    submittedRecs.push(item.member_name); 
-                    const avatarFile = memberImages[item.member_name] || 'default_princess.png';
+                    // JOIN된 결과셋에서 이름과 아바타 이미지 안전하게 발라내기
+                    const memberName = item.members ? item.members.member_name : '미상 공주';
+                    const avatarFile = item.members ? item.members.image_name : 'default_princess.png';
                     const pageDisplay = item.page_count ? `${item.page_count}쪽` : '정보없음';
+                    
+                    submittedRecs.push(memberName); 
                     
                     container.innerHTML += `
                         <div class="p-3 mb-2 border-bottom border-secondary bg-dark rounded-3 d-flex align-items-center" style="border-color: rgba(255,0,127,0.1) !important;">
                             <img src="images/${avatarFile}" class="princess-avatar-mid" onerror="this.src='images/default_princess.png'">
                             <div class="w-100">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold text-pink" style="color: var(--bp-pink) !important;">👸 ${item.member_name} 공주 픽</span>
+                                    <span class="fw-bold text-pink" style="color: var(--bp-pink) !important;">👸 ${memberName} 공주 픽</span>
                                     <span class="badge bg-secondary" style="font-size:0.7rem; background-color: rgba(255,0,127,0.15) !important; color: var(--bp-pink) !important;">제 ${nextRoundNum}회차 후보</span>
                                 </div>
                                 <h6 class="text-white fw-bold mb-1"><i class="fa-solid fa-book-sparkles me-1 text-warning"></i> ${item.title}</h6>
@@ -190,13 +185,13 @@
             } catch (err) { console.error(err); }
         }
 
-        // 명세 3번: is_closed가 false인 차수의 review_text와 rating_before 표출
+        // 👑 [Golden Schema 변환]: reviews_ratings에서도 member_id 기반으로 members 실시간 JOIN 처리!
         async function fetchFilteredReviews(roundNo, bookTitle) {
             const container = document.getElementById("reviewFeedList");
             try {
                 const { data, error } = await _db
                     .from('reviews_ratings')
-                    .select('*')
+                    .select('*, members(member_name, image_name)') // 👑 관계형 임베딩 조인 발사!
                     .eq('round_no', roundNo)
                     .order('created_at', { ascending: false });
 
@@ -220,14 +215,13 @@
                 `;
 
                 data.forEach(item => {
-                    // 👑 [명세 충족 매킹 조율] reviews_ratings 테이블에서 review_text와 rating_before가 둘 다 무사히 채워진 기지배들만 숙제 완료 처리!
+                    const memberName = item.members ? item.members.member_name : '미상 공주';
+                    const avatarFile = item.members ? item.members.image_name : 'default_princess.png';
+
                     if (item.review_text && item.rating_before !== null) {
-                        submittedReviews.push(item.member_name); 
+                        submittedReviews.push(memberName); 
                     }
                     
-                    const avatarFile = memberImages[item.member_name] || 'default_princess.png';
-                    
-                    // 👑 구형 rating 대신 토론 전 평점인 rating_before 기둥으로 스포트라이트 표출 조치!
                     const score = item.rating_before;
                     const stars = score !== null ? '★'.repeat(Math.floor(score)) + (score % 1 !== 0 ? '½' : '') : '평가전';
                     const scoreLabel = score !== null ? score.toFixed(1) : '0';
@@ -237,7 +231,7 @@
                             <img src="images/${avatarFile}" class="princess-avatar-mid mt-1" onerror="this.src='images/default_princess.png'">
                             <div class="w-100">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-bold text-white" style="font-size:0.9rem;">${item.member_name} 공주</span>
+                                    <span class="fw-bold text-white" style="font-size:0.9rem;">${memberName} 공주</span>
                                     <span class="text-warning fw-bold" style="color: var(--royal-gold) !important; font-size:0.85rem;">${stars} <small style="color:#aaa;">(${scoreLabel})</small></span>
                                 </div>
                                 <p class="text-white m-0 small mt-1" style="line-height:1.4; word-break: break-all; font-weight:400;">
@@ -250,13 +244,10 @@
             } catch (err) { console.error(err); }
         }
 
-        // 명세 1번: is_closed가 false인 차수에 대해 review_text와 rating_before가 없는 공주들 색출
         function renderPrincessNagging(nextRound, roundNo) {
             const container = document.getElementById("naggingContainer");
             
-            // 다음 차수 추천 릴레이 안 낸 사람 추적
             const missingRecs = allMembersList.filter(m => !submittedRecs.includes(m));
-            // 👑 이번 차수 평점 전 기록이 누락된 기지배 색출 (submittedReviews 필터망 연동)
             const missingReviews = allMembersList.filter(m => !submittedReviews.includes(m));
 
             if (missingRecs.length === 0 && missingReviews.length === 0) {
@@ -278,7 +269,7 @@
                         <span class="fw-bold text-white" style="font-size:0.95rem; color:var(--bp-pink) !important;">
                             ${missingRecs.map(m => `❌${m}`).join(', ')}
                         </span> <br>
-                        <span class="text-muted" style="font-size:0.75rem;">👉 기지배들아!! 벽돌책인지 아닌지 쪽수 들고 냉큼 기록장으로 기어오셔요!! 💅</span>
+                        <span class="text-muted" style="font-size:0.75rem;">👉 기지배들아!! 벽돌책인지 아닌지 쪽수 들고 냉큼 기록장으로 행차하셔요!! 💅</span>
                     </div>
                 `;
             }

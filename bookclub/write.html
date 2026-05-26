@@ -30,7 +30,7 @@
                     <div class="mb-2">
                         <label class="form-label text-pink small fw-bold">대상 티타임 차수 선택</label>
                         <select class="form-select form-select-custom" id="targetRoundSelect" onchange="loadExistingRecommendation()" required>
-                            </select>
+                        </select>
                     </div>
                     
                     <div id="reRecommendWrapper" class="mb-3 d-none">
@@ -76,7 +76,7 @@
                     <div class="mb-2">
                         <label class="form-label text-pink small fw-bold">토론 참여 차수 선택</label>
                         <select class="form-select form-select-custom" id="roundNoSelect" onchange="loadExistingReview()" required>
-                            </select>
+                        </select>
                     </div>
 
                     <div class="mb-2">
@@ -159,13 +159,16 @@
             } catch(e) { console.error(e); }
         }
 
+        // 👑 [Golden Schema 리팩토링]: member_name 대신 세션 배낭의 고유 숫자 id 기반 낙방작 수색 처리
         async function huntLastUnselectedRecommendation() {
-            const member_name = getLoggedInMember();
+            const member_id = parseInt(localStorage.getItem("login_member_id"));
+            if (!member_id) return;
+
             try {
                 const { data, error } = await _db
                     .from('recommendations')
                     .select('title, author, page_count, nickname, is_selected')
-                    .eq('member_name', member_name)
+                    .eq('member_id', member_id) // 👑 문자열 필터 완전 소멸
                     .eq('is_selected', false) 
                     .order('created_at', { ascending: false })
                     .limit(1);
@@ -198,16 +201,17 @@
             document.getElementById("recTitle").focus();
         }
 
+        // 👑 [Golden Schema 리팩토링]: 기존 기입작 로드 엔진 또한 고유 member_id 필터링 기믹으로 무장
         async function loadExistingRecommendation() {
-            const member_name = getLoggedInMember();
+            const member_id = parseInt(localStorage.getItem("login_member_id"));
             const target_round = document.getElementById("targetRoundSelect").value;
-            if(!target_round) return;
+            if(!target_round || !member_id) return;
             
             try {
                 const { data, error } = await _db
                     .from('recommendations')
                     .select('id, title, author, nickname, page_count')
-                    .eq('member_name', member_name)
+                    .eq('member_id', member_id) // 👑 정석 고유 ID 바인딩
                     .eq('target_round', parseInt(target_round))
                     .order('created_at', { ascending: false })
                     .limit(1);
@@ -239,19 +243,19 @@
             } catch (err) { console.error(err); }
         }
 
-        // 👑 [명세 반영 교정] 구형 rating 대신 rating_before 컬럼값을 낚아채어 셋팅하는 기믹
+        // 👑 [Golden Schema 리팩토링]: 기존 별점 리뷰 로드도 member_id 필터 연동 체제 전환
         async function loadExistingReview() {
-            const member_name = getLoggedInMember();
+            const member_id = parseInt(localStorage.getItem("login_member_id"));
             const roundNoEl = document.getElementById("roundNoSelect");
-            if (!roundNoEl.value) return;
+            if (!roundNoEl.value || !member_id) return;
             
             const round_no = parseInt(roundNoEl.value);
             
             try {
                 const { data, error } = await _db
                     .from('reviews_ratings')
-                    .select('rating_before, review_text') // 👑 정밀 교정 컬럼
-                    .eq('member_name', member_name)
+                    .select('rating_before, review_text') 
+                    .eq('member_id', member_id) // 👑 정석 고유 ID 바인딩
                     .eq('round_no', round_no)
                     .limit(1);
 
@@ -278,9 +282,12 @@
             } catch (err) { console.error(err); }
         }
 
+        // 👑 [Golden Schema 리팩토링]: 추천작 저장 핸들러에서 member_name 대신 member_id를 공식 인서트 처리!
         async function saveRecommendation(e) {
             e.preventDefault();
-            const member_name = getLoggedInMember();
+            const member_id = parseInt(localStorage.getItem("login_member_id"));
+            if (!member_id) { alert("세션 만료! 다시 로그인해 주셔요."); return; }
+
             const target_round = parseInt(document.getElementById("targetRoundSelect").value);
             const title = document.getElementById("recTitle").value.trim();
             const author = document.getElementById("recAuthor").value.trim();
@@ -293,6 +300,7 @@
 
             try {
                 if (currentRecId) {
+                    // 수정 업데이트 구역
                     const { error } = await _db
                         .from('recommendations')
                         .update({ title, author, page_count, nickname, target_round })
@@ -301,9 +309,10 @@
                     if (error) throw error;
                     alert("추천 도서 정보가 차수별로 완벽하게 수정되었사옵니다! ✨");
                 } else {
+                    // 👑 신규 인서트 기믹: member_name 명단 걷어내고 member_id 필드 안착 시전!
                     const { error } = await _db
                         .from('recommendations')
-                        .insert([{ target_month, target_round, member_name, title, author, page_count, nickname }]);
+                        .insert([{ target_month, target_round, member_id, title, author, page_count, nickname }]);
                         
                     if (error) throw error;
                     alert("추천 도서가 지정 차수에 명확히 등록되었사옵니다! 💖");
@@ -317,21 +326,24 @@
             }
         }
 
-        // 👑 [명세 반영 교정] 별점을 순수 rating_before 컬럼 파이프라인에 업서트 꽂는 기믹
+        // 👑 [Golden Schema 리팩토링]: 평점 업서트 페이로드와 제약조건(onConflict) 타격을 member_id 기반으로 정밀 개조!
         async function saveReviewRating(e) {
             e.preventDefault();
-            const member_name = getLoggedInMember();
+            const member_id = parseInt(localStorage.getItem("login_member_id"));
+            if (!member_id) { alert("세션 만료! 다시 로그인해 주셔요."); return; }
+
             const round_no = parseInt(document.getElementById("roundNoSelect").value);
-            const rating_before = parseFloat(document.getElementById("ratingSelect").value); // 👑 명세 반영 변수
+            const rating_before = parseFloat(document.getElementById("ratingSelect").value); 
             const review_text = document.getElementById("reviewText").value.trim();
 
             try {
+                // 👑 신규 업서트 기믹: member_name 매핑 폐기, member_id 필드 및 onConflict 제약조건 대상 전격 교체!
                 const { error } = await _db.from('reviews_ratings').upsert({ 
                     round_no, 
-                    member_name, 
-                    rating_before, // 👑 정밀 교정 컬럼 맵핑
+                    member_id, 
+                    rating_before, 
                     review_text 
-                }, { onConflict: 'round_no, member_name' });
+                }, { onConflict: 'round_no, member_id' }); // 👑 정석 유니크 인덱스 타격
                 
                 if (error) throw error;
                 alert("토론 전 마음의 별점과 리뷰 총평이 성공적으로 장전되었습니다! ☕");

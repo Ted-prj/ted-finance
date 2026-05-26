@@ -137,9 +137,10 @@
                 input.blur(); 
 
                 try {
+                    // 👑 [Zoro Link System] 상디의 정석 마마 마이그레이션 반영: 고유 id 컬럼 수색 조건에 강제 투입!
                     const { data, error } = await _db
                         .from('members')
-                        .select('member_name, password, image_name')
+                        .select('id, member_name, password, image_name') 
                         .eq('member_name', memberName)
                         .eq('password', password)
                         .eq('is_active', true); // 혹시 모를 비활성 계정 침투 강제 차단
@@ -147,8 +148,11 @@
                     if (error) throw error;
 
                     if (data && data.length > 0) {
+                        // 👑 [Zoro Link System] 세션 창고 잠금 해제: 고유 숫자 id를 로컬 보관소에 안전하게 선제 적재!
+                        localStorage.setItem("login_member_id", data[0].id);
                         localStorage.setItem("login_member", memberName);
                         localStorage.setItem("login_member_image", data[0].image_name);
+                        
                         window.location.href = "gate.html";
                     } else {
                         showError("시크릿 시그널이 올바르지 않사옵니다, 공주님! 🥀");
