@@ -82,9 +82,8 @@
             display: block;
         }
 
-        /* 👑 [선장의 UI 조도 상향 오더 반영]: 침침한 글자 무리를 완전히 몰아내기 위한 고대비 마스터 스타일 */
         .history-vivid-label {
-            color: #ff69b4 !important; /* 눈에 번쩍 뜨이는 고선명 비비드 핑크 강제 인젝션 */
+            color: #ff69b4 !important; 
             font-weight: 700 !important;
             font-size: 0.78rem !important;
             letter-spacing: 0.5px;
@@ -232,7 +231,6 @@
 
                 const roundNumbers = histories.map(h => h.round_no);
 
-                // 👑 [평점 수확 엔진 장착]: 이름과 아바타 매핑뿐 아니라, 수거된 rating_after 및 rating_before 필드까지 한 묶음으로 전격 사냥!
                 const [booksResponse, attendeesResponse] = await Promise.all([
                     _db.from('books').select('round_no, title, discussion_date, location').in('round_no', roundNumbers),
                     _db.from('reviews_ratings').select('round_no, member_id, rating_after, rating_before, members(member_name, image_name)').in('round_no', roundNumbers)
@@ -258,7 +256,6 @@
             }
         }
 
-        // 👑 프사 격파 및 숫자 평점 동적 바인딩형 모바일 전용 카드 카드 레이아웃 빌더
         function buildHistoryCardHtml(hist, books, attendees) {
             const roundNo = hist.round_no;
             const bookTitles = books.map(b => `<span class="text-warning fw-bold">[${b.title}]</span>`).join(' & ');
@@ -268,7 +265,6 @@
             const uniqueAttendanceMap = new Map();
             attendees.forEach(a => {
                 if (a.members && !uniqueAttendanceMap.has(a.member_id)) {
-                    // 토론 후 평점을 우선시하되, 공백 시 토론 전 마음의 별점 점수로 정밀 백업 연동
                     const validScore = a.rating_after !== null ? a.rating_after : (a.rating_before !== null ? a.rating_before : null);
                     uniqueAttendanceMap.set(a.member_id, {
                         info: a.members,
@@ -277,7 +273,6 @@
                 }
             });
 
-            // 👑 [선장의 핵심 오더 반영]: 아바타와 닉네임 바로 뒤에 눈부신 황금빛 소수점 점수 안착!
             let attendeeChipsHtml = "";
             if (uniqueAttendanceMap.size === 0) {
                 attendeeChipsHtml = `<span class="text-muted small">출석 명단 공백</span>`;
@@ -308,7 +303,6 @@
                 photosHtml = `<div class="text-muted small py-2 id-empty-photo-${roundNo}" style="font-size:0.78rem;"><i class="fa-regular fa-images me-1"></i> 현장 사진첩이 비어있사옵니다.</div>`;
             }
 
-            // 👑 [선장의 고광채 오더 반영]: btn-history-vivid-edit 및 history-vivid-label 전격 배정 구역
             return `
                 <div class="card history-card text-start" id="card_master_${roundNo}">
                     <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2.5" style="border-color: rgba(255,0,127,0.15) !important;">
@@ -453,42 +447,70 @@
                 const emptyMsg = document.querySelector(`.id-empty-photo-${roundNo}`);
                 if (emptyMsg) emptyMsg.style.display = "none";
 
+                // 👑 모든 비동기 순서가 대기 완료(await)된 후 알림창을 띄우므로 완벽 시그널 보장
                 alert("✨ 압축 완료! 사진이 초경량 상태로 장전되었습니다. 하단 [개정 역사 확정 저장]을 누르셔야 최종 반영되옵니다!");
             } catch(e) {
                 console.error(e);
                 alert("가변 이미지 연쇄 압축 실패.");
             } finally {
-                document.getElementById(mockSpinnerId).remove();
+                const spinnerNode = document.getElementById(mockSpinnerId);
+                if(spinnerNode) spinnerNode.remove();
             }
         }
 
+        // 👑 [Zoro's Masterpiece Async Sequencer Engine]: 비동기 역전 버그를 단칼에 베어낸 무결점 캔버스 엔진
         async function compressAndUploadHistorySingleBlob(file, roundNo, index) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.readAsDataURL(file);
+                
+                // 1. 이벤트 리스너(onload/onerror)를 1순위로 장전하여 비동기 트랩 전격 봉쇄!
                 reader.onload = (event) => {
                     const img = new Image();
-                    img.src = event.target.result;
+                    
+                    // 2. 이미지 객체 내부 로드 이벤트 역시 src 주입보다 먼저 완벽하게 선제 정렬!
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 1200;
-                        let width = img.width; let height = img.height;
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                        canvas.width = width; canvas.height = height;
-                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        
+                        // 3. 폭발 예방 Fallback 가치 마킹 탑재 (0x0 유령 캔버스 생성 원천 차단)
+                        let width = img.width || 300; 
+                        let height = img.height || 300;
+                        
+                        if (width > MAX_WIDTH) { 
+                            height *= MAX_WIDTH / width; 
+                            width = MAX_WIDTH; 
+                        }
+                        canvas.width = width; 
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
 
                         canvas.toBlob(async (blob) => {
-                            if (!blob) { reject("블롭 실패"); return; }
+                            if (!blob) { 
+                                reject("블롭 파일 추출 장해 발생"); 
+                                return; 
+                            }
+                            
                             const path = `${roundNo}/append_${Date.now()}_${index}.jpg`;
                             try {
                                 const { error } = await _db.storage.from('discussion-photos').upload(path, blob, { contentType: 'image/jpeg' });
                                 if (error) throw error;
+                                
                                 const { data } = _db.storage.from('discussion-photos').getPublicUrl(path);
                                 resolve(data.publicUrl);
-                            } catch (err) { reject(err); }
+                            } catch (err) { 
+                                reject(err); 
+                            }
                         }, 'image/jpeg', 0.75);
                     };
+                    
+                    img.onerror = () => reject("이미지 가공 로드 대실패");
+                    img.src = event.target.result; // 👑 무조건 onload 바인딩 아랫줄에 안착 사수!
                 };
+                
+                reader.onerror = () => reject("로컬 파일 스캔 장해 발생");
+                reader.readAsDataURL(file); // 👑 무조건 onload 바인딩 아랫줄에 안착 사수!
             });
         }
 
