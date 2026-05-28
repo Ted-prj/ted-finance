@@ -113,11 +113,6 @@
                         <input type="number" class="form-control form-control-custom" id="recPageCount" placeholder="예: 324" min="1" inputmode="numeric" pattern="[0-9]*" required>
                     </div>
 
-                    <div class="mb-2">
-                        <label class="form-label text-pink small fw-bold">책 별칭 또는 한줄평 키워드</label>
-                        <input type="text" class="form-control form-control-custom" id="recNickname" placeholder="예: 벽돌책 아님 패스">
-                    </div>
-
                     <button type="submit" class="btn btn-princess w-100 mt-2" id="recSubmitBtn">
                         <i class="fa-solid fa-heart-circle-plus"></i> 추천 도서 등록하기
                     </button>
@@ -186,7 +181,6 @@
             loadExistingReview();
         });
 
-        // 👑 스와이프 시 실시간으로 황금 별을 채워주고 점수를 갱신하는 렌더 엔진 유틸
         function syncWriteStarSlider(val) {
             document.getElementById("writeStarInner").style.width = (parseFloat(val) / 5 * 100) + "%";
             document.getElementById("writeStarText").textContent = parseFloat(val).toFixed(1);
@@ -228,7 +222,7 @@
             try {
                 const { data, error } = await _db
                     .from('recommendations')
-                    .select('title, author, page_count, nickname, is_selected')
+                    .select('title, author, page_count, is_selected') // 👑 nickname 검색 필드 생략 제거
                     .eq('member_id', member_id) 
                     .eq('is_selected', false) 
                     .order('created_at', { ascending: false })
@@ -256,7 +250,7 @@
             document.getElementById("recTitle").value = lastUnselectedBookObj.title || "";
             document.getElementById("recAuthor").value = lastUnselectedBookObj.author || "";
             document.getElementById("recPageCount").value = lastUnselectedBookObj.page_count || "";
-            document.getElementById("recNickname").value = lastUnselectedBookObj.nickname || "";
+            // 👑 별칭 폼 주입 제거 완료
             
             alert(`✨ 완벽 로딩! 탈락했던 명작 [${lastUnselectedBookObj.title}]의 스펙을 폼에 채워 넣었사옵니다. 하단 등록을 누르셔요!`);
             document.getElementById("recTitle").focus();
@@ -270,7 +264,7 @@
             try {
                 const { data, error } = await _db
                     .from('recommendations')
-                    .select('id, title, author, nickname, page_count')
+                    .select('id, title, author, page_count') // 👑 nickname 제거
                     .eq('member_id', member_id) 
                     .eq('target_round', parseInt(target_round))
                     .order('created_at', { ascending: false })
@@ -286,7 +280,6 @@
                     document.getElementById("recTitle").value = rec.title || "";
                     document.getElementById("recAuthor").value = rec.author || "";
                     document.getElementById("recPageCount").value = rec.page_count || "";
-                    document.getElementById("recNickname").value = rec.nickname || "";
                     
                     submitBtn.innerHTML = `<i class="fa-solid fa-pen-fancy"></i> 추천 도서 우아하게 수정하기`;
                     submitBtn.style.background = "linear-gradient(135deg, #FF007F, #FF69B4)";
@@ -295,7 +288,6 @@
                     document.getElementById("recTitle").value = "";
                     document.getElementById("recAuthor").value = "";
                     document.getElementById("recPageCount").value = "";
-                    document.getElementById("recNickname").value = "";
                     
                     submitBtn.innerHTML = `<i class="fa-solid fa-heart-circle-plus"></i> 추천 도서 등록하기`;
                     submitBtn.style.background = ""; 
@@ -327,7 +319,6 @@
                     const rev = data[0];
                     const existingScore = rev.rating_before !== null ? rev.rating_before : 4.0;
                     
-                    // 👑 기입 데이터 기반 슬라이더 및 황금 광채 별 연동 세팅
                     ratingSlider.value = existingScore;
                     syncWriteStarSlider(existingScore);
                     
@@ -354,7 +345,6 @@
             const title = document.getElementById("recTitle").value.trim();
             const author = document.getElementById("recAuthor").value.trim();
             const page_count = document.getElementById("recPageCount").value ? parseInt(document.getElementById("recPageCount").value) : null;
-            const nickname = document.getElementById("recNickname").value.trim();
 
             const now = new Date();
             const future = new Date(now.getFullYear(), now.getMonth() + (target_round - latestRound), 1);
@@ -362,17 +352,19 @@
 
             try {
                 if (currentRecId) {
+                    // 👑 업데이트 페이로드에서 nickname 제외 완료
                     const { error } = await _db
                         .from('recommendations')
-                        .update({ title, author, page_count, nickname, target_round })
+                        .update({ title, author, page_count, target_round })
                         .eq('id', currentRecId);
                         
                     if (error) throw error;
                     alert("추천 도서 정보가 차수별로 완벽하게 수정되었사옵니다! ✨");
                 } else {
+                    // 👑 인서트 페이로드에서 nickname 제외 완료
                     const { error } = await _db
                         .from('recommendations')
-                        .insert([{ target_month, target_round, member_id, title, author, page_count, nickname }]);
+                        .insert([{ target_month, target_round, member_id, title, author, page_count }]);
                         
                     if (error) throw error;
                     alert("추천 도서가 지정 차수에 명확히 등록되었사옵니다! 💖");
@@ -392,7 +384,6 @@
             if (!member_id) { alert("세션 만료! 다시 로그인해 주셔요."); return; }
 
             const round_no = parseInt(document.getElementById("roundNoSelect").value);
-            // 👑 슬라이더 인풋에 누적된 0.1 정밀도 실수를 그대로 적재 파이프라인에 바인딩!
             const rating_before = parseFloat(document.getElementById("ratingSelect").value); 
             const review_text = document.getElementById("reviewText").value.trim();
 

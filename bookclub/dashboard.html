@@ -9,6 +9,67 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* 👑 [Zoro's Custom Upward Book Tooltip Architecture] */
+        .book-nickname-container {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            color: #fff;
+            border-bottom: 1px dotted var(--neon-pink);
+            font-weight: 500;
+        }
+        .custom-upward-tooltip {
+            visibility: hidden;
+            width: 190px;
+            background-color: #000000;
+            color: #ffffff;
+            text-align: center;
+            border: 1px solid var(--neon-pink);
+            border-radius: 8px;
+            padding: 6px 10px;
+            position: absolute;
+            z-index: 9999;
+            bottom: 135%; /* 👑 선장의 오더 반영: 손가락에 가리지 않게 위쪽 방향으로 강제 고정 */
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            font-size: 0.75rem !important;
+            font-weight: 400 !important;
+            white-space: normal;
+            word-break: break-all;
+            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.5);
+            line-height: 1.3;
+        }
+        /* 말풍선 아래쪽 꼭지 삼각형 장착 */
+        .custom-upward-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #000000 transparent transparent transparent;
+        }
+        .custom-upward-tooltip::before {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -7px;
+            border-width: 7px;
+            border-style: solid;
+            border-color: var(--neon-pink) transparent transparent transparent;
+            z-index: -1;
+        }
+        .custom-upward-tooltip.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
 
@@ -21,7 +82,7 @@
                 </button>
             </div>
             <p class="text-muted m-0">
-                <i class="fa-solid fa-sparkles me-1" style="color: var(--bp-pink);"></i> 
+                <i class="fa-solid fa-sparkles me-1" style="color: var(--bp-pink); "></i> 
                 우아한 공주님들의 고결한 독서 취향과 눈부신 발자취가 실시간으로 반짝이는 럭셔리 핑크 라운지-★
             </p>
             <div class="mt-3 pt-2 border-top border-secondary d-flex justify-content-between align-items-center">
@@ -44,11 +105,11 @@
                         <i class="fa-solid fa-heart-window me-1"></i> 공주별 티타임 평점 순위
                     </div>
                     <div class="card-body-custom scrollable-panel">
-                        <table class="table table-custom text-center" id="memberStatsTable">
+                        <table class="table table-custom text-center" id="memberStatsTable" style="table-layout: fixed; width: 100%;">
                             <thead>
                                 <tr>
-                                    <th style="width: 35%;">공주 프로필</th>
-                                    <th class="text-start" style="width: 35%;">최근 픽</th>
+                                    <th style="width: 32%;">공주 프로필</th>
+                                    <th class="text-start" style="width: 38%;">최근 픽</th>
                                     <th style="width: 15%;">최근</th>
                                     <th style="width: 15%;">평균</th>
                                 </tr>
@@ -167,6 +228,7 @@
 
         let globalBooksData = [];
         let globalBookRatings = {};
+        let globalBooksMap = {}; // 👑 차수별 도서 오브젝트 매핑 창고
 
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("currentUserLabel").textContent = getLoggedInMember();
@@ -174,21 +236,61 @@
             fetchAllDashboardData();
         });
 
+        // 👑 터치했을 때 말풍선을 안전하게 토글하는 전역 UI 스크립트 엔진
+        function toggleTooltipAction(event, el) {
+            event.stopPropagation(); // 아코디언 카드 닫힘 기믹 간섭 원천 배제
+            const tooltip = el.querySelector('.custom-upward-tooltip');
+            const isOpen = tooltip.classList.contains('show');
+            
+            // 다른 모든 말풍선을 클리어하여 화면 충돌 방지
+            document.querySelectorAll('.custom-upward-tooltip').forEach(t => t.classList.remove('show'));
+            
+            if (!isOpen) {
+                tooltip.classList.add('show');
+            }
+        }
+
+        // 바깥 허공 영역 터치 시 말풍선 전량 자동 소멸 방어선
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.custom-upward-tooltip').forEach(t => t.classList.remove('show'));
+        });
+
+        // 👑 [Zoro's Hyper Tooltip Renderer]: 별칭(nickname)이 있으면 뿌려주고, 누르면 원본 제목(title)을 스포트라이트 조명
+        function renderBookNameWithTooltip(roundNo, defaultTitle) {
+            const book = globalBooksMap[roundNo];
+            const title = book ? book.title : defaultTitle;
+            const nickname = (book && book.nickname) ? book.nickname : title;
+            
+            return `
+                <span class="book-nickname-container" onclick="toggleTooltipAction(event, this)">
+                    ${escapeHtml(nickname)}
+                    <span class="custom-upward-tooltip">📖 진짜 제목: ${escapeHtml(title)}</span>
+                </span>
+            `;
+        }
+
         async function fetchAllDashboardData() {
             try {
+                // 👑 [별칭 로드 인프라]: books 스캔 시 nickname 컬럼까지 전격 병렬 인출!
                 const { data: bData } = await _db
                     .from('books')
-                    .select('round_no, title, main_category, custom_category')
+                    .select('round_no, title, nickname, main_category, custom_category, recommended_by')
                     .eq('is_closed', true)
                     .order('round_no', { ascending: false }); 
                 
                 globalBooksData = bData || [];
                 
+                // 래피드 조회를 위한 고속 맵 기판 적재
+                globalBooksMap = {};
+                globalBooksData.forEach(b => {
+                    globalBooksMap[b.round_no] = b;
+                });
+                
                 const { data: rData } = await _db.from('v_book_stats').select('*');
                 globalBookRatings = {};
                 if (rData) {
                     rData.forEach(row => {
-                        globalBookRatings[`${row.round_no}-${row.title}`] = row.avg_rating;
+                        globalBookRatings[row.round_no] = row.avg_rating; // 👑 고유 차수코드로 다이렉트 바인딩 전환
                     });
                 }
             } catch(e) { console.error("선행 데이터 스캔 실패:", e); }
@@ -213,17 +315,25 @@
                     return;
                 }
                 data.forEach(row => {
-                    const recentRatingHtml = row.recent_rating > 0 ? `<span class="text-warning">★</span>${row.recent_rating.toFixed(1)}` : `<span class="text-muted">-</span>`;
-                    const avgScoreDisplay = row.avg_rating ? row.avg_rating.toFixed(1) : '0.0';
+                    const recentRatingHtml = row.recent_rating > 0 ? `<span class="text-warning">★</span>${Number(row.recent_rating).toFixed(1)}` : `<span class="text-muted">-</span>`;
+                    const avgScoreDisplay = row.avg_rating ? Number(row.avg_rating).toFixed(1) : '0.0';
+                    
+                    // 👑 최근 픽 텍스트를 별칭 기반 레이아웃 칩으로 전격 변환!
+                    let matchedRoundNo = null;
+                    const foundBook = globalBooksData.find(b => b.title === row.recent_book);
+                    if (foundBook) matchedRoundNo = foundBook.round_no;
+                    
+                    const recentBookHtml = matchedRoundNo ? renderBookNameWithTooltip(matchedRoundNo, row.recent_book) : escapeHtml(row.recent_book);
+
                     tbody.innerHTML += `
                         <tr>
-                            <td class="fw-bold text-pink text-start text-truncate" style="max-width:0;">
+                            <td class="fw-bold text-pink text-start text-truncate" style="max-width:0; vertical-align: middle;">
                                 <img src="images/${row.image_name}" class="princess-avatar-sm" onerror="this.src='images/default_princess.png'">
                                 ${row.member_name}
                             </td>
-                            <td class="text-start text-wrap" style="word-break: break-all; font-size:0.85rem;">${row.recent_book}</td>
-                            <td>${recentRatingHtml}</td>
-                            <td><div class="rating-badge">★${avgScoreDisplay}</div></td>
+                            <td class="text-start text-wrap" style="word-break: break-all; font-size:0.82rem; vertical-align: middle;">${recentBookHtml}</td>
+                            <td style="vertical-align: middle;">${recentRatingHtml}</td>
+                            <td style="vertical-align: middle;"><div class="rating-badge">★${avgScoreDisplay}</div></td>
                         </tr>
                     `;
                 });
@@ -233,13 +343,13 @@
             }
         }
 
-        // 👑 [Golden Schema 변환]: books.recommended_by가 숫자 ID로 변환되었으므로 매칭 필터 엔진 교정!
+        // 👑 파트 2: 공주별 추천 도서 왕좌 (명세 반영: 개별 책 평점 + 추천 도서 총 합산 평균 레이스 연산 탑재)
         async function fetchRecommendationCrownStats() {
             const container = document.getElementById("recommendationCrownContainer");
             try {
                 const { data: activeMembers, error: memErr } = await _db
                     .from('members')
-                    .select('id, member_name, image_name') // id 확보 사수!
+                    .select('id, member_name, image_name') 
                     .eq('is_active', true)
                     .order('member_name', { ascending: true });
 
@@ -247,7 +357,7 @@
 
                 const { data: selectedBooks, error: bkErr } = await _db
                     .from('books')
-                    .select('round_no, title, recommended_by') // recommended_by는 이제 숫자형 고유 ID!
+                    .select('round_no, title, recommended_by') 
                     .order('round_no', { ascending: false });
 
                 if (bkErr) throw bkErr;
@@ -261,11 +371,23 @@
 
                 activeMembers.forEach(member => {
                     const name = member.member_name;
-                    
-                    // 👑 문자열 대조(b.recommended_by === name)에서 고유 숫자 ID 대조 직격 변경!
                     const matchingBooks = selectedBooks.filter(b => b.recommended_by === member.id);
                     const count = matchingBooks.length;
                     const safeId = name.replace(/\s+/g, '_');
+
+                    // 👑 [추천작 전쟁 연산 엔진]: 이 공주가 가져온 모든 책의 평균 별점을 합산해서 2차 종합 평균 도출!
+                    let totalRatingSum = 0;
+                    let ratedBooksCount = 0;
+
+                    matchingBooks.forEach(b => {
+                        const bookAvg = globalBookRatings[b.round_no];
+                        if (bookAvg && bookAvg > 0) {
+                            totalRatingSum += bookAvg;
+                            ratedBooksCount++;
+                        }
+                    });
+
+                    const princessPickAvgDisplay = ratedBooksCount > 0 ? (totalRatingSum / ratedBooksCount).toFixed(2) : '0.00';
 
                     container.innerHTML += `
                         <div class="mb-2 border-bottom border-secondary pb-2" style="border-color: rgba(255,0,127,0.1) !important;">
@@ -276,21 +398,32 @@
                                     <img src="images/${member.image_name}" class="princess-avatar-sm" onerror="this.src='images/default_princess.png'">
                                     ${name} 공주
                                 </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="badge" style="background: linear-gradient(135deg, var(--royal-gold), #DAA520); color:#000; font-weight:800; font-size:0.75rem;">
-                                        🏆 총 ${count}권 선정
+                                <div class="d-flex align-items-center gap-1.5">
+                                    <span class="badge" style="background: linear-gradient(135deg, #FF007F, #FF69B4); color:#fff; font-weight:700; font-size:0.7rem;">
+                                        ⭐ 픽 평균: ${princessPickAvgDisplay}점
                                     </span>
-                                    <i class="fa-solid fa-chevron-down ms-2 text-muted" id="arrow_panel_${safeId}" style="font-size:0.8rem; transition: transform 0.2s;"></i>
+                                    <span class="badge" style="background: linear-gradient(135deg, var(--royal-gold), #DAA520); color:#000; font-weight:800; font-size:0.7rem;">
+                                        🏆 총 ${count}권
+                                    </span>
+                                    <i class="fa-solid fa-chevron-down ms-1 text-muted" id="arrow_panel_${safeId}" style="font-size:0.8rem; transition: transform 0.2s;"></i>
                                 </div>
                             </div>
                             
                             <div id="panel_${safeId}" class="d-none mt-2 px-3 py-2 rounded-3" style="background-color: #150910; border: 1px dashed rgba(255,105,180,0.25);">
-                                ${count > 0 ? matchingBooks.map(b => `
-                                    <div class="small py-1 text-white d-flex align-items-center" style="font-size:0.82rem; font-weight:400; width:100%; min-width:0;">
-                                        <span class="text-warning fw-bold me-2 flex-shrink-0">[제 ${b.round_no}회차]</span>
-                                        <span class="text-truncate" style="flex-grow:1; min-width:0; text-align:left;">${b.title}</span>
-                                    </div>
-                                `).join('') : `<div class="small text-muted py-1 text-center">선정 히스토리가 없사옵니다. 🥀</div>`}
+                                ${count > 0 ? matchingBooks.map(b => {
+                                    // 👑 서랍 내 개별 도서명 별칭 우회 및 평점 스코어 우측 인레이 노출 완료
+                                    const individualScore = globalBookRatings[b.round_no];
+                                    const individualScoreStr = individualScore > 0 ? `★${Number(individualScore).toFixed(1)}` : '평가전';
+                                    return `
+                                        <div class="small py-1 text-white d-flex justify-content-between align-items-center" style="font-size:0.82rem; font-weight:400; width:100%; min-width:0; border-bottom: 1px solid rgba(255,255,255,0.02);">
+                                            <div class="text-truncate me-2" style="text-align:left; min-width:0; flex-grow:1;">
+                                                <span class="text-warning fw-bold me-2 flex-shrink-0">[제 ${b.round_no}회차]</span>
+                                                ${renderBookNameWithTooltip(b.round_no, b.title)}
+                                            </div>
+                                            <span class="badge bg-dark border border-pink text-pink flex-shrink-0" style="font-size: 0.68rem;">${individualScoreStr}</span>
+                                        </div>
+                                    `;
+                                }).join('') : `<div class="small text-muted py-1 text-center">선정 히스토리가 없사옵니다. 🥀</div>`}
                             </div>
                         </div>
                     `;
@@ -317,9 +450,9 @@
                     const ratingHtml = row.avg_rating > 0 ? `<div class="rating-badge" style="background: transparent; border: 1px solid var(--neon-pink); color: var(--neon-pink); box-shadow: none;">★${scoreVal}</div>` : `<span class="text-muted">평가전</span>`;
                     tbody.innerHTML += `
                         <tr>
-                            <td><span class="badge bg-dark border border-secondary">제 ${row.round_no}회차</span></td>
-                            <td class="text-start text-wrap" style="word-break: break-all;">${row.title}</td>
-                            <td>${ratingHtml}</td>
+                            <td style="vertical-align: middle;"><span class="badge bg-dark border border-secondary">제 ${row.round_no}회차</span></td>
+                            <td class="text-start text-wrap" style="word-break: break-all; vertical-align: middle;">${renderBookNameWithTooltip(row.round_no, row.title)}</td>
+                            <td style="vertical-align: middle;">${ratingHtml}</td>
                         </tr>
                     `;
                 });
@@ -350,22 +483,23 @@
 
                     tbody.innerHTML += `
                         <tr onclick="toggleAccordion('panel_${safeId}', 'arrow_panel_${safeId}')" style="cursor: pointer; transition: background 0.2s;">
-                            <td class="text-start fw-medium text-truncate" style="color: #fff !important; max-width:0;">
+                            <td class="text-start fw-medium text-truncate" style="color: #fff !important; max-width:0; vertical-align: middle;">
                                 <i class="fa-regular fa-star text-pink me-1" style="color:var(--bp-pink);"></i>${row.main_category}
                                 <i class="fa-solid fa-chevron-down ms-1 text-muted" id="arrow_panel_${safeId}" style="font-size:0.7rem; transition: transform 0.2s;"></i>
                             </td>
-                            <td><span class="count-badge">${row.book_count}권</span></td>
-                            <td><span class="rating-badge">${avgScoreDisplay}</span></td>
+                            <td style="vertical-align: middle;"><span class="count-badge">${row.book_count}권</span></td>
+                            <td style="vertical-align: middle;"><span class="rating-badge">${avgScoreDisplay}</span></td>
                         </tr>
                         <tr id="panel_${safeId}" class="d-none" style="background-color: #190B13;">
                             <td colspan="3" class="text-start px-3 py-2" style="border-bottom: 1px solid rgba(255,0,127,0.15) !important; max-width:0;">
                                 ${targetBooks.length > 0 ? targetBooks.map(b => {
-                                    const score = globalBookRatings[`${b.round_no}-${b.title}`];
+                                    const score = globalBookRatings[b.round_no];
                                     const scoreStr = score > 0 ? `★${Number(score).toFixed(1)}` : '평가전';
                                     return `
                                         <div class="d-flex justify-content-between align-items-center small py-1" style="border-bottom: 1px solid rgba(255,255,255,0.04); font-size:0.82rem; width:100%; min-width:0;">
                                             <div class="text-white text-truncate me-2" style="flex-grow:1; min-width:0; text-align:left;">
-                                                <span class="text-warning fw-bold me-1">[제 ${b.round_no}회차]</span>${b.title}
+                                                <span class="text-warning fw-bold me-1">[제 ${b.round_no}회차]</span>
+                                                ${renderBookNameWithTooltip(b.round_no, b.title)}
                                             </div>
                                             <span class="badge bg-dark border border-pink text-pink flex-shrink-0" style="font-size: 0.68rem;">${scoreStr}</span>
                                         </div>
@@ -402,21 +536,22 @@
 
                     tbody.innerHTML += `
                         <tr onclick="toggleAccordion('panel_${safeId}', 'arrow_panel_${safeId}')" style="cursor: pointer; transition: background 0.2s;">
-                            <td class="text-start fw-medium text-truncate" style="color: #fff !important; max-width:0;"><i class="fa-solid fa-sparkles me-1" style="color:var(--neon-pink);"></i>${row.custom_category}
+                            <td class="text-start fw-medium text-truncate" style="color: #fff !important; max-width:0; vertical-align: middle;"><i class="fa-solid fa-sparkles me-1" style="color:var(--neon-pink);"></i>${row.custom_category}
                                 <i class="fa-solid fa-chevron-down ms-1 text-muted" id="arrow_panel_${safeId}" style="font-size:0.7rem; transition: transform 0.2s;"></i>
                             </td>
-                            <td><span class="count-badge">${row.book_count}권</span></td>
-                            <td><span class="rating-badge">${avgScoreDisplay}</span></td>
+                            <td style="vertical-align: middle;"><span class="count-badge">${row.book_count}권</span></td>
+                            <td style="vertical-align: middle;"><span class="rating-badge">${avgScoreDisplay}</span></td>
                         </tr>
                         <tr id="panel_${safeId}" class="d-none" style="background-color: #190B13;">
                             <td colspan="3" class="text-start px-3 py-2" style="border-bottom: 1px solid rgba(255,0,127,0.15) !important; max-width:0;">
                                 ${targetBooks.length > 0 ? targetBooks.map(b => {
-                                    const score = globalBookRatings[`${b.round_no}-${b.title}`];
+                                    const score = globalBookRatings[b.round_no];
                                     const scoreStr = score > 0 ? `★${Number(score).toFixed(1)}` : '평가전';
                                     return `
                                         <div class="d-flex justify-content-between align-items-center small py-1" style="border-bottom: 1px solid rgba(255,255,255,0.04); font-size:0.82rem; width:100%; min-width:0;">
                                             <div class="text-white text-truncate me-2" style="flex-grow:1; min-width:0; text-align:left;">
-                                                <span class="text-warning fw-bold me-1">[제 ${b.round_no}회차]</span>${b.title}
+                                                <span class="text-warning fw-bold me-1">[제 ${b.round_no}회차]</span>
+                                                ${renderBookNameWithTooltip(b.round_no, b.title)}
                                             </div>
                                             <span class="badge bg-dark border border-pink text-pink flex-shrink-0" style="font-size: 0.68rem;">${scoreStr}</span>
                                         </div>

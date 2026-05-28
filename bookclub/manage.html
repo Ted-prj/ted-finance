@@ -91,6 +91,13 @@
 
                 <div class="mt-4 pt-3 border-top border-secondary">
                     <label class="form-label text-warning small fw-bold mb-1.5">
+                        <i class="fa-solid fa-signature"></i> 이번 회차 도서 최종 별칭 (미입력 시 책 제목으로 자동 보존)
+                    </label>
+                    <input type="text" class="form-control form-control-custom" id="currentRoundNicknameInput" placeholder="예: 벽돌책 아님 패스, 눈물지뢰 등 (공백 시 책 제목)">
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label text-warning small fw-bold mb-1.5">
                         <i class="fa-solid fa-square-poll-horizontal"></i> AI 토론 내용 요약본 (회의록 텍스트 붙여넣기)
                     </label>
                     <textarea class="form-control form-control-custom" id="historySummaryText" rows="5" placeholder="AI가 장시간 수다를 요약한 대장정 회의록본을 남김없이 여기에 붙여넣으셔요." required></textarea>
@@ -195,6 +202,7 @@
         let currentActiveRound = 0; 
         let nextTargetRound = 0;
         let activeMembersList = []; 
+        let currentRoundBooks = []; // 👑 현재 라운드의 실시간 다중 도서 정보를 홀딩할 마스터 스택
 
         document.addEventListener("DOMContentLoaded", async () => {
             await anchorRoundsEngine();
@@ -205,25 +213,29 @@
             ]);
         });
 
+        // 👑 [명세 맞춤 변경]: 무결점 닉네임 자동 연동을 위해 현재 진행 차수의 도서 고유 ID와 TITLE을 전량 추적 스캔
         async function anchorRoundsEngine() {
             try {
                 const { data, error } = await _db
                     .from('books')
-                    .select('round_no, title')
+                    .select('id, round_no, title') 
                     .eq('is_closed', false) 
-                    .order('round_no', { ascending: false })
-                    .limit(1);
+                    .order('round_no', { ascending: false });
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
                     currentActiveRound = data[0].round_no;
-                    const currentTitle = data[0].title;
+                    // 다중 도서 회차 리스크를 예방하기 위해 동일 차수 도서 전량 필터링 홀딩
+                    currentRoundBooks = data.filter(b => b.round_no === currentActiveRound);
+                    
+                    const currentTitle = currentRoundBooks.map(b => b.title).join(', ');
                     nextTargetRound = currentActiveRound + 1;
                     document.getElementById("currentRoundTitleLabel").textContent = `제 ${currentActiveRound}회차 [${currentTitle}]`;
                 } else {
-                    const { data: maxB } = await _db.from('books').select('round_no, title').order('round_no', { ascending: false }).limit(1);
+                    const { data: maxB } = await _db.from('books').select('id, round_no, title').order('round_no', { ascending: false }).limit(1);
                     currentActiveRound = maxB && maxB.length > 0 ? maxB[0].round_no : 0;
+                    currentRoundBooks = maxB || [];
                     nextTargetRound = currentActiveRound + 1;
                     document.getElementById("currentRoundTitleLabel").textContent = `제 ${currentActiveRound}회차 지정 도서`;
                 }
@@ -323,21 +335,14 @@
             }
         }
 
-        // 👑 [Zoro's Masterpiece Async Sequencer Engine]: 비동기 역전 레이스 트랩을 완벽히 분쇄해낸 무결점 세션 마감 압축 함수
         async function compressAndUploadPhoto(file, roundNo, index) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                
-                // 1. 이벤트 리스너 감지기를 1순위로 선제 장전하여 비동기 트랩 전면 봉쇄!
                 reader.onload = (event) => {
                     const img = new Image();
-                    
-                    // 2. 이미지 객체 로딩 완료 이벤트 또한 src 할당보다 반드시 앞자리에 위치 사수!
                     img.onload = async () => {
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 1200; 
-                        
-                        // 3. 0x0 유령 캔버스 생성 원천 차단 가드 보루 탑재
                         let width = img.width || 300;
                         let height = img.height || 300;
 
@@ -375,21 +380,21 @@
                             }
                         }, 'image/jpeg', 0.75);
                     };
-                    
                     img.onerror = () => reject("이미지 가공 로드 대실패");
-                    img.src = event.target.result; // 👑 리스너 선포 완료 아랫줄에 안착시켜 로딩 가동!
+                    img.src = event.target.result; 
                 };
-                
                 reader.onerror = error => reject("로컬 파일 스캔 장해 발생");
-                reader.readAsDataURL(file); // 👑 리스너 선포 완료 아랫줄에 안착시켜 파일 리딩 가동!
+                reader.readAsDataURL(file); 
             });
         }
 
+        // 👑 [Golden Schema 대혁신 트랜잭션]: 마감 마그네틱 가동 시, 입력된 별칭 필드가 공백이면 책 제목(title)으로 자동 스위칭 적재!
         async function executeFinalSessionClosingTransaction() {
             const nextRoundDate = document.getElementById("nextRoundDateInput").value;
             const nextRoundLocation = document.getElementById("nextRoundLocationInput").value.trim();
             const summaryText = document.getElementById("historySummaryText").value.trim();
             const photoFiles = document.getElementById("historyPhotosInput").files;
+            const roundNickname = document.getElementById("currentRoundNicknameInput").value.trim(); // 👑 별칭 수거 완료
 
             if (!nextRoundDate) {
                 alert(`선장! 다음 [ 제 ${nextTargetRound}회차 ] 토론 일정을 캘린더에서 완벽히 선택하셔야 최종 마감이 가동되옵니다! 📅✨`);
@@ -481,7 +486,15 @@
                     return;
                 }
 
-                const closeCurrentRoundPromise = _db.from('books').update({ is_closed: true }).eq('round_no', currentActiveRound);
+                // 👑 [선장의 핵심 요구 조건 연동]: 현재 라운드 도서 리스트를 순회하며, 별칭 입력 공백 시 b.title 주입 집행!
+                const closeRoundPromises = currentRoundBooks.map(b => {
+                    const finalNickname = roundNickname ? roundNickname : b.title;
+                    return _db
+                        .from('books')
+                        .update({ is_closed: true, nickname: finalNickname })
+                        .eq('id', b.id);
+                });
+
                 const insertNextBooksPromise = _db.from('books').insert(nextBooksPayloads);
 
                 const insertHistoryPromise = _db.from('discussion_histories').insert([{
@@ -492,7 +505,7 @@
 
                 const results = await Promise.all([
                     ...ratingPromises, 
-                    closeCurrentRoundPromise, 
+                    ...closeRoundPromises, // 👑 기존 단일 책 업데이트 구문을 해체하고 무결점 다중 별칭-마감 배열로 결속 완료!
                     insertNextBooksPromise,
                     insertHistoryPromise
                 ]);
@@ -503,10 +516,11 @@
                     await _db.from('recommendations').update({ is_selected: true }).in('id', selectedRecIds);
                 }
 
-                alert(`🎉 대서사시 기록 보관 완료! 제 ${currentActiveRound}회차 토론방 셧다운 및 앨범 저장이 공식 잠금 완료되었으며, 제 ${nextTargetRound}회차 새 무결점 차수가 공식 출범되었습니다! 📅✨`);
+                alert(`🎉 대서사시 및 최종 도서 별칭 보관 완료! 제 ${currentActiveRound}회차 토론방 셧다운 및 앨범 저장이 공식 잠금 완료되었으며, 제 ${nextTargetRound}회차 새 무결점 차수가 공식 출범되었습니다! 📅✨`);
                 
                 document.getElementById("nextRoundDateInput").value = "";
                 document.getElementById("nextRoundLocationInput").value = "";
+                document.getElementById("currentRoundNicknameInput").value = ""; // 👑 초기화 리셋
                 document.getElementById("historySummaryText").value = "";
                 document.getElementById("historyPhotosInput").value = "";
                 document.getElementById("spontaneousFormWrapper").classList.add("d-none");
