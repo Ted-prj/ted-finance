@@ -81,12 +81,12 @@
 
         <div class="stat-card mb-4">
             <div class="card-header-custom">
-                <i class="fa-solid fa-book-medical"></i> 1. 다음 티타임 후보 도서 추천하기
+                <i class="fa-solid fa-book-medical"></i> 1. 다음 술타임 후보 도서 추천하기
             </div>
             <div class="card-body-custom">
                 <form id="recommendForm" onsubmit="saveRecommendation(event)">
                     <div class="mb-2">
-                        <label class="form-label text-pink small fw-bold">대상 티타임 차수 선택</label>
+                        <label class="form-label text-pink small fw-bold">대상 술타임 차수 선택</label>
                         <select class="form-select form-select-custom" id="targetRoundSelect" onchange="loadExistingRecommendation()" required>
                         </select>
                     </div>
@@ -122,7 +122,7 @@
 
         <div class="stat-card">
             <div class="card-header-custom">
-                <i class="fa-solid fa-heart me-1"></i> 2. 이번 티타임 평가 남기기
+                <i class="fa-solid fa-heart me-1"></i> 2. 이번 술타임 평가 남기기
             </div>
             <div class="card-body-custom">
                 <form id="reviewForm" onsubmit="saveReviewRating(event)">
@@ -192,9 +192,9 @@
             for(let i = 1; i <= 3; i++) {
                 let targetRoundNum = latestRound + i;
                 let roundLabel = "";
-                if (i === 1) roundLabel = `다음 (제 ${targetRoundNum}회차) 티타임 후보작`;
-                else if (i === 2) roundLabel = `다다음 (제 ${targetRoundNum}회차) 티타임 후보작`;
-                else roundLabel = `다다다음 (제 ${targetRoundNum}회차) 티타임 후보작`;
+                if (i === 1) roundLabel = `다음 (${targetRoundNum}회차) 술타임 후보작`;
+                else if (i === 2) roundLabel = `다다음 (${targetRoundNum}회차) 술타임 후보작`;
+                else roundLabel = `다다다음 (${targetRoundNum}회차) 술타임 후보작`;
 
                 select.innerHTML += `<option value="${targetRoundNum}">${roundLabel}</option>`;
             }
@@ -210,7 +210,7 @@
                 const select = document.getElementById("roundNoSelect");
                 select.innerHTML = "";
                 data.forEach(b => {
-                    select.innerHTML += `<option value="${b.round_no}">${b.round_no}회차 티타임 [${b.title}]</option>`;
+                    select.innerHTML += `<option value="${b.round_no}">${b.round_no}회차 술타임 [${b.title}]</option>`;
                 });
             } catch(e) { console.error(e); }
         }
@@ -235,7 +235,7 @@
 
                 if (data && data.length > 0) {
                     lastUnselectedBookObj = data[0];
-                    btn.innerHTML = `<i class="fa-solid fa-arrows-rotate text-warning"></i> ♻️ 지난 탈락작 <b>[${lastUnselectedBookObj.title}]</b> 원터치 불러오기`;
+                    btn.innerHTML = `<i class="fa-solid fa-arrows-rotate text-warning"></i> ♻️ 지난 탈락작 <b>[${lastUnselectedBookObj.title}]</b> 불러오기`;
                     wrapper.classList.remove("d-none"); 
                 } else {
                     lastUnselectedBookObj = null;
@@ -323,7 +323,7 @@
                     syncWriteStarSlider(existingScore);
                     
                     document.getElementById("reviewText").value = rev.review_text || "";
-                    submitBtn.innerHTML = `<i class="fa-solid fa-pen-fancy"></i> 티타임 총평 우아하게 수정하기`;
+                    submitBtn.innerHTML = `<i class="fa-solid fa-pen-fancy"></i> 술타임 총평 우아하게 수정하기`;
                     submitBtn.style.background = "linear-gradient(135deg, #FF007F, #FF69B4)";
                 } else {
                     ratingSlider.value = 4.0;

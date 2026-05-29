@@ -76,7 +76,7 @@
                 <h1><i class="fa-solid fa-screwdriver-wrenches text-pink" style="color: var(--neon-pink);"></i> 시크릿 운영 <span>MANAGE</span></h1>
                 <span class="badge bg-dark border border-warning text-warning p-2" id="roundStatusBadge"><i class="fa-solid fa-gavel"></i> 차수 로딩 중...</span>
             </div>
-            <p class="text-muted mt-2 m-0">티타임 공식 마감, 최종 평점 수거 및 다음 회차 개막을 대행하옵니다 👑</p>
+            <p class="text-muted mt-2 m-0">술타임 공식 마감, 최종 평점 수거 및 다음 회차 개막 👑</p>
         </div>
 
         <div class="stat-card mb-4" style="border-color: var(--neon-pink) !important;">
@@ -84,39 +84,36 @@
                 <i class="fa-solid fa-mug-tea" style="color: var(--neon-pink) !important;"></i> ☕ <span id="currentRoundTitleLabel">현재 차수</span> 토론 마감 및 최종 별점 수거
             </div>
             <div class="card-body-custom p-3">
-                <p class="text-muted small mb-3">※ 토론을 마무리하며 공주님들이 최종적으로 확정한 평점을 거두어 주셔요.</p>
+                <p class="text-muted small mb-3">※ 토론을 마무리하며 공주님들의 최종 평점을 거두어 주셔요.</p>
                 <div id="memberFinalRatingsContainer" class="d-flex flex-column gap-2">
                     <div class="text-center py-2"><div class="spinner-border spinner-pink spinner-sm" role="status"></div></div>
                 </div>
 
                 <div class="mt-4 pt-3 border-top border-secondary">
                     <label class="form-label text-warning small fw-bold mb-1.5">
-                        <i class="fa-solid fa-signature"></i> 이번 회차 도서 최종 별칭 (미입력 시 책 제목으로 자동 보존)
+                        <i class="fa-solid fa-signature"></i> 이번 회차 도서 최종 별칭
                     </label>
                     <input type="text" class="form-control form-control-custom" id="currentRoundNicknameInput" placeholder="예: 벽돌책 아님 패스, 눈물지뢰 등 (공백 시 책 제목)">
                 </div>
 
                 <div class="mt-3">
                     <label class="form-label text-warning small fw-bold mb-1.5">
-                        <i class="fa-solid fa-square-poll-horizontal"></i> AI 토론 내용 요약본 (회의록 텍스트 붙여넣기)
+                        <i class="fa-solid fa-square-poll-horizontal"></i> 토론 내용
                     </label>
                     <textarea class="form-control form-control-custom" id="historySummaryText" rows="5" placeholder="AI가 장시간 수다를 요약한 대장정 회의록본을 남김없이 여기에 붙여넣으셔요." required></textarea>
                 </div>
                 <div class="mt-3">
                     <label class="form-label text-warning small fw-bold mb-1.5">
-                        <i class="fa-solid fa-images"></i> 티타임 현장 사진 업로드 (다중 선택 가능)
+                        <i class="fa-solid fa-images"></i> 술타임 현장 사진 업로드
                     </label>
-                    <input type="file" class="form-control form-control-custom" id="historyPhotosInput" multiple accept="image/*" style="background:#000 !important;">
-                    <p class="text-muted m-0 mt-1" style="font-size:0.7rem; line-height: 1.3;">
-                        ※ 조로의 모바일 초경량 Canvas 압축 엔진이 실시간 가동되어 선장의 Supabase Storage 무료 한도(1GB)를 평생 사수하옵니다.
-                    </p>
+                    <input type="file" class="form-control form-control-custom" id="historyPhotosInput" multiple accept="image/*" style="background:#000 !important;">                    
                 </div>
             </div>
         </div>
 
         <div class="stat-card mb-4">
             <div class="card-header-custom">
-                <i class="fa-solid fa-calendar-circle-plus"></i> 📅 다음 차수 도서 및 토론 일정 수립
+                <i class="fa-solid fa-calendar-circle-plus"></i> 📅 다음 술타임 도서 및 일정
             </div>
             <div class="card-body-custom p-3">
                 <div class="mb-2">
@@ -125,19 +122,19 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label text-pink small fw-bold"><i class="fa-solid fa-location-dot me-1"></i> 다음 티타임 개최 장소 입력</label>
-                    <input type="text" class="form-control form-control-custom" id="nextRoundLocationInput" placeholder="예: 강남 핑크 테라스 (미정 시 공백 가능)">
+                    <label class="form-label text-pink small fw-bold"><i class="fa-solid fa-location-dot me-1"></i> 다음 술타임 개최 장소 입력</label>
+                    <input type="text" class="form-control form-control-custom" id="nextRoundLocationInput" placeholder="예: 강남 핑크 테라스(공백 가능)">
                 </div>
 
                 <div id="candidateSelectionWrapper">
-                    <label class="form-label text-pink small fw-bold mb-2">다음 차수 공주 추천 후보작 목록 (복수 선택 가능)</label>
+                    <label class="form-label text-pink small fw-bold mb-2">다음 차수 공주 추천 후보작 목록</label>
                     <div id="candidateCheckboxContainer" class="d-flex flex-column gap-2">
                     </div>
                 </div>
 
                 <div class="text-center mt-3">
                     <span class="small fw-bold text-warning" style="cursor: pointer; text-decoration: underline;" onclick="toggleSpontaneousFormDropdown()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 후보작 목록 외 [즉석 도서 직접 기입] 하기 (터치하여 확장)
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> [즉석 선택 도서 직접 기입]
                     </span>
                 </div>
 
@@ -175,13 +172,13 @@
 
         <div class="mb-4 px-1">
             <button class="btn btn-princess w-100 p-3 fw-bold fs-6" id="btnSealSession" onclick="executeFinalSessionClosingTransaction()">
-                <i class="fa-solid fa-flag-checkered me-1"></i> 이번 티타임 공식 마감 및 다음 차수 오픈
+                <i class="fa-solid fa-flag-checkered me-1"></i> 이번 술타임 공식 마감 및 다음 차수 오픈
             </button>
         </div>
 
         <div class="stat-card">
             <div class="card-header-custom">
-                <i class="fa-solid fa-calendar-days"></i> 진행중인 티타임 일정 및 장소 변경
+                <i class="fa-solid fa-calendar-days"></i> 진행중인 술타임 일정 및 장소 변경
             </div>
             <div class="card-body-custom scrollable-panel">
                 <div id="discussionBookList">
@@ -397,18 +394,18 @@
             const roundNickname = document.getElementById("currentRoundNicknameInput").value.trim(); // 👑 별칭 수거 완료
 
             if (!nextRoundDate) {
-                alert(`선장! 다음 [ 제 ${nextTargetRound}회차 ] 토론 일정을 캘린더에서 완벽히 선택하셔야 최종 마감이 가동되옵니다! 📅✨`);
+                alert(`다음 [ 제 ${nextTargetRound}회차 ] 토론 일정을 캘린더에서 완벽히 선택하셔야 최종 마감이 가동되옵니다! 📅✨`);
                 document.getElementById("nextRoundDateInput").focus();
                 return;
             }
 
             if (!summaryText) {
-                alert("선장! 이번 회차의 대서사시를 보존하려면 AI 토론 요약 내용(회의록)을 무조건 기입하셔야 하옵니다! 📜");
+                alert("이번 회차의 대서사시를 보존하려면 토론 요약 내용(회의록)을 기입하셔야 하옵니다! 📜");
                 document.getElementById("historySummaryText").focus();
                 return;
             }
 
-            const masterConfirm = confirm(`정말로 이번 제 ${currentActiveRound}회차 토론을 영구 마감(is_closed=true)하고 대서사시 히스토리와 함께 다음 차수를 공식 출범시키겠사옵니다?`);
+            const masterConfirm = confirm(`정말로 이번 ${currentActiveRound}회차 토론을 마감하고 대서사시 히스토리와 함께 다음 차수를 공식 출범시키겠사옵니다?`);
             if (!masterConfirm) return;
 
             const sealBtn = document.getElementById("btnSealSession");
@@ -516,7 +513,7 @@
                     await _db.from('recommendations').update({ is_selected: true }).in('id', selectedRecIds);
                 }
 
-                alert(`🎉 대서사시 및 최종 도서 별칭 보관 완료! 제 ${currentActiveRound}회차 토론방 셧다운 및 앨범 저장이 공식 잠금 완료되었으며, 제 ${nextTargetRound}회차 새 무결점 차수가 공식 출범되었습니다! 📅✨`);
+                alert(`🎉 대서사시 및 최종 도서 별칭 보관 완료! ${currentActiveRound}회차 토론방 셧다운 및 앨범 저장이 공식 잠금 완료되었으며, ${nextTargetRound}회차 차수가 공식 출범되었습니다! 📅✨`);
                 
                 document.getElementById("nextRoundDateInput").value = "";
                 document.getElementById("nextRoundLocationInput").value = "";
@@ -557,7 +554,7 @@
                 container.innerHTML = "";
 
                 if (!data || data.length === 0) {
-                    container.innerHTML = `<p class="text-center text-muted small py-3 m-0">현재 실시간 조율 가능한 미완료 티타임 도서가 없사옵니다.</p>`;
+                    container.innerHTML = `<p class="text-center text-muted small py-3 m-0">현재 실시간 조율 가능한 미완료 술타임 도서가 없사옵니다.</p>`;
                     return;
                 }
 
@@ -596,7 +593,7 @@
             const newLoc = document.getElementById(`locInput_${bookId}`).value.trim();
 
             if (!newDate) {
-                alert("조율할 티타임 일정을 똑바로 정해주셔요!");
+                alert("조율할 술타임 일정을 똑바로 정해주셔요!");
                 return;
             }
 
@@ -610,7 +607,7 @@
                     .eq('id', bookId);
 
                 if (error) throw error;
-                alert("해당 진행 차수의 개최 일정과 티타임 장소가 우아하게 실시간 리스케줄링 완료되었습니다! 📅📍");
+                alert("해당 진행 차수의 개최 일정과 술타임 장소가 우아하게 실시간 리스케줄링 완료되었습니다! 📅📍");
                 loadDiscussionBooks();
             } catch (err) {
                 console.error(err);

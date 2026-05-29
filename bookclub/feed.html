@@ -21,12 +21,12 @@
                     <span class="badge bg-dark border border-pink text-pink p-2" id="userBadge" style="color: var(--bp-pink) !important;">공주님</span>
                 </div>
             </div>
-            <p class="text-muted mt-2 m-0">오직 이번 티타임과 다음 티타임 픽만 실시간 큐레이션하옵니다 💖</p>
+            <p class="text-muted mt-2 m-0">이번 술타임과 다음 술타임 픽 실시간 큐레이션💖</p>
         </div>
 
         <div class="stat-card border-danger mb-3 animate-pulse" id="naggingPanel" style="border-color: var(--neon-pink) !important; background: linear-gradient(135deg, #1A0510, #141414);">
             <div class="card-header-custom" style="color: #FF007F !important; font-weight: 900;">
-                <i class="fa-solid fa-bullhorn" style="color: #FF007F !important;"></i> 🚨 오늘의 숙제 탈영병 공주 색출기
+                <i class="fa-solid fa-bullhorn" style="color: #FF007F !important;"></i> 🚨 숙제 안한 공주 색출기
             </div>
             <div class="card-body-custom py-2" id="naggingContainer">
                 <div class="text-center py-2"><div class="spinner-border spinner-pink spinner-sm" role="status"></div></div>
@@ -35,7 +35,7 @@
 
         <div class="stat-card">
             <div class="card-header-custom" id="recHeaderTitle">
-                <i class="fa-solid fa-paper-plane"></i> 다음 티타임 추천 릴레이 현황
+                <i class="fa-solid fa-paper-plane"></i> 다음 술타임 추천 릴레이 현황
             </div>
             <div class="card-body-custom">
                 <div id="recommendationFeedList">
@@ -46,7 +46,7 @@
 
         <div class="stat-card mt-3">
             <div class="card-header-custom" id="reviewHeaderTitle">
-                <i class="fa-solid fa-comments"></i> 이번 티타임 공주님들의 생생 별점 & 총평
+                <i class="fa-solid fa-comments"></i> 이번 술타임 공주님들의 생생 별점 & 총평 ${bookTitle}
             </div>
             <div class="card-body-custom">
                 <div id="reviewFeedList">
@@ -117,8 +117,8 @@
 
                 const nextRound = currentRound + 1;
 
-                document.getElementById("recHeaderTitle").innerHTML = `<i class="fa-solid fa-paper-plane"></i> 💌 다음 (제 ${nextRound}회차) 티타임 추천 릴레이 현황`;
-                document.getElementById("reviewHeaderTitle").innerHTML = `<i class="fa-solid fa-comments"></i> ☕ 이번 (제 ${currentRound}회차) 티타임 공주님들의 생생 별점 & 총평`;
+                document.getElementById("recHeaderTitle").innerHTML = `<i class="fa-solid fa-paper-plane"></i> 💌 다음 술타임 추천 릴레이 현황(${nextRound}회차)`;
+                document.getElementById("reviewHeaderTitle").innerHTML = `<i class="fa-solid fa-comments"></i> ☕ 이번 술타임 공주님들의 생생 별점 & 총평(${currentRound}회차)`;
 
                 // 관계형 조인 쿼리 사냥 병렬 가동
                 await Promise.all([
@@ -151,7 +151,7 @@
                     container.innerHTML = `
                         <div class="text-center py-4 text-muted small">
                             <i class="fa-solid fa-envelope-open-text d-block fs-3 mb-2" style="color: rgba(255,105,180,0.3);"></i>
-                            아직 어떤 공주님도 다음 (제 ${nextRoundNum}회차) 티타임 추천작을 내지 않으셨사옵니다.
+                            아직 어떤 공주님도 다음 술타임 추천작을 내지 않으셨사옵니다.
                         </div>`;
                     return;
                 }
@@ -203,14 +203,14 @@
                     container.innerHTML = `
                         <div class="text-center py-4 text-muted small">
                             <i class="fa-solid fa-mug-tea d-block fs-3 mb-2" style="color: rgba(255,105,180,0.3);"></i>
-                            이번 제 ${roundNo}회차 티타임 도서 [${bookTitle}]에 <br>달린 토론 전 별점 총평이 아직 없사옵니다. 🎉
+                            이번 술타임 도서에 <br>달린 토론 전 별점 총평이 아직 없사옵니다. 🎉
                         </div>`;
                     return;
                 }
 
                 container.innerHTML = `
                     <div class="small mb-3 px-2 py-1 rounded bg-black text-center border border-secondary text-truncate" style="color: var(--bp-pink) !important; border-color: rgba(255,105,180,0.2) !important;">
-                        📖 이번 티타임 도서 : <b>${bookTitle}</b>
+                        📖 이번 술타임 도서 : <b>${bookTitle}</b>
                     </div>
                 `;
 
@@ -265,11 +265,11 @@
             if (missingRecs.length > 0) {
                 html += `
                     <div class="mb-2">
-                        <span class="text-warning fw-bold">🎀 다음 (제 ${nextRound}회차) 티타임 추천 안 던진 기지배들 :</span> <br>
+                        <span class="text-warning fw-bold">🎀 다음 술타임 추천 도서 안 던진 기지배들(${nextRound}회차) :</span> <br>
                         <span class="fw-bold text-white" style="font-size:0.95rem; color:var(--bp-pink) !important;">
                             ${missingRecs.map(m => `❌${m}`).join(', ')}
                         </span> <br>
-                        <span class="text-muted" style="font-size:0.75rem;">👉 기지배들아!! 벽돌책인지 아닌지 쪽수 들고 냉큼 기록장으로 행차하셔요!! 💅</span>
+                        <span class="text-muted" style="font-size:0.75rem;">👉 벽돌책인지 아닌지 쪽수 들고 냉큼 기록장으로 행차하셔요!! 💅</span>
                     </div>
                 `;
             }
@@ -277,7 +277,7 @@
             if (missingReviews.length > 0) {
                 html += `
                     <div>
-                        <span class="text-warning fw-bold">☕ 이번 (제 ${roundNo}회차) 토론 전 총평/별점 누락 기지배들 :</span> <br>
+                        <span class="text-warning fw-bold">☕ 이번 토론 전 총평/별점 누락 공주들(${roundNo}) :</span> <br>
                         <span class="fw-bold text-white" style="font-size:0.95rem; color:var(--neon-pink) !important;">
                             ${missingReviews.map(m => `🥀${m}`).join(', ')}
                         </span> <br>

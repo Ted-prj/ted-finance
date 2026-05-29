@@ -117,13 +117,13 @@
                 <h1><i class="fa-solid fa-monument text-pink" style="color: var(--neon-pink);"></i> 독한 연대기 <span>HISTORY</span></h1>
                 <span class="badge bg-dark border border-pink text-pink p-2" id="userBadge" style="color: var(--bp-pink) !important;">공주님</span>
             </div>
-            <p class="text-muted mt-2 m-0">우리가 나눈 치열한 지성과 달콤한 수다의 흔적들을 영구 보존하옵니다 👑</p>
+            <p class="text-muted mt-2 m-0">우리가 나눈 치열한 지성과 달콤한 수다의 흔적들, 아힝 👑</p>
         </div>
 
         <div class="row g-2 mb-3">
             <div class="col-12">
                 <div class="p-3 bg-dark rounded-3 border border-secondary" style="border-color: rgba(255,255,255,0.06) !important;">
-                    <label class="form-label text-pink small fw-bold mb-1"><i class="fa-solid fa-magnifying-glass-chart"></i> 특정 회차 대서사시 조준경 (점프점프)</label>
+                    <label class="form-label text-pink small fw-bold mb-1"><i class="fa-solid fa-magnifying-glass-chart"></i> 대서사시 회차 선택</label>
                     <select class="form-select form-select-custom py-2" id="roundJumpSelect" onchange="handleRoundJumpSelect(this.value)">
                         <option value="">정주행 연대기 전체 보기 (최근 순) 🎞️</option>
                     </select>
@@ -338,7 +338,7 @@
                     </div>
 
                     <div class="mt-1">
-                        <div class="history-vivid-label"><i class="fa-solid fa-brain"></i> AI 토론 종합 분석 요약문</div>
+                        <div class="history-vivid-label"><i class="fa-solid fa-brain"></i> 술타임 요약</div>
                         
                         <div class="text-white bg-black p-3 rounded-3" id="summaryViewZone_${roundNo}" style="font-size:0.82rem; line-height:1.6; border: 1px solid rgba(255,255,255,0.04); max-height:240px; overflow-y:auto; font-weight:300; white-space: pre-wrap;">${escapeHtml(hist.summary_text)}</div>
                         
