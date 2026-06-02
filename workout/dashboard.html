@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>IDENTITY - DASHBOARD v5.5.0</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="common.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* 대시보드 전용 상시 노출형 고정식 블랙핑크 달력 UI */
+        .dashboard-calendar-panel { 
+            background: var(--bp-dark-gray); 
+            border: 1px solid #252525; 
+            border-radius: 24px; 
+            padding: 18px; 
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .cal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .cal-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .cal-table th { color: #666; font-size: 0.68rem; font-weight: 800; padding-bottom: 10px; text-transform: uppercase; }
+        .cal-table td { padding: 10px 0; font-size: 0.85rem; cursor: pointer; position: relative; width: 14.28%; border-radius: 12px; font-weight: 600; transition: 0.2s; }
+        .cal-table td:not(.other-month):hover { background: rgba(255, 63, 126, 0.1); color: var(--bp-pink); }
+        .cal-table td.other-month { opacity: 0.12; pointer-events: none; }
+        .cal-table td.selected-day { background: var(--bp-pink) !important; color: #000 !important; font-weight: 900; box-shadow: 0 4px 12px rgba(232, 142, 163, 0.3); }
+        .cal-table td.today-cell { border: 1.5px solid var(--neon-pink); }
+        .log-dot { width: 5px; height: 5px; background-color: var(--neon-pink); border-radius: 50%; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); box-shadow: 0 0 6px var(--neon-pink); }
+        .cal-table td.selected-day .log-dot { background-color: #000; box-shadow: none; }
+
+        /* 모드 스위칭 탭 디자인 */
+        .mode-tab-group { background: #111; border: 1px solid #222; border-radius: 16px; padding: 4px; display: flex; margin-bottom: 15px; }
+        .mode-tab-btn { flex: 1; border: none; background: transparent; color: #777; padding: 10px; font-size: 0.78rem; font-weight: 800; border-radius: 12px; transition: 0.2s; }
+        .mode-tab-btn.active { background: var(--bp-dark-gray); color: var(--bp-pink); border: 1px solid #282828; }
+
+        /* 히스토리 피드 애니메이션 효과 */
+        .feed-block { animation: fadeInBlock 0.4s ease-out both; will-change: transform, opacity; margin-bottom: 20px; transition: all 0.5s ease-in-out; }
+        @keyframes fadeInBlock {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 텅 비었을 때 안내 가이드 상자 */
+        .empty-notice-box { background: rgba(255,255,255,0.02); border: 1px dashed #252525; border-radius: 20px; text-align: center; padding: 40px 20px; color: #666; font-size: 0.85rem; font-weight: 600; }
+        
+        /* 요약 미니 배지 라벨 */
+        .summary-mini-badge { font-size: 0.65rem; font-weight: 700; background: #1a1a1a; padding: 2px 6px; border-radius: 4px; color: #aaa; border: 1px solid #252525; }
+    </style>
+</head>
+<body style="background-color: var(--bp-black); color: white;">
+    <div class="container-app" style="padding-top: 15px;">
+        <div class="mgmt-card" style="margin: 0 0 15px 0; padding: 18px;">
+            <h4 style="color:var(--bp-pink); font-weight:900;" class="mb-3">📊 IDENTITY DASHBOARD <span style="font-size:0.75rem; color:#666; font-weight:normal;">v5.5.0</span></h4>
+            
+            <div class="mode-tab-group">
+                <button class="mode-tab-btn active" onclick="switchFilterMode('TYPE')">운동 종류별</button>
+                <button class="mode-tab-btn" onclick="switchFilterMode('PART')">운동 부위별</button>
+                <button class="mode-tab-btn" onclick="switchFilterMode('EXERCISE')">운동 종목별</button>
+            </div>
+
+            <label class="label-small" id="select-box-label">조회할 종류 선택</label>
+            <select id="dashboard-main-select" class="form-select" onchange="handleMainSelectChange(this.value)">
+                <option value="">-- 데이터 로딩 중 --</option>
+            </select>
+        </div>
+
+        <div class="dashboard-calendar-panel">
+            <div class="cal-header-row">
+                <button class="btn btn-sm btn-outline-light px-2 py-1" style="font-size:0.7rem;" onclick="changeDashboardMonth(-1)">◀</button>
+                <b id="cal-month-title" style="font-size:0.92rem; color:white; letter-spacing:1px;">2026년 06월</b>
+                <button class="btn btn-sm btn-outline-light px-2 py-1" style="font-size:0.7rem;" onclick="changeDashboardMonth(1)">▶</button>
+            </div>
+            <div id="calendar-grid-target"></div>
+        </div>
+
+        <h6 class="px-2 mb-3" style="font-weight:900; color:var(--bp-pink); font-size:0.85rem; letter-spacing:0.5px;">📋 HISTORY FEED TIMELINE</h6>
+        <div id="dashboard-history-feed">
+            <div class="empty-notice-box">상단 필터를 지정하거나 캘린더의 점(Dot)이 찍힌 날짜를 터치해 주세요.</div>
+        </div>
+
+        <div id="infinite-scroll-sensor" style="height: 10px; margin-bottom: 40px;"></div>
+
+        <div id="global-nav" data-active="dashboard"></div>
+    </div>
+
+    <script src="supabase_config.js"></script>
+    <script>
+        checkAuth();
+
+        // 글로벌 상태 스코프 관리 객체
+        let CURRENT_MODE = "TYPE"; // TYPE, PART, EXERCISE
+        let SELECTED_ITEM_ID = "";  // 선택된 종류/부위/종목의 고유 DB ID
+        let ALL_EXERCISE_MASTER = [];
+        let SETTINGS_LOOKUP_MAP = {};
+        let CATEGORIZED_SETTINGS = { 'EXERCISE_TYPE':[], 'BODY_PART':[] };
+
+        // 달력 내부 조작용 상태 변수
+        let CAL_ACTIVE_YEAR = 2026;
+        let CAL_ACTIVE_MONTH = 5; // 0-indexed (5 = 6월)
+        let CAL_CLICKED_DATE = ""; // 사용자가 클릭 선택한 날짜 (YYYY-MM-DD)
+        let MARKED_DOT_DATES = []; // 조건별 운동 기록이 실존하는 순수 날짜 캐시 배열 (YYYY-MM-DD)
+
+        // [종목별 모드] 전용 고도화 페이징 제어 트래커
+        let EX_MODE_ALL_DATES = [];      // 해당 종목이 수행된 전체 날짜 목록 (내림차순 정렬)
+        let EX_MODE_RENDERED_DATES = []; // 현재 피드 화면에 렌더링 적재되어 있는 날짜 배열
+        let IS_INFINITE_LOADING = false;  // 무한 스크롤 중복 호출 방지 락 스위치
+        let SCROLL_OBSERVER = null;
+
+        async function initDashboard() {
+            // 1. 마스터 정보 및 셋팅 코드 일괄 조립
+            const { data: sData } = await _db.schema('workout').from('settings').select('*');
+            if (sData) {
+                sData.forEach(s => {
+                    SETTINGS_LOOKUP_MAP[s.id] = s.name;
+                    if(CATEGORIZED_SETTINGS[s.category]) {
+                        CATEGORIZED_SETTINGS[s.category].push({ id: s.id, name: s.name });
+                    }
+                });
+            }
+            const { data: eData } = await _db.schema('workout').from('exercises').select('*').order('name');
+            ALL_EXERCISE_MASTER = eData || [];
+
+            // 2. 디폴트 달력 타겟팅 설정 (오늘 기준 초기화)
+            const todayObj = new Date();
+            CAL_ACTIVE_YEAR = todayObj.getFullYear();
+            CAL_ACTIVE_MONTH = todayObj.getMonth();
+            CAL_CLICKED_DATE = todayObj.toISOString().split('T')[0];
+
+            // 3. UI 렌더링 파이프라인 가동 및 내비게이션 바 예외 오버라이딩 처리
+            setupDashboardMenuSafety();
+            switchFilterMode('TYPE');
+            setupInfiniteScrollObserver();
+        }
+
+        // 하단 공통 탭 바에 DASHBOARD 가 활성화되어 보일 수 있도록 주입 엔진 방어 코드 구성
+        function setupDashboardMenuSafety() {
+            const navContainer = document.getElementById('global-nav');
+            if (!navContainer) return;
+            const MENUS = [
+                { id: 'workout', name: 'WORKOUT', url: 'workout.html' },
+                { id: 'manage', name: 'MANAGE', url: 'manage.html' },
+                { id: 'settings', name: 'SETTINGS', url: 'settings.html' },
+                { id: 'logs', name: 'LOGS', url: 'logs.html' },
+                { id: 'dashboard', name: 'DASHBOARD', url: 'dashboard.html' },
+                { id: 'diethub', name: 'DIET HUB', url: 'https://ted-prj.github.io/ted-finance/diet' }
+            ];
+            navContainer.innerHTML = `
+                <div class="bottom-nav-container">
+                    <ul class="nav nav-pills">
+                        ${MENUS.map(m => `<li class="nav-item"><a href="${m.url}" class="nav-link ${m.id === 'dashboard' ? 'active' : ''}">${m.name}</a></li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // 상단 대분류 필터 탭 교체 엔진
+        async function switchFilterMode(mode) {
+            CURRENT_MODE = mode;
+            document.querySelectorAll('.mode-tab-btn').forEach(b => b.classList.remove('active'));
+            
+            const btnIdx = mode === 'TYPE' ? 0 : mode === 'PART' ? 1 : 2;
+            document.querySelectorAll('.mode-tab-btn')[btnIdx].classList.add('active');
+
+            const selectEl = document.getElementById('dashboard-main-select');
+            const labelEl = document.getElementById('select-box-label');
+            
+            selectEl.innerHTML = '';
+            document.getElementById('dashboard-history-feed').innerHTML = '<div class="empty-notice-box">상단 필터의 세부 항목을 선택하면 분석이 시작됩니다.</div>';
+            MARKED_DOT_DATES = [];
+            EX_MODE_ALL_DATES = [];
+            EX_MODE_RENDERED_DATES = [];
+            renderCalendarGrid();
+
+            if (mode === 'TYPE') {
+                labelEl.innerText = "1. 조회할 운동 종류(Type) 선택";
+                selectEl.innerHTML = '<option value="">-- 종류 선택 --</option>' + CATEGORIZED_SETTINGS['EXERCISE_TYPE'].map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            } else if (mode === 'PART') {
+                labelEl.innerText = "1. 조회할 운동 부위(Body Part) 선택";
+                selectEl.innerHTML = '<option value="">-- 부위 선택 --</option>' + CATEGORIZED_SETTINGS['BODY_PART'].map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            } else if (mode === 'EXERCISE') {
+                labelEl.innerText = "1. 조회할 운동 종목(Exercise Master) 선택";
+                selectEl.innerHTML = '<option value="">-- 종목 선택 --</option>' + ALL_EXERCISE_MASTER.map(e => `<option value="${e.id}">${e.name} (${SETTINGS_LOOKUP_MAP[e.body_part] || '유산소'})</option>`).join('');
+            }
+        }
+
+        // 드롭다운 세부 아이템 체인지 연동 이벤트 핸들러
+        async function handleMainSelectChange(val) {
+            SELECTED_ITEM_ID = val;
+            if(!val) {
+                MARKED_DOT_DATES = [];
+                renderCalendarGrid();
+                document.getElementById('dashboard-history-feed').innerHTML = '<div class="empty-notice-box">세부 항목을 선택해 주세요.</div>';
+                return;
+            }
+
+            document.getElementById('dashboard-history-feed').innerHTML = '<div class="text-center py-5" style="color:var(--bp-pink);">데이터 통계 분석 엔진 가동 중...</div>';
+            
+            if (CURRENT_MODE === 'TYPE') {
+                const subExIds = ALL_EXERCISE_MASTER.filter(e => Number(e.exercise_type) === Number(val)).map(e => e.id);
+                if(subExIds.length === 0) { MARKED_DOT_DATES = []; renderCalendarGrid(); showNoDataNotice(); return; }
+                const { data } = await _db.schema('workout').from('logs').select('workout_date').eq('status', 'FINAL').in('exercise_id', subExIds);
+                MARKED_DOT_DATES = [...new Set(data.map(l => l.workout_date.split('T')[0]))];
+                renderCalendarGrid();
+                showSelectDayNotice();
+            } 
+            else if (CURRENT_MODE === 'PART') {
+                const { data } = await _db.schema('workout').from('logs').select('workout_date').eq('status', 'FINAL').eq('body_part', val);
+                MARKED_DOT_DATES = [...new Set(data.map(l => l.workout_date.split('T')[0]))];
+                renderCalendarGrid();
+                showSelectDayNotice();
+            } 
+            else if (CURRENT_MODE === 'EXERCISE') {
+                const { data } = await _db.schema('workout').from('logs').select('workout_date').eq('status', 'FINAL').eq('exercise_id', val).order('workout_date', { ascending: false });
+                const distinctDates = [...new Set(data.map(l => l.workout_date.split('T')[0]))];
+                MARKED_DOT_DATES = distinctDates;
+                EX_MODE_ALL_DATES = [...distinctDates]; 
+                renderCalendarGrid();
+
+                if (EX_MODE_ALL_DATES.length === 0) {
+                    showNoDataNotice();
+                } else {
+                    EX_MODE_RENDERED_DATES = EX_MODE_ALL_DATES.slice(0, 10);
+                    await reloadExerciseHistoryFeed(EX_MODE_RENDERED_DATES);
+                }
+            }
+        }
+
+        // 달력 격리 렌더링 엔진
+        function renderCalendarGrid() {
+            const gridArea = document.getElementById('calendar-grid-target');
+            document.getElementById('cal-month-title').innerText = `${CAL_ACTIVE_YEAR}년 ${String(CAL_ACTIVE_MONTH + 1).padStart(2, '0')}월`;
+
+            const firstDayIndex = new Date(CAL_ACTIVE_YEAR, CAL_ACTIVE_MONTH, 1).getDay();
+            const totalDays = new Date(CAL_ACTIVE_YEAR, CAL_ACTIVE_MONTH + 1, 0).getDate();
+            const prevTotalDays = new Date(CAL_ACTIVE_YEAR, CAL_ACTIVE_MONTH, 0).getDate();
+
+            let html = `
+                <table class="cal-table">
+                    <thead><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr></thead>
+                    <tbody><tr>`;
+
+            let dayCounter = 1;
+            let nextMonthCounter = 1;
+
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                html += `<td class="other-month">${prevTotalDays - i}</td>`;
+            }
+
+            for (let i = firstDayIndex; i < 42; i++) {
+                if (dayCounter <= totalDays) {
+                    const currentLoopDate = `${CAL_ACTIVE_YEAR}-${String(CAL_ACTIVE_MONTH + 1).padStart(2, '0')}-${String(dayCounter).padStart(2, '0')}`;
+                    const isSelected = currentLoopDate === CAL_CLICKED_DATE ? 'selected-day' : '';
+                    
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const isToday = currentLoopDate === todayStr ? 'today-cell' : '';
+                    const hasLogDot = MARKED_DOT_DATES.includes(currentLoopDate) ? '<div class="log-dot"></div>' : '';
+
+                    html += `<td class="${isSelected} ${isToday}" onclick="handleCalendarDayTouch('${currentLoopDate}')">${dayCounter}${hasLogDot}</td>`;
+                    dayCounter++;
+                } else {
+                    html += `<td class="other-month">${nextMonthCounter}</td>`;
+                    nextMonthCounter++;
+                }
+
+                if (i % 7 === 6 && dayCounter <= totalDays) {
+                    html += '</tr><tr>';
+                } else if (i % 7 === 6 && dayCounter > totalDays) {
+                    break;
+                }
+            }
+
+            html += '</tr></tbody></table>';
+            gridArea.innerHTML = html;
+        }
+
+        function changeDashboardMonth(dir) {
+            CAL_ACTIVE_MONTH += dir;
+            if (CAL_ACTIVE_MONTH < 0) { CAL_ACTIVE_MONTH = 11; CAL_ACTIVE_YEAR--; }
+            else if (CAL_ACTIVE_MONTH > 11) { CAL_ACTIVE_MONTH = 0; CAL_ACTIVE_YEAR++; }
+            renderCalendarGrid();
+        }
+
+        // 캘린더 날짜 터치 액션 통합 라우터
+        async function handleCalendarDayTouch(dateStr) {
+            CAL_CLICKED_DATE = dateStr;
+            renderCalendarGrid();
+
+            if(!SELECTED_ITEM_ID) {
+                alert("상단 필터 세부 항목을 먼저 골라주세요!");
+                return;
+            }
+
+            const feedEl = document.getElementById('dashboard-history-feed');
+
+            // [명세 ①] 운동 종류별 조회 모드 날짜 클릭 액션 연동 (로빈 추천 구현)
+            if (CURRENT_MODE === 'TYPE') {
+                feedEl.innerHTML = `<div class="text-center py-4" style="color:var(--bp-pink);">${dateStr} 요약 분석 중...</div>`;
+                const subExIds = ALL_EXERCISE_MASTER.filter(e => Number(e.exercise_type) === Number(SELECTED_ITEM_ID)).map(e => e.id);
+                
+                const { data } = await _db.schema('workout').from('logs')
+                    .select('*').eq('status', 'FINAL')
+                    .in('exercise_id', subExIds)
+                    .gte('workout_date', `${dateStr}T00:00:00`)
+                    .lte('workout_date', `${dateStr}T23:59:59`);
+
+                if(!data || data.length === 0) {
+                    feedEl.innerHTML = `<div class="empty-notice-box">📅 ${dateStr}<br>해당 종류의 운동 수행 기록이 없습니다.</div>`;
+                    return;
+                }
+
+                const groupedByPart = data.reduce((acc, log) => {
+                    if(!acc[log.body_part]) acc[log.body_part] = {};
+                    if(!acc[log.body_part][log.display_name]) acc[log.body_part][log.display_name] = [];
+                    acc[log.body_part][log.display_name].push(log);
+                    return acc;
+                }, {});
+
+                let html = `<div class="feed-block"><div class="stats-box mb-3 text-center fw-bold text-pink" style="font-size:0.8rem;">📆 ${dateStr} [${SETTINGS_LOOKUP_MAP[SELECTED_ITEM_ID]}] 요약 리포트</div>`;
+                
+                Object.keys(groupedByPart).forEach(partId => {
+                    const partName = SETTINGS_LOOKUP_MAP[partId] || '기타/유산소';
+                    html += `
+                        <div class="workout-card border-${getPartKey(partName)}" style="background:var(--bp-dark-gray); border-radius:20px; padding:15px; margin-bottom:15px;">
+                            <div class="d-flex justify-content-between align-items-center mb-2" style="border-bottom:1px solid #222; padding-bottom:6px;">
+                                <span class="text-pink font-mono fw-bold" style="font-size:0.85rem;">💪 ${partName}</span>
+                                <span class="summary-mini-badge">${Object.keys(groupedByPart[partId]).length}개 종목</span>
+                            </div>`;
+                    
+                    Object.keys(groupedByPart[partId]).forEach(exName => {
+                        const sets = groupedByPart[partId][exName];
+                        const maxW = Math.max(...sets.map(s => s.weight || 0));
+                        const maxR = Math.max(...sets.map(s => s.reps || 0));
+                        const totalT = Math.max(...sets.map(s => s.workout_time || 0));
+                        
+                        let metricStr = maxW > 0 ? `Max: ${maxW}kg / ${maxR}회` : `시간: ${totalT}분`;
+                        html += `
+                            <div class="d-flex justify-content-between align-items-center small py-1 font-mono">
+                                <span style="color:#eee; font-weight:700;">• ${exName}</span>
+                                <span class="text-dim" style="font-size:0.7rem;">[${sets.length}세트] ${metricStr}</span>
+                            </div>`;
+                    });
+                    html += `</div>`;
+                });
+                html += `</div>`;
+                feedEl.innerHTML = html;
+            } 
+            
+            // [명세 ②] 운동 부위별 조회 모드 날짜 클릭 액션 연동 (세트상세 및 Note 표출)
+            else if (CURRENT_MODE === 'PART') {
+                feedEl.innerHTML = `<div class="text-center py-4" style="color:var(--bp-pink);">${dateStr} 상세 로그 매핑 중...</div>`;
+                
+                const { data } = await _db.schema('workout').from('logs')
+                    .select('*').eq('status', 'FINAL')
+                    .eq('body_part', SELECTED_ITEM_ID)
+                    .gte('workout_date', `${dateStr}T00:00:00`)
+                    .lte('workout_date', `${dateStr}T23:59:59`);
+
+                if(!data || data.length === 0) {
+                    feedEl.innerHTML = `<div class="empty-notice-box">📅 ${dateStr}<br>해당 부위의 상세 운동 기록이 존재하지 않습니다.</div>`;
+                    return;
+                }
+
+                const groupedByEx = data.reduce((acc, log) => {
+                    if(!acc[log.display_name]) acc[log.display_name] = [];
+                    acc[log.display_name].push(log);
+                    return acc;
+                }, {});
+
+                let html = `<div class="feed-block"><div class="stats-box mb-3 text-center fw-bold text-pink" style="font-size:0.8rem;">📆 ${dateStr} [${SETTINGS_LOOKUP_MAP[SELECTED_ITEM_ID]}] 상세 실시간 일지</div>`;
+                
+                Object.keys(groupedByEx).forEach(exName => {
+                    const logs = groupedByEx[exName].sort((a,b) => a.set_no - b.set_no);
+                    const partName = SETTINGS_LOOKUP_MAP[SELECTED_ITEM_ID] || '';
+                    
+                    html += `
+                        <div class="workout-card border-${getPartKey(partName)}" style="margin-bottom:15px;">
+                            <div class="card-header">
+                                <div><b style="font-size:0.85rem;">${exName}</b></div>
+                                <span class="badge-custom">${partName}</span>
+                            </div>
+                            <div class="sets-container">`;
+                    
+                    logs.forEach(l => {
+                        html += `
+                            <div class="set-row py-2 px-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-pink" style="font-size:0.75rem; width:35px;">${l.set_no}세트</span>
+                                    <div class="flex-grow-1 d-flex justify-content-around text-center small font-mono">
+                                        ${l.weight > 0 ? `<span><b>${l.weight}</b> kg</span>` : ''}
+                                        ${l.reps > 0 ? `<span><b>${l.reps}</b> 회</span>` : ''}
+                                        ${l.set_time > 0 ? `<span><b>${l.set_time}</b> 초</span>` : ''}
+                                        ${l.workout_time > 0 ? `<span><b>${l.workout_time}</b> 분</span>` : ''}
+                                    </div>
+                                    <span class="text-secondary" style="font-size:0.6rem;">${l.workout_date.split('T')[1].substring(0,5)}</span>
+                                </div>
+                                ${l.note ? `<div class="mt-1 small text-dim" style="font-size:0.68rem; padding-left:2px; font-style:italic; color:rgba(232,142,163,0.75);">📝 Note: "${l.note}"</div>` : ''}
+                            </div>`;
+                    });
+                    html += `</div></div>`;
+                });
+                html += `</div>`;
+                feedEl.innerHTML = html;
+            } 
+            
+            // [명세 ③] 운동 종목별 조회 모드 (옵션 B 인터랙션 하이라이트 + 범위 로드 기믹)
+            else if (CURRENT_MODE === 'EXERCISE') {
+                if (EX_MODE_RENDERED_DATES.includes(dateStr)) {
+                    const targetBlock = document.getElementById(`feed-block-${dateStr}`);
+                    if (targetBlock) {
+                        targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetBlock.style.outline = "2px solid var(--neon-pink)";
+                        targetBlock.style.borderRadius = "20px";
+                        setTimeout(() => { targetBlock.style.outline = "none"; }, 1500);
+                    }
+                } 
+                else {
+                    const targetIdx = EX_MODE_ALL_DATES.indexOf(dateStr);
+                    if (targetIdx === -1) {
+                        feedEl.innerHTML = `<div class="empty-notice-box">📅 ${dateStr}<br>해당 종목의 수행 이력이 없는 날짜입니다.</div>`;
+                        return;
+                    }
+
+                    // 선택한 날짜 기준 전5개, 후5개 범위 슬라이싱 알고리즘 가동
+                    let startIdx = Math.max(0, targetIdx - 5);
+                    let endIdx = Math.min(EX_MODE_ALL_DATES.length, targetIdx + 6);
+                    
+                    EX_MODE_RENDERED_DATES = EX_MODE_ALL_DATES.slice(startIdx, endIdx);
+                    
+                    feedEl.innerHTML = `<div class="text-center py-4" style="color:var(--bp-pink);">날짜 점프 엔진 가동: ${dateStr} 전후 5개 패칭 중...</div>`;
+                    await reloadExerciseHistoryFeed(EX_MODE_RENDERED_DATES);
+
+                    setTimeout(() => {
+                        const targetBlock = document.getElementById(`feed-block-${dateStr}`);
+                        if (targetBlock) {
+                            targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            targetBlock.style.outline = "2px solid var(--neon-pink)";
+                            targetBlock.style.borderRadius = "20px";
+                            setTimeout(() => { targetBlock.style.outline = "none"; }, 1500);
+                        }
+                    }, 200);
+                }
+            }
+        }
+
+        // 종목별 피드 블록 일괄 재적재 제어 프레임워크
+        async function reloadExerciseHistoryFeed(dateArray) {
+            const feedEl = document.getElementById('dashboard-history-feed');
+            if(dateArray.length === 0) { showNoDataNotice(); return; }
+
+            const sortedDates = [...dateArray].sort();
+            const minDate = sortedDates[0];
+            const maxDate = sortedDates[sortedDates.length - 1];
+
+            const { data } = await _db.schema('workout').from('logs')
+                .select('*').eq('status', 'FINAL')
+                .eq('exercise_id', SELECTED_ITEM_ID)
+                .gte('workout_date', `${minDate}T00:00:00`)
+                .lte('workout_date', `${maxDate}T23:59:59`)
+                .order('workout_date', { ascending: false });
+
+            const blockMap = {};
+            dateArray.forEach(d => blockMap[d] = []);
+            
+            if (data) {
+                data.forEach(log => {
+                    const pDate = log.workout_date.split('T')[0];
+                    if (blockMap[pDate]) blockMap[pDate].push(log);
+                });
+            }
+
+            let finalHtml = "";
+            const masterExInfo = ALL_EXERCISE_MASTER.find(e => e.id === SELECTED_ITEM_ID);
+            const partName = SETTINGS_LOOKUP_MAP[masterExInfo?.body_part] || '유산소';
+
+            dateArray.forEach(date => {
+                const logs = blockMap[date] ? blockMap[date].sort((a,b) => a.set_no - b.set_no) : [];
+                if(logs.length === 0) return;
+
+                finalHtml += `
+                    <div class="feed-block" id="feed-block-${date}">
+                        <div class="workout-card border-${getPartKey(partName)}">
+                            <div class="card-header" style="background:#141414;">
+                                <div><b style="color:var(--bp-pink); font-size:0.82rem;">📅 ${date} History</b></div>
+                                <span class="summary-mini-badge">${logs.length}세트 완수</span>
+                            </div>
+                            <div class="sets-container">`;
+                
+                logs.forEach(l => {
+                    finalHtml += `
+                        <div class="set-row py-2 px-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dim font-mono" style="font-size:0.75rem; width:35px;">${l.set_no}S</span>
+                                <div class="flex-grow-1 d-flex justify-content-around text-center small">
+                                    ${l.weight > 0 ? `<span>${l.weight}kg</span>` : ''}
+                                    ${l.reps > 0 ? `<span>${l.reps}회</span>` : ''}
+                                    ${l.set_time > 0 ? `<span>${l.set_time}s</span>` : ''}
+                                    ${l.workout_time > 0 ? `<span>${l.workout_time}m</span>` : ''}
+                                </div>
+                                <span class="text-secondary" style="font-size:0.6rem;">${l.workout_date.split('T')[1].substring(0,5)}</span>
+                            </div>
+                            ${l.note ? `<div class="mt-1 small text-secondary" style="font-size:0.65rem; padding-left:2px; font-style:italic;">"${l.note}"</div>` : ''}
+                        </div>`;
+                });
+                
+                finalHtml += `</div></div></div>`;
+            });
+
+            feedEl.innerHTML = finalHtml;
+        }
+
+        // Intersection Observer 연동형 히스토리 피드 무한 스크롤 추가 로드 엔진
+        function setupInfiniteScrollObserver() {
+            const sensor = document.getElementById('infinite-scroll-sensor');
+            if(!sensor) return;
+
+            SCROLL_OBSERVER = new IntersectionObserver(async (entries) => {
+                if (entries[0].isIntersecting && CURRENT_MODE === "EXERCISE" && SELECTED_ITEM_ID && !IS_INFINITE_LOADING) {
+                    if (EX_MODE_RENDERED_DATES.length >= EX_MODE_ALL_DATES.length) return;
+
+                    IS_INFINITE_LOADING = true;
+                    const loader = document.createElement('div');
+                    loader.id = "feed-infinite-loader";
+                    loader.className = "text-center py-3 text-secondary font-mono small";
+                    loader.innerText = "⏳ 이전 운동 히스토리 타임라인 동적 인서트 중...";
+                    document.getElementById('dashboard-history-feed').appendChild(loader);
+
+                    const currentLen = EX_MODE_RENDERED_DATES.length;
+                    const nextBatch = EX_MODE_ALL_DATES.slice(currentLen, currentLen + 5);
+                    
+                    EX_MODE_RENDERED_DATES.push(...nextBatch);
+                    await appendExerciseHistoryBatch(nextBatch);
+
+                    const targetLoader = document.getElementById('feed-infinite-loader');
+                    if(targetLoader) targetLoader.remove();
+                    IS_INFINITE_LOADING = false;
+                }
+            }, { threshold: 0.1 });
+
+            SCROLL_OBSERVER.observe(sensor);
+        }
+
+        // 무한 스크롤 다운 시 하단 피드 하단부에 기존 카드 무너트리지 않고 조심스럽게 Append 시키는 엔진
+        async function appendExerciseHistoryBatch(dateArray) {
+            if(dateArray.length === 0) return;
+            const feedEl = document.getElementById('dashboard-history-feed');
+
+            const sortedDates = [...dateArray].sort();
+            const minDate = sortedDates[0];
+            const maxDate = sortedDates[sortedDates.length - 1];
+
+            const { data } = await _db.schema('workout').from('logs')
+                .select('*').eq('status', 'FINAL')
+                .eq('exercise_id', SELECTED_ITEM_ID)
+                .gte('workout_date', `${minDate}T00:00:00`)
+                .lte('workout_date', `${maxDate}T23:59:59`)
+                .order('workout_date', { ascending: false });
+
+            const blockMap = {};
+            dateArray.forEach(d => blockMap[d] = []);
+            if (data) {
+                data.forEach(log => {
+                    const pDate = log.workout_date.split('T')[0];
+                    if (blockMap[pDate]) blockMap[pDate].push(log);
+                });
+            }
+
+            const masterExInfo = ALL_EXERCISE_MASTER.find(e => e.id === SELECTED_ITEM_ID);
+            const partName = SETTINGS_LOOKUP_MAP[masterExInfo?.body_part] || '유산소';
+
+            dateArray.forEach(date => {
+                const logs = blockMap[date] ? blockMap[date].sort((a,b) => a.set_no - b.set_no) : [];
+                if(logs.length === 0) return;
+
+                const blockDiv = document.createElement('div');
+                blockDiv.className = "feed-block";
+                blockDiv.id = `feed-block-${date}`;
+
+                let html = `
+                    <div class="workout-card border-${getPartKey(partName)}">
+                        <div class="card-header" style="background:#141414;">
+                            <div><b style="color:var(--bp-pink); font-size:0.82rem;">📅 ${date} History</b></div>
+                            <span class="summary-mini-badge">${logs.length}세트 완수</span>
+                        </div>
+                        <div class="sets-container">`;
+
+                logs.forEach(l => {
+                    html += `
+                        <div class="set-row py-2 px-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dim font-mono" style="font-size:0.75rem; width:35px;">${l.set_no}S</span>
+                                <div class="flex-grow-1 d-flex justify-content-around text-center small">
+                                    ${l.weight > 0 ? `<span>${l.weight}kg</span>` : ''}
+                                    ${l.reps > 0 ? `<span>${l.reps}회</span>` : ''}
+                                    ${l.set_time > 0 ? `<span>${l.set_time}s</span>` : ''}
+                                    ${l.workout_time > 0 ? `<span>${l.workout_time}m</span>` : ''}
+                                </div>
+                                <span class="text-secondary" style="font-size:0.6rem;">${l.workout_date.split('T')[1].substring(0,5)}</span>
+                            </div>
+                            ${l.note ? `<div class="mt-1 small text-secondary" style="font-size:0.65rem; padding-left:2px; font-style:italic;">"${l.note}"</div>` : ''}
+                        </div>`;
+                });
+
+                html += `</div></div>`;
+                blockDiv.innerHTML = html;
+                feedEl.appendChild(blockDiv);
+            });
+        }
+
+        // 도우미 알림 UI 헬퍼 함수들
+        function showSelectDayNotice() {
+            document.getElementById('dashboard-history-feed').innerHTML = '<div class="empty-notice-box" style="color:var(--bp-pink); border-color:rgba(232,142,163,0.3); background:rgba(232,142,163,0.01);">💡 데이터 캐싱 완료!<br>상단 달력에서 핑크색 점(Dot)이 박힌 운동 날짜를 터치하면 상세 리포트 피드가 출력됩니다.</div>';
+        }
+        function showNoDataNotice() {
+            document.getElementById('dashboard-history-feed').innerHTML = '<div class="empty-notice-box">📭 분석 실패<br>해당 조건으로 완수된 실전 데이터 로그(FINAL)가 존재하지 않습니다.</div>';
+        }
+
+        initDashboard();
+    </script>
+</body>
+</html>

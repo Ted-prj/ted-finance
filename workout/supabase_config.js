@@ -70,9 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'workout', name: 'WORKOUT', url: 'workout.html' },
         { id: 'manage', name: 'MANAGE', url: 'manage.html' },
         { id: 'settings', name: 'SETTINGS', url: 'settings.html' },
+        { id: 'dashboard', name: 'DASHBOARD', url: 'dashboard.html' },
         { id: 'logs', name: 'LOGS', url: 'logs.html' },
         // 💖 명세 반영: 테드의 DIET HUB 외부 깃허브 주소 파이프라인 연결
-        { id: 'diethub', name: 'DIET HUB', url: 'https://ted-prj.github.io/ted-finance/diet' }
+        { id: 'diethub', name: 'DIET HUB', url: 'diet/index.html' }
     ];
 
     const activeId = navContainer.getAttribute('data-active');
