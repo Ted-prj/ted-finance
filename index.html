@@ -57,7 +57,6 @@
             position: relative;
         }
         
-        /* 각 프로젝트별 고유 컬러 브랜딩 */
         .card-finance { border-left: 6px solid var(--bp-pink); }
         .card-diet { border-left: 6px solid var(--diet-mint); }
         .card-workout { border-left: 6px solid var(--workout-neon); }
@@ -66,7 +65,7 @@
             display: flex;
             align-items: center;
             gap: 18px;
-            pointer-events: none; /* 클릭 이벤트 중복 방지 */
+            pointer-events: none;
         }
 
         .app-icon { font-size: 2.2rem; line-height: 1; }
@@ -74,7 +73,6 @@
         .app-title { font-size: 1.4rem; font-weight: 900; letter-spacing: 2px; }
         .app-desc { font-size: 0.75rem; color: var(--text-dim); font-weight: 700; margin-top: 2px; }
 
-        /* --- 인라인 인증 영역 (기본 숨김) --- */
         .auth-section {
             max-height: 0;
             opacity: 0;
@@ -91,7 +89,7 @@
         }
 
         .app-card.active .auth-section {
-            max-height: 150px; /* 입력창이 열릴 충분한 높이 */
+            max-height: 150px;
             opacity: 1;
             margin-top: 25px;
             padding-top: 25px;
@@ -111,12 +109,10 @@
             border-radius: 16px;
             padding: 10px;
             font-weight: 900;
-            transition: border-color 0.3s;
         }
         
         .auth-input:focus { outline: none; box-shadow: none !important; }
 
-        /* 활성화 시 입력창 테두리 컬러 동기화 */
         .card-finance.active .auth-input:focus { border-color: var(--bp-pink) !important; color: var(--bp-pink) !important; }
         .card-diet.active .auth-input:focus { border-color: var(--diet-mint) !important; color: var(--diet-mint) !important; }
         .card-workout.active .auth-input:focus { border-color: var(--workout-neon) !important; color: var(--workout-neon) !important; }
@@ -139,7 +135,6 @@
 
     <div class="app-container">
         
-        <!-- 1. FINANCE (Nami) -->
         <div class="app-card card-finance" onclick="activateApp('FINANCE', this)">
             <div class="card-header">
                 <div class="app-icon">🖤</div>
@@ -154,7 +149,6 @@
             </div>
         </div>
 
-        <!-- 2. DIET (Sanji) -->
         <div class="app-card card-diet" onclick="activateApp('DIET', this)">
             <div class="card-header">
                 <div class="app-icon">🥗</div>
@@ -169,7 +163,6 @@
             </div>
         </div>
 
-        <!-- 3. WORKOUT (Robin) -->
         <div class="app-card card-workout" onclick="activateApp('WORKOUT', this)">
             <div class="card-header">
                 <div class="app-icon">💪</div>
@@ -189,14 +182,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Supabase 통합 설정 (루트 레벨에서는 스키마를 고정하지 않고, API 호출 시 동적으로 스키마 지정)
+        // Supabase 초기화 (기본 public 스키마를 바라봅니다)
         const SUPABASE_URL = 'https://vaamifqzjsrflmprihgv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYW1pZnF6anNyZmxtcHJpaGd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODc2NzksImV4cCI6MjA5MTk2MzY3OX0.qUUs3aoWQMEVjTQkYTZtA8CMjMF_MrgBFa4UfiiEWzI';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 카드 활성화 로직
         function activateApp(appName, cardElement) {
-            // 다른 열려있는 카드들 모두 닫기 및 초기화
             document.querySelectorAll('.app-card').forEach(card => {
                 if (card !== cardElement) {
                     card.classList.remove('active');
@@ -207,66 +198,49 @@
                 }
             });
 
-            // 현재 선택한 카드 열기
             if (!cardElement.classList.contains('active')) {
                 cardElement.classList.add('active');
-                
-                // 트랜지션 애니메이션이 끝난 후 포커스 주입 (모바일 키보드 팝업)
                 setTimeout(() => {
                     cardElement.querySelector('.auth-input').focus();
                 }, 350);
             }
         }
 
-        // 핀 번호 자동 감지 및 인증 라우터 호출
         function handlePinInput(inputEl) {
             if (inputEl.value.length === 4) {
-                inputEl.blur(); // 키보드 숨기기
+                inputEl.blur();
                 verifyAppAccess(inputEl.dataset.app, inputEl.value, inputEl.nextElementSibling, inputEl);
             }
         }
 
-        // 인증 로직 허브
+        // 중앙 집중형 인증 시스템 (공통 public.settings 테이블 이용)
         async function verifyAppAccess(appName, pin, msgEl, inputEl) {
             msgEl.className = 'auth-msg msg-loading';
             msgEl.innerText = "VERIFYING...";
 
             try {
-                if (appName === 'FINANCE') {
-                    // 🖤 나미의 Finance 스키마 인증 로직 (PostgreSQL Schema 지원 방식)
-                    const { data, error } = await _supabase.schema('finance').from('settings').select('value').eq('code', 'ACCESS_PW').single();
-                    if (error) throw error;
+                // 🌟 공통 스키마(public)에서 비밀번호 무결성 판별
+                const { data, error } = await _supabase.from('settings').select('value').eq('code', 'ACCESS_PW').single();
+                if (error) throw error;
+                
+                if (data.value === pin) {
+                    msgEl.innerText = "ACCESS GRANTED";
                     
-                    if (data.value === pin) {
+                    if (appName === 'FINANCE') {
                         sessionStorage.setItem('is_auth', 'true');
-                        msgEl.innerText = "ACCESS GRANTED";
                         msgEl.style.color = "var(--bp-pink)";
                         setTimeout(() => location.href = 'finance/out.html', 300);
-                    } else {
-                        throw new Error("WRONG PASSWORD");
-                    }
-                } 
-                else if (appName === 'DIET') {
-                    // 💚 상디(Sanji)의 Diet 인증 로직 위치
-                    // 예: await _supabase.schema('diet').from('...')...
-                    // 상디가 이 부분의 쿼리와 세션스토리지, 라우팅(location.href)을 채워 넣으면 됩니다!
-                    
-                    // [임시 하드코딩 테스트용 - 나중에 지우고 상디 로직으로 교체하세요]
-                    if (pin === '0000') {
+                    } else if (appName === 'DIET') {
                         sessionStorage.setItem('is_auth_diet', 'true');
+                        msgEl.style.color = "var(--diet-mint)";
                         setTimeout(() => location.href = 'diet/index.html', 300);
-                    } else throw new Error("WRONG PASSWORD");
-                } 
-                else if (appName === 'WORKOUT') {
-                    // 🔥 로빈(Robin)의 Workout 인증 로직 위치
-                    // 예: await _supabase.schema('workout').from('...')...
-                    // 로빈이 이 부분의 쿼리와 세션스토리지, 라우팅(location.href)을 채워 넣으면 됩니다!
-
-                    // [임시 하드코딩 테스트용 - 나중에 지우고 로빈 로직으로 교체하세요]
-                    if (pin === '0000') {
+                    } else if (appName === 'WORKOUT') {
                         sessionStorage.setItem('is_auth_workout', 'true');
+                        msgEl.style.color = "var(--workout-neon)";
                         setTimeout(() => location.href = 'workout/index.html', 300);
-                    } else throw new Error("WRONG PASSWORD");
+                    }
+                } else {
+                    throw new Error("WRONG PASSWORD");
                 }
             } catch (err) {
                 msgEl.className = 'auth-msg msg-error';
@@ -274,7 +248,7 @@
                 setTimeout(() => {
                     inputEl.value = "";
                     msgEl.innerText = "";
-                    inputEl.focus(); // 재입력을 위해 포커스 복원
+                    inputEl.focus();
                 }, 1000);
             }
         }
