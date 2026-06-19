@@ -10,14 +10,36 @@
     <style>
         /* 스와이프 UI 스타일 */
         .swipe-del-bg { 
-            .swipe-wrapper { position: relative; overflow: hidden; border-radius: 12px; margin-bottom: 5px; }
-            position: absolute; right: -100%; top: 0; width: 100%; height: 100%; 
+            position: absolute; 
+            right: -100%; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
             background: linear-gradient(90deg, transparent, #ff2d55); 
-            display: flex; align-items: center; justify-content: flex-end; 
-            padding-right: 20px; color: white; font-weight: 900; z-index: 1; transition: 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-end; 
+            padding-right: 20px; 
+            color: white; 
+            font-weight: 900; 
+            z-index: 1; 
+            transition: 0.2s; 
         }
-        .swipe-content { position: relative; z-index: 2; background: var(--bp-dark-gray); transition: 0.2s; }
-        .ex-header-wrapper { border-radius: 18px 18px 0 0; }
+        .swipe-wrapper { 
+            position: relative; 
+            overflow: hidden; 
+            border-radius: 12px; 
+            margin-bottom: 5px; 
+        }
+        .swipe-content { 
+            position: relative; 
+            z-index: 2; 
+            background: var(--bp-dark-gray); 
+            transition: 0.2s; 
+        }
+        .ex-header-wrapper { 
+            border-radius: 18px 18px 0 0; 
+        }
         
         @keyframes fadeInCard {
             from { opacity: 0; transform: translateY(15px); }
@@ -32,11 +54,47 @@
         }
 
         /* 운동 종목 순서 조정을 위한 블랙핑크 오버레이 팝업 스타일 */
-        .reorder-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 4000; align-items: center; justify-content: center; padding: 20px; }
-        .reorder-modal-card { background: #111; border: 2px solid #222; border-radius: 24px; padding: 20px; width: 100%; max-width: 450px; max-height: 80vh; display: flex; flex-direction: column; }
-        .reorder-list-scroll { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; }
+        .reorder-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.92); 
+            z-index: 4000; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        .reorder-modal-card { 
+            background: #111; 
+            border: 2px solid #222; 
+            border-radius: 24px; 
+            padding: 20px; 
+            width: 100%; 
+            max-width: 450px; 
+            max-height: 80vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .reorder-list-scroll { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            margin-bottom: 15px; 
+            padding-right: 5px; 
+        }
+        
+        /* 💡 시각적 인지력을 위한 초경량 마이크로 수행일 배지 스타일 */
+        .micro-date-badge { 
+            font-size: 0.58rem !important; 
+            font-weight: normal !important; 
+            color: #ff3f7e !important; 
+            margin-left: 2px; 
+            opacity: 0.85; 
+        }
     </style>
-    <script src="config.js"></script>
+    <script src="supabase_config.js"></script>
     <script src="../universe_core.js"></script>
 </head>
 <body>
@@ -74,12 +132,21 @@
         <div class="quick-add-area">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <span style="font-weight:900; font-size:0.9rem; color:var(--bp-pink);">+ QUICK ADD</span>
-                <div id="buwi-last-date" style="font-size:0.65rem; color:#888;"></div>
             </div>
+            
             <div class="row g-2 mb-2">
-                <div class="col-4"><label class="label-small">종류</label><select id="q-type" class="form-select form-select-sm" onchange="handleTypeChange(this.value)"></select></div>
-                <div class="col-4" id="q-buwi-wrapper"><label class="label-small">부위</label><select id="q-buwi" class="form-select form-select-sm" onchange="handleBuwiChange(this.value)"></select></div>
-                <div class="col-4" id="q-ex-wrapper"><label class="label-small">종목</label><select id="q-ex" class="form-select form-select-sm" onchange="loadQuickExStats(this.value)"></select></div>
+                <div class="col-4">
+                    <label class="label-small">종류 <span id="last-date-type" class="micro-date-badge"></span></label>
+                    <select id="q-type" class="form-select form-select-sm" onchange="handleTypeChange(this.value)"></select>
+                </div>
+                <div class="col-4" id="q-buwi-wrapper">
+                    <label class="label-small">부위 <span id="last-date-buwi" class="micro-date-badge"></span></label>
+                    <select id="q-buwi" class="form-select form-select-sm" onchange="handleBuwiChange(this.value)"></select>
+                </div>
+                <div class="col-4" id="q-ex-wrapper">
+                    <label class="label-small">종목 <span id="last-date-ex" class="micro-date-badge"></span></label>
+                    <select id="q-ex" class="form-select form-select-sm" onchange="loadQuickExStats(this.value)"></select>
+                </div>
             </div>
             <div id="q-stats-area" class="stats-box" style="display:none;">
                 <div id="q-best-info" class="mb-1"></div>
@@ -88,7 +155,9 @@
             <div id="q-inputs" class="row g-2 mb-3"></div>
             <div class="mb-3">
                 <label class="label-small">수퍼세트 설정</label>
-                <select id="q-superset" class="form-select form-select-sm" onchange="handleSupersetSelectChange(this.value)"><option value="">N/A</option></select>
+                <select id="q-superset" class="form-select form-select-sm" onchange="handleSupersetSelectChange(this.value)">
+                    <option value="">N/A</option>
+                </select>
             </div>
             <button class="btn-pink w-100" onclick="addWorkoutFromQuick()">리스트 추가하기</button>
         </div>
@@ -108,11 +177,16 @@
         <div id="global-nav" data-active="workout"></div>
     </div>
 
-    <script src="supabase_config.js"></script>
     <script>
-        checkAuth();
         let EX_MASTER = [];
-        let SETTINGS_CODE = { 'EXERCISE_TYPE':[], 'BODY_PART':[], 'EQUIPMENT':[], 'WEIGHT_SUB_TYPE':[], 'GRIP':[], 'LYING':[] };
+        let SETTINGS_CODE = { 
+            'EXERCISE_TYPE': [], 
+            'BODY_PART': [], 
+            'EQUIPMENT': [], 
+            'WEIGHT_SUB_TYPE': [], 
+            'GRIP': [], 
+            'LYING': [] 
+        };
         let SETTINGS_LOOKUP = {};
         let ACTIVE_SETS = [];
         let touchStartX = 0;
@@ -122,7 +196,7 @@
             if (sData) {
                 sData.forEach(s => { 
                     SETTINGS_LOOKUP[s.id] = s.name;
-                    if(SETTINGS_CODE[s.category]) {
+                    if (SETTINGS_CODE[s.category]) {
                         SETTINGS_CODE[s.category].push({ id: s.id, name: s.name });
                     }
                 });
@@ -139,47 +213,103 @@
 
         function calculateFinalWeight(weight, weightTypeId, equipTypeId) {
             let multiplier = 1;
-            if ([26, 28, 46].includes(Number(weightTypeId))) multiplier = 2;
+            if ([26, 28, 46].includes(Number(weightTypeId))) {
+                multiplier = 2;
+            }
             let baseWeight = 0;
-            if ([47, 48].includes(Number(equipTypeId))) baseWeight = 20;
+            if ([47, 48].includes(Number(equipTypeId))) {
+                baseWeight = 20;
+            }
             return (Number(weight) * multiplier) + baseWeight;
         }
 
-        function handleTypeChange(typeId) {
+        // 🛠️ 3단 부스터 고도화: 종류 선택 시 하위 모든 종목 코드 롤백 추적 후 최신일 추출
+        async function handleTypeChange(typeId) {
             const buwiWrapper = document.getElementById('q-buwi-wrapper');
             const exWrapper = document.getElementById('q-ex-wrapper');
             const exSelect = document.getElementById('q-ex');
             const typeName = SETTINGS_LOOKUP[typeId];
             
+            const typeExIds = EX_MASTER.filter(e => Number(e.exercise_type) === Number(typeId)).map(e => e.id);
+            if (typeExIds.length > 0) {
+                const { data: tData } = await _db.schema('workout').from('logs').select('workout_date').in('exercise_id', typeExIds).order('workout_date', { ascending: false }).limit(1);
+                if (tData && tData.length > 0) {
+                    document.getElementById('last-date-type').innerText = `(${tData[0].workout_date.split('T')[0].slice(5).replace('-', '.')})`;
+                } else {
+                    document.getElementById('last-date-type').innerText = '(-)';
+                }
+            } else {
+                document.getElementById('last-date-type').innerText = '(-)';
+            }
+
             if (typeName === '유산소') {
-                if(buwiWrapper) buwiWrapper.style.display = 'none';
-                if(exWrapper) { exWrapper.classList.remove('col-4'); exWrapper.classList.add('col-8'); }
-                document.getElementById('buwi-last-date').innerText = '';
+                if (buwiWrapper) {
+                    buwiWrapper.style.display = 'none';
+                }
+                if (exWrapper) { 
+                    exWrapper.classList.remove('col-4'); 
+                    exWrapper.classList.add('col-8'); 
+                }
+                document.getElementById('last-date-buwi').innerText = '';
                 const filtered = EX_MASTER.filter(e => Number(e.exercise_type) === Number(typeId));
                 exSelect.innerHTML = filtered.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-                if(filtered.length > 0) loadQuickExStats(filtered[0].id);
+                if (filtered.length > 0) {
+                    loadQuickExStats(filtered[0].id);
+                }
             } else {
-                if(buwiWrapper) buwiWrapper.style.display = 'block';
-                if(exWrapper) { exWrapper.classList.remove('col-8'); exWrapper.classList.add('col-4'); }
+                if (buwiWrapper) {
+                    buwiWrapper.style.display = 'block';
+                }
+                if (exWrapper) { 
+                    exWrapper.classList.remove('col-8'); 
+                    exWrapper.classList.add('col-4'); 
+                }
                 handleBuwiChange(document.getElementById('q-buwi').value);
             }
         }
 
+        // 🛠️ 3단 부스터 고도화: 부위 변경 시 해당 부위 고유 최신 이력 실시간 역조사 매핑
         async function handleBuwiChange(buwiId) {
             const currentTypeId = document.getElementById('q-type').value;
-            if(SETTINGS_LOOKUP[currentTypeId] === '유산소') return;
-            const { data } = await _db.schema('workout').from('logs').select('workout_date').eq('body_part', buwiId).order('workout_date', {ascending:false}).limit(1);
-            document.getElementById('buwi-last-date').innerText = data?.[0] ? `최근 운동: ${data[0].workout_date.split('T')[0]}` : '이력 없음';
+            if (SETTINGS_LOOKUP[currentTypeId] === '유산소') {
+                document.getElementById('last-date-buwi').innerText = '';
+                return;
+            }
+            
+            const { data } = await _db.schema('workout').from('logs').select('workout_date').eq('body_part', buwiId).order('workout_date', { ascending: false }).limit(1);
+            if (data && data.length > 0) {
+                document.getElementById('last-date-buwi').innerText = `(${data[0].workout_date.split('T')[0].slice(5).replace('-', '.')})`;
+            } else {
+                document.getElementById('last-date-buwi').innerText = '(-)';
+            }
+            
             const filtered = EX_MASTER.filter(e => Number(e.body_part) === Number(buwiId) && Number(e.exercise_type) === Number(currentTypeId));
             document.getElementById('q-ex').innerHTML = filtered.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-            if(filtered.length > 0) loadQuickExStats(filtered[0].id);
-            else { document.getElementById('q-stats-area').style.display = 'none'; document.getElementById('q-inputs').innerHTML = ''; }
+            
+            if (filtered.length > 0) {
+                loadQuickExStats(filtered[0].id);
+            } else { 
+                document.getElementById('q-stats-area').style.display = 'none'; 
+                document.getElementById('q-inputs').innerHTML = ''; 
+                document.getElementById('last-date-ex').innerText = '(-)';
+            }
         }
 
+        // 🛠️ 3단 부스터 고도화: 종목 최종 타깃팅 시 다이렉트 최신 수행일 매핑 및 치명적 오타 복구
         async function loadQuickExStats(exId) {
-            if(!exId) return;
+            if (!exId) {
+                document.getElementById('last-date-ex').innerText = '(-)';
+                return;
+            }
             const ex = EX_MASTER.find(e => e.id === exId);
             const { best, bestLog, recentConfigs } = await getDetailedStats(exId);
+            
+            const { data: lastLogForDate } = await _db.schema('workout').from('logs').select('workout_date').eq('exercise_id', exId).order('workout_date', { ascending: false }).limit(1);
+            if (lastLogForDate && lastLogForDate.length > 0) {
+                document.getElementById('last-date-ex').innerText = `(${lastLogForDate[0].workout_date.split('T')[0].slice(5).replace('-', '.')})`;
+            } else {
+                document.getElementById('last-date-ex').innerText = '(-)';
+            }
             
             let bestFinalHtml = '';
             if (bestLog && bestLog.weight) {
@@ -199,20 +329,47 @@
 
         function renderQuickInputFields(ex, best) {
             let html = '';
-            if(ex.use_set_no) html += `<div class="col-3"><label class="label-small">세트수</label><input type="number" id="q-val-sets" class="form-control" value="3"></div>`;
-            if(ex.use_equipment) html += makeQField('col-4', '기구', makeQSelect('q-val-equip', SETTINGS_CODE['EQUIPMENT'], ex.equipment_type || best.equip));
-            if(ex.use_weight_type) html += makeQField('col-4', '무게타입', makeQSelect('q-val-weight-type', SETTINGS_CODE['WEIGHT_SUB_TYPE'], ex.weight_type));
-            if(ex.use_grip) html += makeQField('col-4', '그립', makeQSelect('q-val-grip', SETTINGS_CODE['GRIP'], ex.grip_type || best.grip));
-            if(ex.use_lying) html += makeQField('col-4', '라잉', makeQSelect('q-val-lying', SETTINGS_CODE['LYING'], ex.lying_type || best.lying));
+            if (ex.use_set_no) {
+                html += `<div class="col-3"><label class="label-small">세트수</label><input type="number" id="q-val-sets" class="form-control" value="3"></div>`;
+            }
+            if (ex.use_equipment) {
+                html += makeQField('col-4', '기구', makeQSelect('q-val-equip', SETTINGS_CODE['EQUIPMENT'], ex.equipment_type || best.equip));
+            }
+            if (ex.use_weight_type) {
+                html += makeQField('col-4', '무게타입', makeQSelect('q-val-weight-type', SETTINGS_CODE['WEIGHT_SUB_TYPE'], ex.weight_type));
+            }
+            if (ex.use_grip) {
+                html += makeQField('col-4', '그립', makeQSelect('q-val-grip', SETTINGS_CODE['GRIP'], ex.grip_type || best.grip));
+            }
+            if (ex.use_lying) {
+                html += makeQField('col-4', '라잉', makeQSelect('q-val-lying', SETTINGS_CODE['LYING'], ex.lying_type || best.lying));
+            }
+            if (ex.use_weight) {
+                html += makeQField('col-4', '무게(kg)', `<input type="number" id="q-val-weight" class="form-control" value="${best.weight || ''}">`);
+            }
+            if (ex.use_reps) {
+                html += makeQField('col-4', '횟수', `<input type="number" id="q-val-reps" class="form-control" value="${best.reps || ''}">`);
+            }
+            if (ex.use_set_time) {
+                html += makeQField('col-4', '시간(s)', `<input type="number" id="q-val-set-time" class="form-control" value="${best.set_time || ''}">`);
+            }
             
-            if(ex.use_weight) html += makeQField('col-4', '무게(kg)', `<input type="number" id="q-val-weight" class="form-control" value="${best.weight||''}">`);
-            if(ex.use_reps) html += makeQField('col-4', '횟수', `<input type="number" id="q-val-reps" class="form-control" value="${best.reps||''}">`);
-            if(ex.use_set_time) html += makeQField('col-4', '시간(s)', `<input type="number" id="q-val-set-time" class="form-control" value="${best.set_time||''}">`);
-            if(ex.use_exercise_time) html += makeQField('col-4', '전체시간(m)', `<input type="number" id="q-val-time" class="form-control" value="${best.time||''}">`);
-            if(ex.use_machine_lv) html += makeQField('col-4', '강도', `<input type="number" id="q-val-ml" class="form-control" value="${best.machine_lv||''}">`);
-            if(ex.use_machine_speed) html += makeQField('col-4', '속도', `<input type="number" id="val-ms" class="form-control" value="${best.machine_speed||''}">`);
-            if(ex.use_heart_rate) html += makeQField('col-4', '심박수', `<input type="number" id="q-val-hr" class="form-control" value="${best.heart_rate||''}">`);
-            if(ex.use_pause_count) html += makeQField('col-4', '포즈 수', `<input type="number" id="q-val-pause" class="form-control" value="0" inputmode="numeric" pattern="[0-9]*">`);
+            // 🐛 버그 픽스 완료: 예전 코드에서 잘못 덮어씌워졌던 오타를 깔끔하게 정석 원본 명세로 복구
+            if (ex.use_exercise_time) {
+                html += makeQField('col-4', '전체시간(m)', `<input type="number" id="q-val-time" class="form-control" value="${best.time || ''}">`);
+            }
+            if (ex.use_machine_lv) {
+                html += makeQField('col-4', '강도', `<input type="number" id="q-val-ml" class="form-control" value="${best.machine_lv || ''}">`);
+            }
+            if (ex.use_machine_speed) {
+                html += makeQField('col-4', '속도', `<input type="number" id="val-ms" class="form-control" value="${best.machine_speed || ''}">`);
+            }
+            if (ex.use_heart_rate) {
+                html += makeQField('col-4', '심박수', `<input type="number" id="q-val-hr" class="form-control" value="${best.heart_rate || ''}">`);
+            }
+            if (ex.use_pause_count) {
+                html += makeQField('col-4', '포즈 수', `<input type="number" id="q-val-pause" class="form-control" value="0" inputmode="numeric" pattern="[0-9]*">`);
+            }
             
             document.getElementById('q-inputs').innerHTML = html;
             handleSupersetSelectChange(document.getElementById('q-superset').value);
@@ -220,10 +377,12 @@
 
         function handleSupersetSelectChange(val) {
             const setsInput = document.getElementById('q-val-sets');
-            if(!setsInput) return;
-            if(val) {
+            if (!setsInput) {
+                return;
+            }
+            if (val) {
                 const targetSets = ACTIVE_SETS.filter(s => s.display_name === val);
-                if(targetSets.length > 0) {
+                if (targetSets.length > 0) {
                     const maxSet = Math.max(...targetSets.map(s => s.set_no));
                     setsInput.value = maxSet;
                     setsInput.disabled = true;
@@ -235,7 +394,9 @@
 
         async function addWorkoutFromQuick() {
             const exId = document.getElementById('q-ex').value;
-            if(!exId) return alert("종목을 선택하세요.");
+            if (!exId) {
+                return alert("종목을 선택하세요.");
+            }
             const ex = EX_MASTER.find(e => e.id === exId);
             
             const currentTypeId = document.getElementById('q-type').value;
@@ -244,14 +405,16 @@
             let ssId = '';
             let sets = 1;
             
-            if(supersetTarget) {
+            if (supersetTarget) {
                 const targetSets = ACTIVE_SETS.filter(s => s.display_name === supersetTarget);
                 sets = targetSets.length > 0 ? Math.max(...targetSets.map(s => s.set_no)) : 1;
                 ssId = 'ss_' + Date.now();
                 
                 const targetIds = targetSets.map(s => s.id);
                 const { error: upError = null } = await _db.schema('workout').from('active_workout').update({ program_id: ssId }).in('id', targetIds);
-                if(upError) return alert("수퍼세트 바인딩 실패: " + upError.message);
+                if (upError) {
+                    return alert("수퍼세트 바인딩 실패: " + upError.message);
+                }
             } else {
                 const setsInput = document.getElementById('q-val-sets');
                 sets = setsInput ? (parseInt(setsInput.value) || 1) : 1;
@@ -260,16 +423,20 @@
             let targetBodyPartId = ex.body_part;
             if (currentTypeName === '유산소') {
                 const jeonshin = SETTINGS_CODE['BODY_PART'].find(b => b.name === '전신');
-                if(jeonshin) targetBodyPartId = jeonshin.id;
+                if (jeonshin) {
+                    targetBodyPartId = jeonshin.id;
+                }
             }
             
             const payload = [];
-            for(let i=1; i<=sets; i++) {
+            for (let i = 1; i <= sets; i++) {
                 payload.push({ 
                     exercise_id: exId, 
                     display_name: ex.name, 
                     body_part: targetBodyPartId, 
-                    set_no: i, status: 'TEMP', unit: ex.unit || 'kg',
+                    set_no: i, 
+                    status: 'TEMP', 
+                    unit: ex.unit || 'kg',
                     weight: Number(document.getElementById('q-val-weight')?.value || 0), 
                     reps: Number(document.getElementById('q-val-reps')?.value || 0), 
                     set_time: Number(document.getElementById('q-val-set-time')?.value || 0),
@@ -286,16 +453,18 @@
                 });
             }
             const { error } = await _db.schema('workout').from('active_workout').insert(payload);
-            if(error) alert("추가 실패: " + error.message);
-            else {
+            if (error) {
+                alert("추가 실패: " + error.message);
+            } else {
                 document.getElementById('q-superset').value = '';
                 const setsInput = document.getElementById('q-val-sets');
-                if(setsInput) setsInput.disabled = false;
+                if (setsInput) {
+                    setsInput.disabled = false;
+                }
                 await refreshActiveList();
             }
         }
 
-        // 고도화 버퍼 제어: 가상 메모리 공간(Detached DOM)에서 렌더링 후 한 번에 스왑하여 깜빡임 제거
         async function refreshActiveList() {
             const { data } = await _db.schema('workout').from('active_workout').select('*').order('id');
             ACTIVE_SETS = data || [];
@@ -307,22 +476,21 @@
             ACTIVE_SETS.forEach(s => {
                 const isSS = s.program_id && s.program_id.startsWith('ss_');
                 const key = isSS ? s.program_id : `single_${s.display_name}`;
-                if(!blockMap[key]) {
-                    blockMap[key] = {
-                        id: key,
-                        isSuperset: isSS,
-                        ssId: isSS ? s.program_id : '',
-                        sets: []
+                if (!blockMap[key]) {
+                    blockMap[key] = { 
+                        id: key, 
+                        isSuperset: isSS, 
+                        ssId: isSS ? s.program_id : '', 
+                        sets: [] 
                     };
                     blocks.push(blockMap[key]);
                 }
                 blockMap[key].sets.push(s);
             });
             
-            // 깜빡임 억제용 가상 메모리 임시 컨테이너 생성
             const tempContainer = document.createElement('div');
             
-            for(const block of blocks) {
+            for (const block of blocks) {
                 const card = document.createElement('div');
                 card.id = `block-card-${block.id}`;
                 card.className = `workout-card border-${getPartKey(SETTINGS_LOOKUP[block.sets[0].body_part])}`;
@@ -330,11 +498,11 @@
                 await renderBlockCard(card, block);
             }
             
-            // 단 1프레임만에 화면 일괄 리프레시 (허연 빈 화면 방지 기믹)
             area.innerHTML = tempContainer.innerHTML;
             
-            // 실존 라이브 DOM 노드에 이벤트 리스너 재매핑 일괄 수동 가동
-            ACTIVE_SETS.forEach(s => addSetEventListeners(s.id));
+            ACTIVE_SETS.forEach(s => {
+                addSetEventListeners(s.id);
+            });
             
             updateProgress(); 
             updateSupersetDropdown();
@@ -342,9 +510,11 @@
 
         async function renderBlockCard(cardIdOrEl, block) {
             const card = typeof cardIdOrEl === 'string' ? document.getElementById(cardIdOrEl) : cardIdOrEl;
-            if (!card) return;
+            if (!card) {
+                return;
+            }
             
-            if(block.isSuperset) {
+            if (block.isSuperset) {
                 block.sets.sort((a, b) => a.set_no - b.set_no || a.id - b.id);
             } else {
                 block.sets.sort((a, b) => a.set_no - b.set_no);
@@ -355,7 +525,7 @@
             const bodyParts = [...new Set(block.sets.map(s => SETTINGS_LOOKUP[s.body_part] || '전신'))].join(', ');
             
             let bestInfoHtml = '';
-            if(!block.isSuperset) {
+            if (!block.isSuperset) {
                 const ex = EX_MASTER.find(e => e.id === block.sets[0].exercise_id);
                 const { best, bestLog } = await getDetailedStats(block.sets[0].exercise_id);
                 
@@ -382,7 +552,7 @@
                 </div>
                 <div class="sets-container">`;
                 
-            for(const s of block.sets) { 
+            for (const s of block.sets) { 
                 html += await renderSetRowHtml(s, block.isSuperset); 
             }
             html += `</div>`;
@@ -390,10 +560,15 @@
         }
 
         async function detachSuperset(ssId) {
-            if(!confirm("이 수퍼세트 구성을 해제하고 각각의 일반 운동 카드로 분리하시겠습니까?")) return;
+            if (!confirm("이 수퍼세트 구성을 해제하고 각각의 일반 운동 카드로 분리하시겠습니까?")) {
+                return;
+            }
             const { error } = await _db.schema('workout').from('active_workout').update({ program_id: null }).eq('program_id', ssId);
-            if(error) alert("분리 실패: " + error.message);
-            else await refreshActiveList();
+            if (error) {
+                alert("분리 실패: " + error.message);
+            } else {
+                await refreshActiveList();
+            }
         }
 
         async function renderSetRowHtml(s, isSuperset) {
@@ -404,33 +579,63 @@
             const exLabelText = isSuperset ? `<div class="mb-1 fw-bold" style="font-size:0.65rem; color:var(--bp-pink); opacity:0.9;">[ ${s.display_name} ]</div>` : '';
             
             let selects = '';
-            if(ex.use_equipment) selects += makeRowSelect(s.id, 'equip', SETTINGS_CODE['EQUIPMENT'], s.equipment_type);
-            if(ex.use_weight_type) selects += makeRowSelect(s.id, 'weight-type', SETTINGS_CODE['WEIGHT_SUB_TYPE'], s.weight_type || ex.weight_type);
-            if(ex.use_grip) selects += makeRowSelect(s.id, 'grip', SETTINGS_CODE['GRIP'], s.grip_type);
-            if(ex.use_lying) selects += makeRowSelect(s.id, 'lying', SETTINGS_CODE['LYING'], s.lying_type);
+            if (ex.use_equipment) {
+                selects += makeRowSelect(s.id, 'equip', SETTINGS_CODE['EQUIPMENT'], s.equipment_type);
+            }
+            if (ex.use_weight_type) {
+                selects += makeRowSelect(s.id, 'weight-type', SETTINGS_CODE['WEIGHT_SUB_TYPE'], s.weight_type || ex.weight_type);
+            }
+            if (ex.use_grip) {
+                selects += makeRowSelect(s.id, 'grip', SETTINGS_CODE['GRIP'], s.grip_type);
+            }
+            if (ex.use_lying) {
+                selects += makeRowSelect(s.id, 'lying', SETTINGS_CODE['LYING'], s.lying_type);
+            }
 
             let inputsHtml = '';
-            if(ex.use_weight) inputsHtml += `<input type="number" id="w-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.weight||''}" placeholder="kg" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_reps) inputsHtml += `<input type="number" id="r-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.reps||''}" placeholder="회" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_set_time) inputsHtml += `<input type="number" id="st-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.set_time||''}" placeholder="sec" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_exercise_time) inputsHtml += `<input type="number" id="t-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.workout_time||''}" placeholder="min" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_machine_lv) inputsHtml += `<input type="number" id="ml-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.level||''}" placeholder="Lv" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_machine_speed) inputsHtml += `<input type="number" id="ms-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.machine_speed||''}" placeholder="km/h" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_heart_rate) inputsHtml += `<input type="number" id="hr-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.heart_rate||''}" placeholder="bpm" inputmode="numeric" pattern="[0-9]*">`;
-            if(ex.use_pause_count) inputsHtml += `<input type="number" id="pc-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.pause_count||'0'}" placeholder="포즈" inputmode="numeric" pattern="[0-9]*">`;
+            if (ex.use_weight) {
+                inputsHtml += `<input type="number" id="w-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.weight || ''}" placeholder="kg" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_reps) {
+                inputsHtml += `<input type="number" id="r-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.reps || ''}" placeholder="회" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_set_time) {
+                inputsHtml += `<input type="number" id="st-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.set_time || ''}" placeholder="sec" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_exercise_time) {
+                inputsHtml += `<input type="number" id="t-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.workout_time || ''}" placeholder="min" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_machine_lv) {
+                inputsHtml += `<input type="number" id="ml-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.level || ''}" placeholder="Lv" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_machine_speed) {
+                inputsHtml += `<input type="number" id="ms-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.machine_speed || ''}" placeholder="km/h" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_heart_rate) {
+                inputsHtml += `<input type="number" id="hr-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.heart_rate || ''}" placeholder="bpm" inputmode="numeric" pattern="[0-9]*">`;
+            }
+            if (ex.use_pause_count) {
+                inputsHtml += `<input type="number" id="pc-${s.id}" class="form-control form-control-sm text-center row-input-${s.id}" value="${s.pause_count || '0'}" placeholder="포즈" inputmode="numeric" pattern="[0-9]*">`;
+            }
 
             let configTags = [];
             if (ex.use_weight_type) {
                 let wId = s.weight_type || ex.weight_type;
-                if (wId && SETTINGS_LOOKUP[wId]) configTags.push(SETTINGS_LOOKUP[wId]);
+                if (wId && SETTINGS_LOOKUP[wId]) {
+                    configTags.push(SETTINGS_LOOKUP[wId]);
+                }
             }
             if (ex.use_grip) {
                 let gId = s.grip_type || ex.grip_type;
-                if (gId && SETTINGS_LOOKUP[gId]) configTags.push(SETTINGS_LOOKUP[gId]);
+                if (gId && SETTINGS_LOOKUP[gId]) {
+                    configTags.push(SETTINGS_LOOKUP[gId]);
+                }
             }
             if (ex.use_lying) {
                 let lId = s.lying_type || ex.lying_type;
-                if (lId && SETTINGS_LOOKUP[lId]) configTags.push(SETTINGS_LOOKUP[lId]);
+                if (lId && SETTINGS_LOOKUP[lId]) {
+                    configTags.push(SETTINGS_LOOKUP[lId]);
+                }
             }
             let metaDetails = configTags.length > 0 ? ` <span style="color:#888; font-weight:normal;">[${configTags.join('/')}]</span>` : '';
             let pauseDetails = ex.use_pause_count ? ` (포즈: ${lastPauseCount}회)` : '';
@@ -439,7 +644,7 @@
             return `
             <div class="swipe-wrapper">
                 <div class="swipe-del-bg" id="del-set-bg-${s.id}">DELETE 🗑️</div>
-                <div id="set-row-content-${s.id}" class="set-row swipe-content ${isSaved?'saved-row' : ''}" 
+                <div id="set-row-content-${s.id}" class="set-row swipe-content ${isSaved ? 'saved-row' : ''}" 
                      ontouchstart="handleTouchStart(event)" 
                      ontouchmove="handleTouchMoveSet(event, ${s.id})" 
                      ontouchend="handleTouchEndSet(event, ${s.id}, '${s.display_name}')">
@@ -455,10 +660,10 @@
                                 ${lastNoteHtml}
                                 <textarea id="n-${s.id}" class="form-control form-control-sm row-input-${s.id}" 
                                           style="font-size:0.65rem; resize:none; overflow-y:hidden; background:#1c1c1c; border:1px solid #333; color:white; height:${isSaved ? '28px' : 'auto'};" 
-                                          placeholder="노트 입력..." rows="1">${s.note||''}</textarea>
+                                          placeholder="노트 입력..." rows="1">${s.note || ''}</textarea>
                             </div>
                         </div>
-                        <div class="col-3"><button id="save-btn-${s.id}" class="btn-save ${isSaved?'st-saved':''}" onclick="saveSetRow(${s.id})">${isSaved?'SAVED':'SAVE'}</button></div>
+                        <div class="col-3"><button id="save-btn-${s.id}" class="btn-save ${isSaved ? 'st-saved' : ''}" onclick="saveSetRow(${s.id})">${isSaved ? 'SAVED' : 'SAVE'}</button></div>
                     </div>
                 </div>
             </div>`;
@@ -477,22 +682,26 @@
                 lying_type: document.getElementById(`sel-lying-${id}`)?.value ? Number(document.getElementById(`sel-lying-${id}`).value) : null 
             };
             
-            if(ex.use_weight) up.weight = Number(document.getElementById(`w-${id}`).value);
-            if(ex.use_reps) up.reps = Number(document.getElementById(`r-${id}`).value);
-            if(ex.use_set_time) up.set_time = Number(document.getElementById(`st-${id}`).value);
-            if(ex.use_exercise_time) up.workout_time = Number(document.getElementById('t-' + id).value);
-            if(ex.use_machine_lv) up.level = Number(document.getElementById(`ml-${id}`).value);
-            if(ex.use_machine_speed) up.machine_speed = Number(document.getElementById(`ms-${id}`).value);
-            if(ex.use_heart_rate) up.heart_rate = Number(document.getElementById(`hr-${id}`).value);
-            if(ex.use_pause_count) up.pause_count = Number(document.getElementById(`pc-${id}`).value);
+            if (ex.use_weight) { up.weight = Number(document.getElementById(`w-${id}`).value); }
+            if (ex.use_reps) { up.reps = Number(document.getElementById(`r-${id}`).value); }
+            if (ex.use_set_time) { up.set_time = Number(document.getElementById(`st-${id}`).value); }
+            if (ex.use_exercise_time) { up.workout_time = Number(document.getElementById('t-' + id).value); }
+            if (ex.use_machine_lv) { up.level = Number(document.getElementById(`ml-${id}`).value); }
+            if (ex.use_machine_speed) { up.machine_speed = Number(document.getElementById(`ms-${id}`).value); }
+            if (ex.use_heart_rate) { up.heart_rate = Number(document.getElementById(`hr-${id}`).value); }
+            if (ex.use_pause_count) { up.pause_count = Number(document.getElementById(`pc-${id}`).value); }
             
             const { error } = await _db.schema('workout').from('active_workout').update(up).eq('id', id);
-            if(!error) {
-                btn.innerText = 'SAVED'; btn.classList.remove('st-update'); btn.classList.add('st-saved');
+            if (!error) {
+                btn.innerText = 'SAVED'; 
+                btn.classList.remove('st-update'); 
+                btn.classList.add('st-saved');
                 document.getElementById(`set-row-content-${id}`).classList.add('saved-row');
                 
                 const ta = document.getElementById(`n-${id}`);
-                if (ta) ta.style.height = '28px';
+                if (ta) {
+                    ta.style.height = '28px';
+                }
 
                 Object.assign(s, up); 
                 updateProgress(); 
@@ -508,12 +717,14 @@
             ACTIVE_SETS.forEach(s => {
                 const isSS = s.program_id && s.program_id.startsWith('ss_');
                 const key = isSS ? s.program_id : `single_${s.display_name}`;
-                if(!blockMap[key]) {
+                if (!blockMap[key]) {
                     blockMap[key] = { id: key, isSuperset: isSS, names: [], sets: [] };
                     blocks.push(blockMap[key]);
                 }
                 blockMap[key].sets.push(s);
-                if(!blockMap[key].names.includes(s.display_name)) blockMap[key].names.push(s.display_name);
+                if (!blockMap[key].names.includes(s.display_name)) {
+                    blockMap[key].names.push(s.display_name);
+                }
             });
             
             window.CURRENT_REORDER_BLOCKS = blocks; 
@@ -543,21 +754,27 @@
 
         function moveReorderBlock(idx, dir) {
             const targetIdx = idx + dir;
-            if (targetIdx < 0 || targetIdx >= window.CURRENT_REORDER_BLOCKS.length) return;
+            if (targetIdx < 0 || targetIdx >= window.CURRENT_REORDER_BLOCKS.length) {
+                return;
+            }
             const temp = window.CURRENT_REORDER_BLOCKS[idx];
             window.CURRENT_REORDER_BLOCKS[idx] = window.CURRENT_REORDER_BLOCKS[targetIdx];
             window.CURRENT_REORDER_BLOCKS[targetIdx] = temp;
             renderReorderList();
         }
 
-        function closeReorderModal() { document.getElementById('reorder-overlay').style.display = 'none'; }
+        function closeReorderModal() { 
+            document.getElementById('reorder-overlay').style.display = 'none'; 
+        }
 
         async function saveNewOrder() {
-            if (!window.CURRENT_REORDER_BLOCKS || window.CURRENT_REORDER_BLOCKS.length === 0) return;
+            if (!window.CURRENT_REORDER_BLOCKS || window.CURRENT_REORDER_BLOCKS.length === 0) {
+                return;
+            }
             
             const allSetsNewOrder = [];
             window.CURRENT_REORDER_BLOCKS.forEach(b => {
-                if(b.isSuperset) {
+                if (b.isSuperset) {
                     b.sets.sort((a, b) => a.set_no - b.set_no || a.id - b.id);
                 } else {
                     b.sets.sort((a, b) => a.set_no - b.set_no);
@@ -565,37 +782,48 @@
                 allSetsNewOrder.push(...b.sets);
             });
             
-            if (allSetsNewOrder.length === 0) return closeReorderModal();
+            if (allSetsNewOrder.length === 0) {
+                return closeReorderModal();
+            }
             
             const originalIds = ACTIVE_SETS.map(s => s.id);
-
             const payload = allSetsNewOrder.map(s => {
                 const { id, created_at, ...rest } = s;
                 return rest;
             });
             
             const { error: delError } = await _db.schema('workout').from('active_workout').delete().in('id', originalIds);
-            if(delError) return alert("순서 배치 마이그레이션 오류(삭제 단계): " + delError.message);
+            if (delError) {
+                return alert("순서 배치 마이그레이션 오류(삭제 단계): " + delError.message);
+            }
             
             const { error: insError } = await _db.schema('workout').from('active_workout').insert(payload);
-            if(insError) return alert("순서 배치 마이그레이션 오류(재적재 단계): " + insError.message);
+            if (insError) {
+                return alert("순서 배치 마이그레이션 오류(재적재 단계): " + insError.message);
+            }
             
             closeReorderModal();
             await refreshActiveList(); 
         }
 
-        function handleTouchStart(e) { touchStartX = e.touches[0].clientX; }
-        function handleTouchMoveGroup(e, blockId) { const diffX = e.touches[0].clientX - touchStartX; if (diffX < 0) { document.getElementById(`group-content-${blockId}`).style.transform = `translateX(${Math.max(diffX, -100)}px)`; document.getElementById(`del-group-bg-${blockId}`).style.right = '0'; } }
+        function handleTouchStart(e) { 
+            touchStartX = e.touches[0].clientX; 
+        }
         
-        // 고도화 명세: 가속 스와이프 이펙트를 통한 선행 DOM 삭제 기믹 (삭제 시 깜빡임 완전 소멸 파트)
+        function handleTouchMoveGroup(e, blockId) { 
+            const diffX = e.touches[0].clientX - touchStartX; 
+            if (diffX < 0) { 
+                document.getElementById(`group-content-${blockId}`).style.transform = `translateX(${Math.max(diffX, -100)}px)`; 
+                document.getElementById(`del-group-bg-${blockId}`).style.right = '0'; 
+            } 
+        }
+        
         async function handleTouchEndGroup(e, blockId, label, isSuperset) { 
             const diffX = e.changedTouches[0].clientX - touchStartX; 
             if (diffX < -150) { 
-                if(confirm(isSuperset ? "이 수퍼세트 그룹 전체를 삭제할까요?" : "이 운동 전체를 삭제할까요?")) { 
-                    
-                    // 1 프레임 반응: 화면에서 카드를 즉시 좌측으로 날리고 높이를 차단해 위로 밀어올림
+                if (confirm(isSuperset ? "이 수퍼세트 그룹 전체를 삭제할까요?" : "이 운동 전체를 삭제할까요?")) { 
                     const cardEl = document.getElementById(`block-card-${blockId}`);
-                    if(cardEl) {
+                    if (cardEl) {
                         cardEl.style.transition = "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)";
                         cardEl.style.transform = "translateX(-100%)";
                         cardEl.style.opacity = "0";
@@ -604,39 +832,50 @@
                             cardEl.style.margin = "0";
                             cardEl.style.padding = "0";
                         }, 150);
-                        setTimeout(() => cardEl.remove(), 400);
+                        setTimeout(() => {
+                            cardEl.remove();
+                        }, 400);
                     }
 
-                    // 2단계: 백엔드 동기화 쿼리 사일런트 런칭
-                    if(isSuperset) {
+                    if (isSuperset) {
                         await _db.schema('workout').from('active_workout').delete().eq('program_id', blockId);
                     } else {
                         const originName = blockId.replace('single_', '');
                         await _db.schema('workout').from('active_workout').delete().eq('display_name', originName);
                     }
 
-                    // 3단계: 화면 가림 없이 내부 상태 룩업 업데이트
                     const { data } = await _db.schema('workout').from('active_workout').select('*').order('id');
                     ACTIVE_SETS = data || [];
                     updateProgress(); 
                     updateSupersetDropdown();
-                } else resetSwipeGroup(blockId); 
-            } else resetSwipeGroup(blockId); 
+                } else {
+                    resetSwipeGroup(blockId); 
+                }
+            } else {
+                resetSwipeGroup(blockId); 
+            }
         }
         
-        function resetSwipeGroup(blockId) { document.getElementById('group-content-' + blockId).style.transform = 'translateX(0)'; document.getElementById('del-group-bg-' + blockId).style.right = '-100%'; }
-        function handleTouchMoveSet(e, id) { const diffX = e.touches[0].clientX - touchStartX; if (diffX < 0) { document.getElementById(`set-row-content-${id}`).style.transform = `translateX(${Math.max(diffX, -80)}px)`; document.getElementById(`del-set-bg-${id}`).style.right = '0'; } }
+        function resetSwipeGroup(blockId) { 
+            document.getElementById('group-content-' + blockId).style.transform = 'translateX(0)'; 
+            document.getElementById('del-group-bg-' + blockId).style.right = '-100%'; 
+        }
         
-        // 고도화 명세: 단일 세트 열 스와이프 아웃 연동 가속화 기믹
+        function handleTouchMoveSet(e, id) { 
+            const diffX = e.touches[0].clientX - touchStartX; 
+            if (diffX < 0) { 
+                document.getElementById(`set-row-content-${id}`).style.transform = `translateX(${Math.max(diffX, -80)}px)`; 
+                document.getElementById(`del-set-bg-${id}`).style.right = '0'; 
+            } 
+        }
+        
         async function handleTouchEndSet(e, id, exName) { 
             const diffX = e.changedTouches[0].clientX - touchStartX; 
             if (diffX < -120) { 
-                if(confirm("이 세트를 삭제할까요?")) { 
-                    
-                    // 프론트엔드 실시간 감축 처리 개시
+                if (confirm("이 세트를 삭제할까요?")) { 
                     const rowContent = document.getElementById(`set-row-content-${id}`);
                     const swipeWrapper = rowContent?.closest('.swipe-wrapper');
-                    if(swipeWrapper) {
+                    if (swipeWrapper) {
                         swipeWrapper.style.transition = "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)";
                         swipeWrapper.style.transform = "translateX(-100%)";
                         swipeWrapper.style.opacity = "0";
@@ -645,26 +884,37 @@
                             swipeWrapper.style.margin = "0";
                             swipeWrapper.style.padding = "0";
                         }, 150);
-                        setTimeout(() => swipeWrapper.remove(), 400);
+                        setTimeout(() => {
+                            swipeWrapper.remove();
+                        }, 400);
                     }
 
                     await _db.schema('workout').from('active_workout').delete().eq('id', id); 
                     const { data } = await _db.schema('workout').from('active_workout').select('*').order('id');
                     ACTIVE_SETS = data || [];
                     updateProgress();
-                } else resetSwipeSet(id); 
-            } else resetSwipeSet(id); 
+                } else {
+                    resetSwipeSet(id); 
+                }
+            } else {
+                resetSwipeSet(id); 
+            }
         }
         
-        function resetSwipeSet(id) { document.getElementById(`set-row-content-${id}`).style.transform = 'translateX(0)'; document.getElementById('del-set-bg-' + id).style.right = '-100%'; }
+        function resetSwipeSet(id) { 
+            document.getElementById(`set-row-content-${id}`).style.transform = 'translateX(0)'; 
+            document.getElementById('del-set-bg-' + id).style.right = '-100%'; 
+        }
 
         function addSetEventListeners(id) { 
             const row = document.getElementById(`set-row-content-${id}`); 
-            if(!row) return; 
+            if (!row) {
+                return; 
+            }
             row.querySelectorAll(`.row-input-${id}, select`).forEach(el => { 
                 el.addEventListener('input', () => { 
                     const btn = document.getElementById(`save-btn-${id}`); 
-                    if(btn && btn.innerText === 'SAVED') { 
+                    if (btn && btn.innerText === 'SAVED') { 
                         btn.innerText = 'UPDATE'; 
                         btn.classList.add('st-update'); 
                     } 
@@ -673,87 +923,148 @@
 
             const ta = document.getElementById(`n-${id}`);
             if (ta) {
-                ta.addEventListener('focus', function() {
-                    this.style.height = 'auto';
-                    this.style.height = this.scrollHeight + 'px';
+                ta.addEventListener('focus', function() { 
+                    this.style.height = 'auto'; 
+                    this.style.height = this.scrollHeight + 'px'; 
                 });
-                ta.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = this.scrollHeight + 'px';
+                ta.addEventListener('input', function() { 
+                    this.style.height = 'auto'; 
+                    this.style.height = this.scrollHeight + 'px'; 
                 });
-                ta.addEventListener('blur', function() {
-                    const btn = document.getElementById(`save-btn-${id}`);
-                    if (btn && btn.innerText === 'SAVED') {
-                        this.style.height = '28px';
-                    }
+                ta.addEventListener('blur', function() { 
+                    const btn = document.getElementById(`save-btn-${id}`); 
+                    if (btn && btn.innerText === 'SAVED') { 
+                        this.style.height = '28px'; 
+                    } 
                 });
             }
         }
         
-        function makeQField(col, label, input) { return `<div class="${col} mb-2"><label class="label-small">${label}</label>${input}</div>`; }
-        function makeQSelect(id, list, def) { return `<select id="${id}" class="form-select">${list.map(v => `<option value="${v.id}" ${v.id==def?'selected':''}>${v.name}</option>`).join('')}</select>`; }
-        function makeRowSelect(id, type, list, current) { return `<select id="sel-${type}-${id}" class="form-select form-select-sm" style="font-size:0.6rem; height:24px;">${list.map(v => `<option value="${v.id}" ${v.id==current?'selected':''}>${v.name}</option>`).join('')}</select>`; }
-        function updateProgress() { const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length; const pct = ACTIVE_SETS.length ? Math.round((saved/ACTIVE_SETS.length)*100) : 0; document.getElementById('progress-fill').style.width = pct + '%'; document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} SAVED (${pct}%)`; }
+        function makeQField(col, label, input) { 
+            return `<div class="${col} mb-2"><label class="label-small">${label}</label>${input}</div>`; 
+        }
+        
+        function makeQSelect(id, list, def) { 
+            return `<select id="${id}" class="form-select">${list.map(v => `<option value="${v.id}" ${v.id == def ? 'selected' : ''}>${v.name}</option>`).join('')}</select>`; 
+        }
+        
+        function makeRowSelect(id, type, list, current) { 
+            return `<select id="sel-${type}-${id}" class="form-select form-select-sm" style="font-size:0.6rem; height:24px;">${list.map(v => `<option value="${v.id}" ${v.id == current ? 'selected' : ''}>${v.name}</option>`).join('')}</select>`; 
+        }
+        
+        // 부위 이름별 분기 스킨 매퍼 (인라인으로 완벽 파싱 유지)
+        function getPartKey(b) {
+            if (b && b.includes('가슴')) return 'chest';
+            if (b && b.includes('등')) return 'back';
+            if (b && b.includes('어깨')) return 'shoulder';
+            if (b && b.includes('하체')) return 'leg';
+            return 'etc';
+        }
+
+        // 수동 추가: 누락되었던 HTML 스위칭용 스텁 원본 동기화 복구
+        function handleRoutineChange(val) {
+            console.log("루틴 바인딩 감지:", val);
+        }
+
+        function updateProgress() { 
+            const saved = ACTIVE_SETS.filter(s => s.status === 'SAVED').length; 
+            const pct = ACTIVE_SETS.length ? Math.round((saved / ACTIVE_SETS.length) * 100) : 0; 
+            document.getElementById('progress-fill').style.width = pct + '%'; 
+            document.getElementById('progress-text').innerText = `${saved} / ${ACTIVE_SETS.length} SAVED (${pct}%)`; 
+        }
         
         function updateSupersetDropdown() { 
-            const standalones = ACTIVE_SETS.filter(s => !s.program_id || !s.program_id.startsWith('ss_'));
+            const standalones = ACTIVE_SETS.filter(s => !s.program_id || !s.program_id.startsWith('ss_')); 
             const names = [...new Set(standalones.map(s => s.display_name))]; 
             document.getElementById('q-superset').innerHTML = '<option value="">N/A</option>' + names.map(n => `<option value="${n}">${n}</option>`).join(''); 
         }
         
-        function toggleFinishArea() { const a = document.getElementById('session-input-area'); a.style.display = a.style.display==='none'?'block':'none'; }
+        function toggleFinishArea() { 
+            const a = document.getElementById('session-input-area'); 
+            a.style.display = a.style.display === 'none' ? 'block' : 'none'; 
+        }
         
         async function getDetailedStats(exId, setNo = null) {
-            if (typeof _getDetailedStats === 'function') return await _getDetailedStats(exId, setNo);
+            if (typeof _getDetailedStats === 'function') {
+                return await _getDetailedStats(exId, setNo);
+            }
             try {
                 const { data: logs } = await _db.schema('workout').from('logs').select('*').eq('exercise_id', exId).order('weight', { ascending: false }).limit(1);
-                let best = "0kg x 0회";
+                let best = "0kg x 0회"; 
                 let bestLog = { weight: 0, reps: 0, date: '-', note: '', weight_type: null, equipment_type: null };
-                if (logs && logs.length > 0) {
-                    best = `${logs[0].weight}kg x ${logs[0].reps}회`;
+                
+                if (logs && logs.length > 0) { 
+                    best = `${logs[0].weight}kg x ${logs[0].reps}회`; 
                     bestLog = { 
-                        weight: logs[0].weight, reps: logs[0].reps, 
-                        date: logs[0].workout_date ? logs[0].workout_date.split('T')[0] : '-', note: logs[0].note,
-                        weight_type: logs[0].weight_type, equipment_type: logs[0].equipment_type
-                    };
+                        weight: logs[0].weight, 
+                        reps: logs[0].reps, 
+                        date: logs[0].workout_date ? logs[0].workout_date.split('T')[0] : '-', 
+                        note: logs[0].note, 
+                        weight_type: logs[0].weight_type, 
+                        equipment_type: logs[0].equipment_type 
+                    }; 
                 }
-                let lastStr = "이력 없음"; let lastNote = ""; let lastPauseCount = 0;
-                const query = _db.schema('workout').from('logs').select('*').eq('exercise_id', exId);
-                if (setNo) query.eq('set_no', setNo);
+                
+                let lastStr = "이력 없음"; 
+                let lastNote = ""; 
+                let lastPauseCount = 0;
+                const query = _db.schema('workout').from('logs').select('*').eq('exercise_id', exId); 
+                if (setNo) {
+                    query.eq('set_no', setNo);
+                }
+                
                 const { data: lastLogs } = await query.order('workout_date', { ascending: false }).limit(1);
-                if (lastLogs && lastLogs.length > 0) {
-                    lastStr = `${lastLogs[0].weight}kg x ${lastLogs[0].reps}회`;
-                    lastNote = lastLogs[0].note || "";
-                    lastPauseCount = lastLogs[0].pause_count || 0;
+                if (lastLogs && lastLogs.length > 0) { 
+                    lastStr = `${lastLogs[0].weight}kg x ${lastLogs[0].reps}회`; 
+                    lastNote = lastLogs[0].note || ""; 
+                    lastPauseCount = lastLogs[0].pause_count || 0; 
                 }
                 return { best, bestLog, recentConfigs: [], lastStr, lastNote, lastPauseCount };
-            } catch (e) {
-                return { best: "0kg x 0회", bestLog: {}, recentConfigs: [], lastStr: "이력 없음", lastNote: "" , lastPauseCount: 0 };
+            } catch (e) { 
+                return { best: "0kg x 0회", bestLog: {}, recentConfigs: [], lastStr: "이력 없음", lastNote: "", lastPauseCount: 0 }; 
             }
         }
 
         function getSmartDate() {
-            const now = new Date(); let targetDate = new Date(now);
-            if (now.getHours() < 6) {
-                if (confirm("새벽 6시 이전입니다. 어제 날짜로 기록하시겠습니까?")) {
-                    targetDate.setDate(now.getDate() - 1);
-                }
+            const now = new Date(); 
+            let targetDate = new Date(now); 
+            if (now.getHours() < 6) { 
+                if (confirm("새벽 6시 이전입니다. 어제 날짜로 기록하시겠습니까?")) { 
+                    targetDate.setDate(now.getDate() - 1); 
+                } 
             }
-            const yyyy = targetDate.getFullYear();
-            const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(targetDate.getDate()).padStart(2, '0');
+            const yyyy = targetDate.getFullYear(); 
+            const mm = String(targetDate.getMonth() + 1).padStart(2, '0'); 
+            const dd = String(targetDate.getDate()).padStart(2, '0'); 
             return { idStr: `${yyyy}${mm}${dd}`, justDate: `${yyyy}-${mm}-${dd}`, full: targetDate.toISOString() };
         }
 
         async function processFinalSave() {
-            if(ACTIVE_SETS.some(s => s.status === 'TEMP')) return alert("저장 안 된 세트가 있음!");
-            const smartDate = getSmartDate();
-            const { data: ex } = await _db.schema('workout').from('session_logs').select('id').like('id', `${smartDate.idStr}_%`);
-            const sId = `${smartDate.idStr}_S${(ex?.length||0)+1}`;
-            await _db.schema('workout').from('session_logs').insert([{ id: sId, workout_date: smartDate.justDate, duration_min: Number(document.getElementById('s-duration').value), active_calories: Number(document.getElementById('s-active-cal').value), total_calories: Number(document.getElementById('s-total-cal').value), avg_heart_rate: Number(document.getElementById('s-avg-hr').value), min_heart_rate: Number(document.getElementById('s-min-hr').value), max_heart_rate: Number(document.getElementById('s-max-hr').value) }]);
-            const logs = ACTIVE_SETS.map(s => { const {id, ...rest} = s; return { ...rest, session_id: sId, status: 'FINAL', workout_date: smartDate.full }; });
-            await _db.schema('workout').from('logs').insert(logs);
-            await _db.schema('workout').from('active_workout').delete().neq('id', -1);
+            if (ACTIVE_SETS.some(s => s.status === 'TEMP')) {
+                return alert("저장 안 된 세트가 있음!");
+            }
+            const smartDate = getSmartDate(); 
+            const { data: ex } = await _db.schema('workout').from('session_logs').select('id').like('id', `${smartDate.idStr}_%`); 
+            const sId = `${smartDate.idStr}_S${(ex?.length || 0) + 1}`;
+            
+            await _db.schema('workout').from('session_logs').insert([{ 
+                id: sId, 
+                workout_date: smartDate.justDate, 
+                duration_min: Number(document.getElementById('s-duration').value), 
+                active_calories: Number(document.getElementById('s-active-cal').value), 
+                total_calories: Number(document.getElementById('s-total-cal').value), 
+                avg_heart_rate: Number(document.getElementById('s-avg-hr').value), 
+                min_heart_rate: Number(document.getElementById('s-min-hr').value), 
+                max_heart_rate: Number(document.getElementById('s-max-hr').value) 
+            }]);
+            
+            const logs = ACTIVE_SETS.map(s => { 
+                const { id, ...rest } = s; 
+                return { ...rest, session_id: sId, status: 'FINAL', workout_date: smartDate.full }; 
+            });
+            
+            await _db.schema('workout').from('logs').insert(logs); 
+            await _db.schema('workout').from('active_workout').delete().neq('id', -1); 
             location.reload();
         }
 

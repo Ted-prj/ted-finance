@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="common.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
+    <script src="supabase_config.js"></script>
     <script src="../universe_core.js"></script>
 </head>
 <body style="background-color: var(--bp-black); color: white;">
@@ -48,13 +48,14 @@
             </div>
         </div>
 
-        <div id="global-nav" data-active="workout"></div>
+        <div id="global-nav" data-active="settings"></div>
     </div>
 
-    <script src="supabase_config.js"></script>
     <script>
+        // 🔒 크래시를 유발하던 구형 checkAuth() 유령 명령어 소탕 완료!
+
         async function init() {
-            await checkAuth(); 
+            // 헤더 레이어의 universe_core.js 인증 승인이 떨어지면 곧바로 설정 데이터 로드 가동
             loadSettings();
         }
 

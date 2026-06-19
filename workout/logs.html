@@ -35,7 +35,7 @@
         .log-dot { width: 4px; height: 4px; background-color: var(--neon-pink); border-radius: 50%; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); }
         .cal-table td.selected-day .log-dot { background-color: #000; }
     </style>
-    <script src="config.js"></script>
+    <script src="supabase_config.js"></script>
     <script src="../universe_core.js"></script>
 </head>
 <body style="background-color: var(--bp-black); color: white;">
@@ -65,9 +65,7 @@
         <div id="global-nav" data-active="logs"></div>
     </div>
 
-    <script src="supabase_config.js"></script>
     <script>
-        checkAuth();
         let CURRENT_SESSIONS = [];
         let CURRENT_LOGS = [];
         let EXERCISE_MASTER = []; 
@@ -94,11 +92,9 @@
             const { data: eData } = await _db.schema('workout').from('exercises').select('*').order('name');
             EXERCISE_MASTER = eData || [];
 
-            // 1. 역대 도트 마킹을 위해 세션 로그에 존재하는 전체 중복 없는 날짜 타임라인 일괄 룩업
             const { data: allSessions } = await _db.schema('workout').from('session_logs').select('workout_date');
             ALL_LOGGED_DATES = allSessions ? allSessions.map(s => s.workout_date) : [];
 
-            // 2. 디폴트로 가장 최근 세션로그 데이터 날짜 지정 기본 기능 수호
             const { data: lastSession } = await _db.schema('workout').from('session_logs').select('workout_date').order('workout_date', { ascending: false }).limit(1);
             const defaultDate = lastSession?.[0] ? lastSession[0].workout_date : new Date().toISOString().split('T')[0];
             
@@ -111,7 +107,6 @@
             loadLogsByDate(defaultDate);
         }
 
-        // 고도화 명세: 네온 핑크 도트 결합형 달력 테이블 렌더러
         function renderCustomCalendar() {
             const gridArea = document.getElementById('cal-grid-area');
             const titleArea = document.getElementById('cal-month-title');
@@ -131,27 +126,21 @@
             let dayCounter = 1;
             let nextMonthCounter = 1;
 
-            // 이전 달 여백 채우기
             for (let i = firstDayIndex - 1; i >= 0; i--) {
                 html += `<td class="other-month">${prevTotalDays - i}</td>`;
             }
 
-            // 이번 달 날짜 그리기
             for (let i = firstDayIndex; i < 42; i++) {
                 if (dayCounter <= totalDays) {
                     const currentLoopDate = `${CAL_DISPLAY_YEAR}-${String(CAL_DISPLAY_MONTH + 1).padStart(2, '0')}-${String(dayCounter).padStart(2, '0')}`;
                     const isSelected = currentLoopDate === CAL_SELECTED_DATE ? 'selected-day' : '';
-                    
                     const todayStr = new Date().toISOString().split('T')[0];
                     const isToday = currentLoopDate === todayStr ? 'today-cell' : '';
-                    
-                    // 핵심 체크포인트: 역대 운동 일지 배열에 포함되어 있다면 미니 점 노드 결합
                     const hasLogDot = ALL_LOGGED_DATES.includes(currentLoopDate) ? '<div class="log-dot"></div>' : '';
 
                     html += `<td class="${isSelected} ${isToday}" onclick="selectCalendarDay('${currentLoopDate}')">${dayCounter}${hasLogDot}</td>`;
                     dayCounter++;
                 } else {
-                    // 다음 달 여백 채우기
                     html += `<td class="other-month">${nextMonthCounter}</td>`;
                     nextMonthCounter++;
                 }
