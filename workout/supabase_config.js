@@ -59,42 +59,98 @@ async function getDetailedStats(exId, setNo = null) {
 }
 
 /* ==========================================================================
-   📱 WORKOUT 앱 전역 모바일 횡방향 스크롤 내비게이션 동적 주입 엔진 (v5.4.9)
+   📱 WORKOUT 앱 전역 모바일 횡방향 스크롤 내비게이션 및 드롭업 멀티 허브 엔진
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
     const navContainer = document.getElementById('global-nav');
     if (!navContainer) return;
 
-    // 💡 테드! 이제 여기 배열에 한 줄만 추가하면 모든 탭 화면에 실시간 동기화 완료!
-    const NAVIGATION_MENUS = [
+    // 1. WORKOUT 서브 앱 내부에서 순환할 로컬 탭 메뉴 리스트
+    const LOCAL_MENUS = [
         { id: 'workout', name: 'WORKOUT', url: 'workout.html' },
         { id: 'manage', name: 'MANAGE', url: 'manage.html' },
         { id: 'settings', name: 'SETTINGS', url: 'settings.html' },
         { id: 'dashboard', name: 'DASHBOARD', url: 'dashboard.html' },
-        { id: 'logs', name: 'LOGS', url: 'logs.html' },
-        // 💖 명세 반영: 테드의 DIET HUB 외부 깃허브 주소 파이프라인 연결
-        { id: 'diethub', name: 'DIET HUB', url: 'diet/index.html' }
+        { id: 'logs', name: 'LOGS', url: 'logs.html' }
+    ];
+
+    // 2. 버튼 클릭 시 위로 확장 팝업될 깃허브 하브 프로젝트 연대기 리스트
+    // 부모 디렉토리 탈출 상대경로(../) 매핑 구조를 취해 환경 무결성 완벽 사수!
+    const HUB_PROJECTS = [
+        { name: '🥗 DIET HUB', url: '../diet/index.html' },
+        { name: '💰 FINANCE HUB', url: '../finance/index.html' },
+        { name: '📚 BOOKCLUB HUB', url: '../bookclub/index.html' }
     ];
 
     const activeId = navContainer.getAttribute('data-active');
 
+    // 💡 팝업 UI 레이아웃 통제용 상디 커스텀 CSS 동적 캡슐화 인젝션
+    const inlineStyle = document.createElement('style');
+    inlineStyle.innerHTML = `
+        .dropup-wrapper { position: relative; flex: 1 0 auto; min-width: 85px; text-align: center; }
+        .dropup-menu-container {
+            position: absolute; bottom: calc(100% + 14px); right: 6px;
+            background: rgba(18, 18, 18, 0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid #282828; border-radius: 16px; min-width: 160px;
+            padding: 8px 0; opacity: 0; transform: translateY(10px); visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); z-index: 1100;
+        }
+        .dropup-menu-container.show { opacity: 1; transform: translateY(0); visibility: visible; }
+        .dropup-item {
+            display: block; width: 100%; padding: 10px 16px; text-align: left;
+            color: #ccc; font-weight: 700; font-size: 0.75rem; border: none;
+            background: transparent; text-decoration: none; transition: 0.2s;
+        }
+        /* 다이어트 테마의 핑크 포인트 무드를 안전하게 소프트 매칭 */
+        .dropup-item:hover, .dropup-item:active { background: rgba(232, 142, 163, 0.15); color: #e88ea3; }
+        .dropup-item:not(:last-child) { border-bottom: 1px solid #222; }
+    `;
+    document.head.appendChild(inlineStyle);
+
+    // 3. 모바일 하단 탭바 뼈대 HTML 렌더링
     const navHtml = `
         <div class="bottom-nav-container">
-            <ul class="nav nav-pills">
-                ${NAVIGATION_MENUS.map(menu => `
+            <ul class="nav nav-pills" style="position: relative;">
+                ${LOCAL_MENUS.map(menu => `
                     <li class="nav-item">
                         <a href="${menu.url}" class="nav-link ${menu.id === activeId ? 'active' : ''}">
                             ${menu.name}
                         </a>
                     </li>
                 `).join('')}
+                
+                <li class="dropup-wrapper">
+                    <button class="nav-link" style="color: #ff3f7e; border: 1px dashed rgba(255, 63, 126, 0.4); background:transparent;" onclick="window.toggleProjectHub(event)">
+                        HUB 🚀
+                    </button>
+                    <div id="project-dropup-menu" class="dropup-menu-container">
+                        ${HUB_PROJECTS.map(proj => `
+                            <a href="${proj.url}" class="dropup-item">${proj.name}</a>
+                        `).join('')}
+                    </div>
+                </li>
             </ul>
         </div>
     `;
 
     navContainer.innerHTML = navHtml;
-    
-    // 현재 활성화된 활성 탭 메뉴 위치로 자동 가로 스크롤 포커싱 기믹
+
+    // 4. 전역 팝업 토글 & 바깥 영역 터치 시 자동 닫힘 최적화 기믹
+    window.toggleProjectHub = (e) => {
+        e.stopPropagation();
+        const menu = document.getElementById('project-dropup-menu');
+        if (menu) menu.classList.toggle('show');
+    };
+
+    document.addEventListener('click', () => {
+        const menu = document.getElementById('project-dropup-menu');
+        if (menu && menu.classList.contains('show')) {
+            menu.classList.remove('show');
+        }
+    });
+
+    // 현재 활성화된 탭 위치 자동 가로 스크롤 보정
     const activeBtn = navContainer.querySelector('.nav-link.active');
     if (activeBtn) {
         setTimeout(() => {
