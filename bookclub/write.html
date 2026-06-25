@@ -165,6 +165,7 @@
     <script>
         checkAuth();
         let currentRecId = null;
+        let currentReviewId = null; // 👑 [Zoro] 리뷰 고유 수정 ID 추적용 기믹 추가
         let latestRound = 0; 
         let lastUnselectedBookObj = null;
 
@@ -222,7 +223,7 @@
             try {
                 const { data, error } = await _db
                     .from('recommendations')
-                    .select('title, author, page_count, is_selected') // 👑 nickname 검색 필드 생략 제거
+                    .select('title, author, page_count, is_selected') 
                     .eq('member_id', member_id) 
                     .eq('is_selected', false) 
                     .order('created_at', { ascending: false })
@@ -250,7 +251,6 @@
             document.getElementById("recTitle").value = lastUnselectedBookObj.title || "";
             document.getElementById("recAuthor").value = lastUnselectedBookObj.author || "";
             document.getElementById("recPageCount").value = lastUnselectedBookObj.page_count || "";
-            // 👑 별칭 폼 주입 제거 완료
             
             alert(`✨ 완벽 로딩! 탈락했던 명작 [${lastUnselectedBookObj.title}]의 스펙을 폼에 채워 넣었사옵니다. 하단 등록을 누르셔요!`);
             document.getElementById("recTitle").focus();
@@ -264,7 +264,7 @@
             try {
                 const { data, error } = await _db
                     .from('recommendations')
-                    .select('id, title, author, page_count') // 👑 nickname 제거
+                    .select('id, title, author, page_count') 
                     .eq('member_id', member_id) 
                     .eq('target_round', parseInt(target_round))
                     .order('created_at', { ascending: false })
@@ -305,7 +305,7 @@
             try {
                 const { data, error } = await _db
                     .from('reviews_ratings')
-                    .select('rating_before, review_text') 
+                    .select('id, rating_before, review_text') // 👑 [Zoro] 고유 식별 주소 'id' 인출하도록 개정
                     .eq('member_id', member_id) 
                     .eq('round_no', round_no)
                     .limit(1);
@@ -317,6 +317,7 @@
 
                 if (data && data.length > 0) {
                     const rev = data[0];
+                    currentReviewId = rev.id; // 👑 ID 확보 완료
                     const existingScore = rev.rating_before !== null ? rev.rating_before : 4.0;
                     
                     ratingSlider.value = existingScore;
@@ -326,6 +327,7 @@
                     submitBtn.innerHTML = `<i class="fa-solid fa-pen-fancy"></i> 술타임 총평 우아하게 수정하기`;
                     submitBtn.style.background = "linear-gradient(135deg, #FF007F, #FF69B4)";
                 } else {
+                    currentReviewId = null; // 👑 클리어
                     ratingSlider.value = 4.0;
                     syncWriteStarSlider(4.0);
                     
@@ -352,7 +354,6 @@
 
             try {
                 if (currentRecId) {
-                    // 👑 업데이트 페이로드에서 nickname 제외 완료
                     const { error } = await _db
                         .from('recommendations')
                         .update({ title, author, page_count, target_round })
@@ -361,7 +362,6 @@
                     if (error) throw error;
                     alert("추천 도서 정보가 차수별로 완벽하게 수정되었사옵니다! ✨");
                 } else {
-                    // 👑 인서트 페이로드에서 nickname 제외 완료
                     const { error } = await _db
                         .from('recommendations')
                         .insert([{ target_month, target_round, member_id, title, author, page_count }]);
@@ -388,15 +388,26 @@
             const review_text = document.getElementById("reviewText").value.trim();
 
             try {
-                const { error } = await _db.from('reviews_ratings').upsert({ 
-                    round_no, 
-                    member_id, 
-                    rating_before, 
-                    review_text 
-                }, { onConflict: 'round_no, member_id' }); 
+                // 👑 [Zoro] 불안정한 ON CONFLICT 대신, 완벽하게 통제 가능한 분기형 트랜잭션 검법 구사
+                if (currentReviewId) {
+                    // 이미 작성해둔 총평이 발견되면 깨끗하게 UPDATE 처리
+                    const { error } = await _db
+                        .from('reviews_ratings')
+                        .update({ rating_before, review_text })
+                        .eq('id', currentReviewId);
+                        
+                    if (error) throw error;
+                    alert("토론 전 마음의 별점과 리뷰 총평이 우아하게 수정되었습니다! ☕");
+                } else {
+                    // 생판 처음 남기는 별점이면 순정하게 INSERT 처리
+                    const { error } = await _db
+                        .from('reviews_ratings')
+                        .insert([{ round_no, member_id, rating_before, review_text }]);
+                        
+                    if (error) throw error;
+                    alert("토론 전 마음의 별점과 리뷰 총평이 전격 장전되었습니다! 💖");
+                }
                 
-                if (error) throw error;
-                alert("토론 전 마음의 별점과 리뷰 총평이 성공적으로 장전되었습니다! ☕");
                 await loadExistingReview();
             } catch(err) { 
                 console.error(err);
